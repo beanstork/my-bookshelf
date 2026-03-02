@@ -443,10 +443,10 @@ function Shelf({ books, onBookClick, shelfIndex }) {
   const shapeIndex = shelfIndex % 4;
 
   const bookendShape = [
-    { clipPath: "polygon(20% 6%, 100% 0%, 100% 100%, 0% 100%)", borderRadius: "2px 4px 4px 2px" },
+    { clipPath: "polygon(20% 6%, 100% 0%, 100% 100%, 0% 100%)" },
     { borderRadius: "44% 44% 4px 4px" },
     { borderRadius: "4px 20px 4px 4px" },
-    { clipPath: "polygon(0% 0%, 80% 12%, 100% 12%, 100% 100%, 0% 100%)", borderRadius: "4px 2px 2px 4px" },
+    { clipPath: "polygon(0% 0%, 80% 12%, 100% 12%, 100% 100%, 0% 100%)" },
   ][shapeIndex];
 
   const bookendStyle = {
@@ -469,11 +469,11 @@ function Shelf({ books, onBookClick, shelfIndex }) {
         padding: "0 12px", minHeight: 170,
         flexWrap: "nowrap", overflowX: "auto",
       }}>
-        {!isRight && <div style={bookendStyle} />}
+        {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {books.map((book, i) => (
           <BookSpine key={book.id} book={book} onClick={onBookClick} index={shelfIndex * 20 + i} />
         ))}
-        {isRight && <div style={bookendStyle} />}
+        {isRight && <div aria-hidden="true" style={bookendStyle} />}
       </div>
       {/* Shelf plank */}
       <div style={{
