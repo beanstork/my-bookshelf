@@ -636,9 +636,9 @@ export default function App() {
 
   const pillStyle = (active) => ({
     padding: "6px 16px", borderRadius: 20, border: "1px solid",
-    borderColor: active ? "#2e4130" : "rgba(46,65,48,0.35)",
-    background: active ? "rgba(46,65,48,0.18)" : "transparent",
-    color: active ? "#1a3020" : "#3d5a40",
+    borderColor: active ? "#8B2840" : "rgba(120,50,60,0.35)",
+    background: active ? "rgba(139,40,64,0.12)" : "transparent",
+    color: active ? "#6B1830" : "#7A3040",
     fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
     transition: "all 0.2s", flex: 1, textAlign: "center",
   });
@@ -646,8 +646,8 @@ export default function App() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#2e4130",
-      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ccircle cx='20' cy='35' r='1.2' fill='rgba(255,255,255,0.04)'/%3E%3Ccircle cx='65' cy='18' r='1' fill='rgba(255,255,255,0.05)'/%3E%3Ccircle cx='85' cy='72' r='1.2' fill='rgba(255,255,255,0.03)'/%3E%3Ccircle cx='42' cy='88' r='1' fill='rgba(255,255,255,0.04)'/%3E%3Ccircle cx='98' cy='50' r='1.2' fill='rgba(255,255,255,0.04)'/%3E%3Ccircle cx='15' cy='65' r='1' fill='rgba(255,255,255,0.03)'/%3E%3Ccircle cx='55' cy='55' r='1' fill='rgba(255,255,255,0.05)'/%3E%3Ccircle cx='75' cy='100' r='1.2' fill='rgba(255,255,255,0.03)'/%3E%3Ccircle cx='5' cy='12' r='1' fill='rgba(255,255,255,0.04)'/%3E%3Ccircle cx='110' cy='90' r='1' fill='rgba(255,255,255,0.04)'/%3E%3Ccircle cx='30' cy='110' r='1.2' fill='rgba(255,255,255,0.03)'/%3E%3Ccircle cx='95' cy='8' r='1' fill='rgba(255,255,255,0.04)'/%3E%3C/svg%3E")`,
+      backgroundColor: "#F2E8D9",
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
       fontFamily: "'DM Sans', sans-serif",
     }}>
@@ -656,12 +656,12 @@ export default function App() {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        * { scrollbar-width: thin; scrollbar-color: #4a6b4a #2e4130; }
+        * { scrollbar-width: thin; scrollbar-color: #C4A882 #F2E8D9; }
         *::-webkit-scrollbar { width: 6px; height: 6px; }
-        *::-webkit-scrollbar-track { background: #2e4130; }
-        *::-webkit-scrollbar-thumb { background: #4a6b4a; border-radius: 3px; }
-        input:focus, select:focus, textarea:focus { border-color: #D4A843 !important; box-shadow: 0 0 0 2px rgba(212,168,67,0.15); }
-        select option { background: #1A120B; color: #E8D5B7; }
+        *::-webkit-scrollbar-track { background: #F2E8D9; }
+        *::-webkit-scrollbar-thumb { background: #C4A882; border-radius: 3px; }
+        input:focus, select:focus, textarea:focus { border-color: #A0445A !important; box-shadow: 0 0 0 2px rgba(160,68,90,0.15); }
+        select option { background: #F2E8D9; color: #3A2515; }
       `}</style>
 
       {/* Header */}
@@ -725,8 +725,8 @@ export default function App() {
             placeholder="Search books, authors, or series..."
             style={{
               width: "100%", padding: "12px 16px 12px 40px", borderRadius: 10,
-              border: "1px solid rgba(46,65,48,0.3)", background: "rgba(255,255,255,0.55)",
-              color: "#1a3020", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+              border: "1px solid rgba(120,70,50,0.3)", background: "rgba(255,255,255,0.65)",
+              color: "#3A2010", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
               outline: "none", boxSizing: "border-box",
             }}
           />
@@ -749,10 +749,10 @@ export default function App() {
         {/* Sort & genre filter */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#3d5a40", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Sort</span>
+            <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Sort</span>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
-              padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(46,65,48,0.3)",
-              background: "rgba(255,255,255,0.55)", color: "#1a3020", fontSize: 13,
+              padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(120,70,50,0.3)",
+              background: "rgba(255,255,255,0.65)", color: "#3A2010", fontSize: 13,
               fontFamily: "'DM Sans', sans-serif", cursor: "pointer", outline: "none",
             }}>
               <option value="dateRead">Date Read</option>
@@ -763,10 +763,10 @@ export default function App() {
             </select>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#3d5a40", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Genre</span>
+            <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Genre</span>
             <select value={filterGenre} onChange={e => setFilterGenre(e.target.value)} style={{
-              padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(46,65,48,0.3)",
-              background: "rgba(255,255,255,0.55)", color: "#1a3020", fontSize: 13,
+              padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(120,70,50,0.3)",
+              background: "rgba(255,255,255,0.65)", color: "#3A2010", fontSize: 13,
               fontFamily: "'DM Sans', sans-serif", cursor: "pointer", outline: "none",
             }}>
               <option value="all">All Genres</option>
@@ -820,7 +820,7 @@ export default function App() {
         </div>{/* end wood frame */}
 
         {/* Count */}
-        <div style={{ textAlign: "center", marginTop: 20, color: "#5A4A3A", fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>
+        <div style={{ textAlign: "center", marginTop: 20, color: "#4A3020", fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>
           Showing {filteredAndSorted.length} book{filteredAndSorted.length !== 1 ? "s" : ""}
         </div>
       </div>
