@@ -146,25 +146,14 @@ function BookSpine({ book, onClick, index }) {
       <div style={{
         writingMode: "vertical-rl", textOrientation: "mixed",
         color: textColor, fontFamily: "'Libre Baskerville', 'Georgia', serif",
-        fontSize: width < 28 ? 9 : 11, fontWeight: 600,
+        fontSize: width < 28 ? 11 : 14, fontWeight: 600,
         letterSpacing: "0.5px",
         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        maxHeight: height - 50,
+        maxHeight: height - 40,
         textShadow: "0 1px 2px rgba(0,0,0,0.5)",
         lineHeight: 1.2,
       }}>
         {book.t}
-      </div>
-      <div style={{
-        writingMode: "vertical-rl", textOrientation: "mixed",
-        color: textColor, fontFamily: "'Cormorant Garamond', Georgia, serif",
-        fontSize: width < 28 ? 7 : 8, fontWeight: 400,
-        opacity: 0.7, marginTop: 6,
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        maxHeight: 60,
-        textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-      }}>
-        {book.a.split(' ').pop()}
       </div>
     </div>
   );
