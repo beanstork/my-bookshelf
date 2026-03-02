@@ -478,15 +478,15 @@ function Shelf({ books, onBookClick, shelfIndex }) {
       {/* Shelf plank */}
       <div style={{
         height: 14,
-        backgroundColor: "#6B2225",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='20'%3E%3Cpath d='M0,5 Q100,3 200,6 Q250,8 300,5' stroke='rgba(255,160,100,0.12)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0,12 Q80,14 160,11 Q230,9 300,12' stroke='rgba(200,60,60,0.1)' stroke-width='1' fill='none'/%3E%3Cpath d='M0,17 Q120,15 200,18 Q270,20 300,17' stroke='rgba(255,160,100,0.08)' stroke-width='0.8' fill='none'/%3E%3C/svg%3E")`,
+        backgroundColor: "#C4A882",
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='20'%3E%3Cpath d='M0,5 Q100,3 200,6 Q250,8 300,5' stroke='rgba(200,160,100,0.15)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0,12 Q80,14 160,11 Q230,9 300,12' stroke='rgba(160,120,60,0.12)' stroke-width='1' fill='none'/%3E%3Cpath d='M0,17 Q120,15 200,18 Q270,20 300,17' stroke='rgba(200,160,100,0.1)' stroke-width='0.8' fill='none'/%3E%3C/svg%3E")`,
         backgroundSize: "300px 20px",
         backgroundRepeat: "repeat-x",
         borderRadius: "0 0 3px 3px",
-        boxShadow: "0 4px 8px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,200,180,0.2)",
+        boxShadow: "0 4px 8px rgba(80,50,20,0.4), inset 0 2px 0 rgba(255,230,180,0.25)",
         position: "relative",
       }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "rgba(255,200,180,0.15)" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "rgba(255,230,180,0.2)" }} />
       </div>
       {/* Shelf bracket shadow */}
       <div style={{
@@ -805,20 +805,20 @@ export default function App() {
         {/* Wood frame */}
         <div style={{
           padding: 18,
-          background: "linear-gradient(135deg, #8B3030 0%, #6B2225 30%, #5C1A1E 60%, #6B2225 80%, #7B2A2E 100%)",
+          background: "linear-gradient(135deg, #C8A878 0%, #B89060 30%, #A87A48 60%, #B89060 80%, #C4A070 100%)",
           borderRadius: 14,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,180,160,0.15), inset 0 -2px 4px rgba(0,0,0,0.4)",
-          border: "1px solid #8B3535",
+          boxShadow: "0 8px 32px rgba(80,50,20,0.45), inset 0 2px 4px rgba(255,220,170,0.2), inset 0 -2px 4px rgba(0,0,0,0.25)",
+          border: "1px solid #C0986A",
         }}>
         {/* Back panel texture */}
         <div style={{
-          backgroundColor: "#3D1215",
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='80'%3E%3Cpath d='M0,10 Q75,8 150,12 Q225,15 300,10' stroke='rgba(255,120,80,0.08)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0,25 Q100,27 200,23 Q250,21 300,25' stroke='rgba(180,40,40,0.07)' stroke-width='1' fill='none'/%3E%3Cpath d='M0,40 Q80,38 160,42 Q220,45 300,40' stroke='rgba(255,120,80,0.06)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0,55 Q120,57 200,53 Q260,51 300,55' stroke='rgba(180,40,40,0.07)' stroke-width='1' fill='none'/%3E%3Cpath d='M0,70 Q70,68 140,72 Q210,75 300,70' stroke='rgba(255,120,80,0.05)' stroke-width='1' fill='none'/%3E%3C/svg%3E")`,
+          backgroundColor: "#7A6048",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='80'%3E%3Cpath d='M0,10 Q75,8 150,12 Q225,15 300,10' stroke='rgba(200,160,100,0.1)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0,25 Q100,27 200,23 Q250,21 300,25' stroke='rgba(160,120,70,0.08)' stroke-width='1' fill='none'/%3E%3Cpath d='M0,40 Q80,38 160,42 Q220,45 300,40' stroke='rgba(200,160,100,0.08)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0,55 Q120,57 200,53 Q260,51 300,55' stroke='rgba(160,120,70,0.08)' stroke-width='1' fill='none'/%3E%3Cpath d='M0,70 Q70,68 140,72 Q210,75 300,70' stroke='rgba(200,160,100,0.07)' stroke-width='1' fill='none'/%3E%3C/svg%3E")`,
           backgroundSize: "300px 80px",
           backgroundRepeat: "repeat",
           borderRadius: 8, padding: "24px 12px 12px",
-          border: "1px solid #5A1A1E",
-          boxShadow: "inset 0 2px 20px rgba(0,0,0,0.5), inset 0 -2px 10px rgba(0,0,0,0.3)",
+          border: "1px solid #8A7050",
+          boxShadow: "inset 0 2px 20px rgba(0,0,0,0.35), inset 0 -2px 10px rgba(0,0,0,0.2)",
         }}>
           {filteredAndSorted.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#8B7355", fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontStyle: "italic" }}>
