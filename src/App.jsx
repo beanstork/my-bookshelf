@@ -424,8 +424,8 @@ function AddBookForm({ onAdd, onClose }) {
             <textarea style={{ ...inputStyle, minHeight: 70, resize: "vertical" }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="My thoughts..." />
           </div>
           <button onClick={handleSubmit} style={{
-            background: "linear-gradient(135deg, #8B6014, #5A3E00)", border: "none",
-            borderRadius: 8, padding: "12px 24px", color: "#F5E6C8",
+            background: "#A0445A", border: "none",
+            borderRadius: 8, padding: "12px 24px", color: "#F9EDE8",
             fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 700,
             cursor: title && author ? "pointer" : "not-allowed",
             opacity: title && author ? 1 : 0.5, transition: "opacity 0.2s",
@@ -789,10 +789,10 @@ export default function App() {
           <div style={{ flex: 1 }} />
           <button onClick={() => setShowAddForm(true)} style={{
             padding: "8px 20px", borderRadius: 8,
-            background: "linear-gradient(135deg, #8B6014, #5A3E00)",
-            border: "none", color: "#1A120B", fontFamily: "'DM Sans', sans-serif",
+            background: "#A0445A",
+            border: "none", color: "#F9EDE8", fontFamily: "'DM Sans', sans-serif",
             fontSize: 13, fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(212,168,67,0.3)",
+            boxShadow: "0 2px 8px rgba(160,68,90,0.3)",
           }}>
             + Add Book
           </button>
