@@ -506,8 +506,8 @@ function StatsBar({ books }) {
   return (
     <div style={{
       display: "flex", gap: 0, justifyContent: "center", flexWrap: "wrap",
-      background: "rgba(255,255,255,0.25)", borderRadius: 12,
-      border: "1px solid rgba(255,255,255,0.4)", overflow: "hidden",
+      background: "rgba(255,255,255,0.35)", borderRadius: 12,
+      border: "1px solid rgba(200,140,100,0.3)", overflow: "hidden",
       margin: "0 20px",
     }}>
       {stats.map((s, i) => (
@@ -516,8 +516,8 @@ function StatsBar({ books }) {
           borderRight: (i < stats.length - 1 && !stats[i + 1]?.noLeftBorder) ? "1px solid rgba(0,0,0,0.1)" : "none",
         }}>
           <div style={{ fontSize: s.icon.length > 2 ? 13 : 20, marginBottom: 4, lineHeight: 1.4 }}>{s.icon}</div>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#7A5510", fontSize: 22, fontWeight: 700 }}>{s.value}</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#5A3E0A", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>{s.label}</div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#5C2010", fontSize: 22, fontWeight: 700 }}>{s.value}</div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#6B3520", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>{s.label}</div>
         </div>
       ))}
     </div>
@@ -708,9 +708,8 @@ export default function App() {
 
       {/* Stats + Controls band */}
       <div style={{
-        backgroundColor: "#bad9b9",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cellipse cx='30' cy='40' rx='18' ry='12' fill='rgba(46,80,50,0.07)' opacity='0.8'/%3E%3Cellipse cx='90' cy='25' rx='14' ry='9' fill='rgba(46,80,50,0.06)'/%3E%3Cellipse cx='150' cy='55' rx='20' ry='11' fill='rgba(46,80,50,0.07)'/%3E%3Cellipse cx='60' cy='90' rx='16' ry='10' fill='rgba(46,80,50,0.05)'/%3E%3Cellipse cx='130' cy='100' rx='12' ry='8' fill='rgba(46,80,50,0.07)'/%3E%3Cellipse cx='20' cy='130' rx='15' ry='10' fill='rgba(46,80,50,0.06)'/%3E%3Cellipse cx='100' cy='150' rx='18' ry='11' fill='rgba(46,80,50,0.07)'/%3E%3Cellipse cx='165' cy='140' rx='13' ry='9' fill='rgba(46,80,50,0.05)'/%3E%3Cellipse cx='50' cy='165' rx='11' ry='7' fill='rgba(46,80,50,0.06)'/%3E%3Cellipse cx='145' cy='170' rx='16' ry='10' fill='rgba(46,80,50,0.07)'/%3E%3C/svg%3E")`,
-        backgroundRepeat: "repeat",
+        backgroundColor: "#F5C4A0",
+        marginTop: 12,
         paddingBottom: 16,
       }}>
       {/* Stats */}
