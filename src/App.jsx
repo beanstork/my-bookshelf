@@ -587,8 +587,9 @@ export default function App() {
   const [filterShelf, setFilterShelf] = useState("read");
   const [filterGenre, setFilterGenre] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const coverColors = useCoverColors(books);
+  const coverColors = useCoverColors(syncedBooks);
   const [pulledBookId, setPulledBookId] = useState(null);
+  const pullTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!syncLoading) setBooks(syncedBooks);
@@ -899,7 +900,7 @@ export default function App() {
                 books={shelfBooks}
                 onBookClick={(book) => {
                   setPulledBookId(book.id);
-                  setTimeout(() => setSelectedBook(book), 320);
+                  pullTimeoutRef.current = setTimeout(() => setSelectedBook(book), 320);
                 }}
                 shelfIndex={i}
                 coverColors={coverColors}
@@ -927,6 +928,7 @@ export default function App() {
         <BookModal
           book={selectedBook}
           onClose={() => {
+            clearTimeout(pullTimeoutRef.current);
             setSelectedBook(null);
             setPulledBookId(null);
           }}
