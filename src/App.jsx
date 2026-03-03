@@ -551,16 +551,16 @@ function StatsBar({ books }) {
 export default function App() {
   const { books: syncedBooks, loading: syncLoading } = useGoodreadsSync(RAW_BOOKS);
   const [books, setBooks] = useState(RAW_BOOKS);
-
-  useEffect(() => {
-    if (!syncLoading) setBooks(syncedBooks);
-  }, [syncedBooks, syncLoading]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState("dateRead");
   const [filterShelf, setFilterShelf] = useState("read");
   const [filterGenre, setFilterGenre] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!syncLoading) setBooks(syncedBooks);
+  }, [syncedBooks, syncLoading]);
 
   const allGenres = useMemo(() => {
     const genres = new Set();
