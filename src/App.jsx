@@ -823,12 +823,6 @@ export default function App() {
 
       {/* Bookshelf */}
       <div style={{ padding: "20px 20px 60px", maxWidth: 1100, margin: "0 auto", position: "relative" }}>
-        {/* Vignette overlay */}
-        <div aria-hidden="true" style={{
-          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1,
-          background: "radial-gradient(ellipse at center, transparent 55%, rgba(200,170,130,0.18) 80%, rgba(180,140,100,0.32) 100%)",
-          borderRadius: 14,
-        }} />
         {/* Wood frame */}
         <div style={{
           padding: 18,
@@ -863,6 +857,12 @@ export default function App() {
         <div style={{ textAlign: "center", marginTop: 20, color: "#4A3020", fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>
           Showing {filteredAndSorted.length} book{filteredAndSorted.length !== 1 ? "s" : ""}
         </div>
+      {/* Vignette overlay */}
+      <div aria-hidden="true" style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        background: "radial-gradient(ellipse at center, transparent 55%, rgba(200,170,130,0.18) 80%, rgba(180,140,100,0.32) 100%)",
+        borderRadius: 14,
+      }} />
       </div>
 
       {/* Modals */}
