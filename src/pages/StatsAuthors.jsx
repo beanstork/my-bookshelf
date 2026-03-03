@@ -4,6 +4,25 @@ import {
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 
+// Defined at module scope so it is not recreated on every render.
+// authorData is passed as a prop so the tooltip can look up author details.
+function CustomTooltip({ active, payload, authorData }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  const author = authorData.find(a => a.name === d.fullName);
+  return (
+    <div style={{
+      background: '#2C1D12', border: '1px solid #4A3728',
+      borderRadius: 8, padding: '10px 14px',
+      fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+    }}>
+      <div style={{ color: '#D4A843', fontWeight: 700, marginBottom: 4 }}>{d.fullName}</div>
+      <div style={{ color: '#E8D5B7' }}>{author?.count} book{author?.count !== 1 ? 's' : ''}</div>
+      <div style={{ color: '#BFA88A' }}>{author?.pages.toLocaleString()} pages · Avg {author?.avgRating}★</div>
+    </div>
+  );
+}
+
 export default function StatsAuthors({ books, onBack }) {
   const [metric, setMetric] = useState('count'); // 'count' | 'pages'
   const [expanded, setExpanded] = useState(null);
@@ -28,12 +47,12 @@ export default function StatsAuthors({ books, onBack }) {
       }));
   }, [books]);
 
-  const chartData = authorData.slice(0, 15).map(a => ({
-    name: a.name.split(' ').pop(), // last name for chart label
+  const chartData = useMemo(() => authorData.slice(0, 15).map(a => ({
+    name: a.name.split(' ').pop(),
     fullName: a.name,
     count: a.count,
     pages: a.pages,
-  }));
+  })), [authorData]);
 
   const toggleStyle = (active) => ({
     padding: '6px 16px', borderRadius: 20,
@@ -45,23 +64,6 @@ export default function StatsAuthors({ books, onBack }) {
     cursor: 'pointer', fontWeight: active ? 600 : 400,
     transition: 'all 0.18s',
   });
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    const author = authorData.find(a => a.name === d.fullName);
-    return (
-      <div style={{
-        background: '#2C1D12', border: '1px solid #4A3728',
-        borderRadius: 8, padding: '10px 14px',
-        fontFamily: "'DM Sans', sans-serif", fontSize: 13,
-      }}>
-        <div style={{ color: '#D4A843', fontWeight: 700, marginBottom: 4 }}>{d.fullName}</div>
-        <div style={{ color: '#E8D5B7' }}>{author?.count} book{author?.count !== 1 ? 's' : ''}</div>
-        <div style={{ color: '#BFA88A' }}>{author?.pages.toLocaleString()} pages · Avg {author?.avgRating}★</div>
-      </div>
-    );
-  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F2E8D9', fontFamily: "'DM Sans', sans-serif" }}>
@@ -115,7 +117,10 @@ export default function StatsAuthors({ books, onBack }) {
                 tick={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fill: '#6B3520' }}
                 axisLine={false} tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(139,40,64,0.06)' }} />
+              <Tooltip
+                content={(props) => <CustomTooltip {...props} authorData={authorData} />}
+                cursor={{ fill: 'rgba(139,40,64,0.06)' }}
+              />
               <Bar dataKey={metric} radius={[0, 4, 4, 0]} maxBarSize={28}>
                 {chartData.map((entry, i) => (
                   <Cell key={entry.fullName} fill={i === 0 ? '#8B2840' : '#D4A843'} />
@@ -131,10 +136,10 @@ export default function StatsAuthors({ books, onBack }) {
           border: '1px solid rgba(200,160,120,0.2)',
           overflow: 'hidden',
         }}>
-          {authorData.map((author, i) => (
+          {authorData.map((author) => (
             <div key={author.name}>
               <div
-                onClick={() => setExpanded(expanded === i ? null : i)}
+                onClick={() => setExpanded(expanded === author.name ? null : author.name)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 16,
                   padding: '13px 20px', cursor: 'pointer',
@@ -150,9 +155,9 @@ export default function StatsAuthors({ books, onBack }) {
                 }}>{author.name}</span>
                 <span style={{ color: '#8B7355', fontSize: 13 }}>{author.count} book{author.count !== 1 ? 's' : ''}</span>
                 <span style={{ color: '#D4A843', fontSize: 13, minWidth: 40, textAlign: 'right' }}>{author.avgRating !== '—' ? `${author.avgRating}★` : '—'}</span>
-                <span style={{ color: '#BFA88A', fontSize: 13 }}>{expanded === i ? '▲' : '▼'}</span>
+                <span style={{ color: '#BFA88A', fontSize: 13 }}>{expanded === author.name ? '▲' : '▼'}</span>
               </div>
-              {expanded === i && (
+              {expanded === author.name && (
                 <div style={{ padding: '8px 20px 16px', background: 'rgba(212,168,67,0.04)' }}>
                   {author.books.map(b => (
                     <div key={b.id} style={{
