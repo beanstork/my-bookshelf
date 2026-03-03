@@ -86,7 +86,6 @@ export default async function handler(req, res) {
 
     const parser = new XMLParser({
       ignoreAttributes: false,
-      cdataPropName: '__cdata',
       isArray: (name) => name === 'item',
     });
 
