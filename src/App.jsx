@@ -658,12 +658,13 @@ export default function App() {
   }), [books]);
 
   const pillStyle = (active) => ({
-    padding: "6px 16px", borderRadius: 20, border: "1px solid",
-    borderColor: active ? "#8B2840" : "rgba(120,50,60,0.35)",
-    background: active ? "rgba(139,40,64,0.12)" : "transparent",
-    color: active ? "#6B1830" : "#7A3040",
+    padding: "7px 16px", borderRadius: 20, border: "1px solid",
+    borderColor: active ? "#8B2840" : "rgba(120,50,60,0.25)",
+    background: active ? "#8B2840" : "rgba(255,255,255,0.55)",
+    color: active ? "#FDF0F3" : "#7A3040",
     fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
     transition: "all 0.2s", flex: 1, textAlign: "center",
+    fontWeight: active ? 600 : 400,
   });
 
   return (
@@ -685,6 +686,7 @@ export default function App() {
         *::-webkit-scrollbar-thumb { background: #C4A882; border-radius: 3px; }
         input:focus, select:focus, textarea:focus { border-color: #A0445A !important; box-shadow: 0 0 0 2px rgba(160,68,90,0.15); }
         select option { background: #F2E8D9; color: #3A2515; }
+        select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B3520' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
       `}</style>
 
       {/* Header */}
@@ -780,9 +782,10 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Sort</span>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
-              padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(120,70,50,0.3)",
-              background: "rgba(255,255,255,0.65)", color: "#3A2010", fontSize: 13,
+              padding: "7px 28px 7px 12px", borderRadius: 8, border: "1px solid rgba(160,100,70,0.35)",
+              background: "rgba(255,255,255,0.75)", color: "#3A2010", fontSize: 13,
               fontFamily: "'DM Sans', sans-serif", cursor: "pointer", outline: "none",
+              boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
             }}>
               <option value="dateRead">Date Read</option>
               <option value="rating">My Rating</option>
@@ -794,9 +797,10 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Genre</span>
             <select value={filterGenre} onChange={e => setFilterGenre(e.target.value)} style={{
-              padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(120,70,50,0.3)",
-              background: "rgba(255,255,255,0.65)", color: "#3A2010", fontSize: 13,
+              padding: "7px 28px 7px 12px", borderRadius: 8, border: "1px solid rgba(160,100,70,0.35)",
+              background: "rgba(255,255,255,0.75)", color: "#3A2010", fontSize: 13,
               fontFamily: "'DM Sans', sans-serif", cursor: "pointer", outline: "none",
+              boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
             }}>
               <option value="all">All Genres</option>
               {allGenres.map(g => <option key={g} value={g}>{g}</option>)}
@@ -805,10 +809,11 @@ export default function App() {
           <div style={{ flex: 1 }} />
           <button onClick={() => setShowAddForm(true)} style={{
             padding: "8px 20px", borderRadius: 8,
-            background: "#A0445A",
-            border: "none", color: "#F9EDE8", fontFamily: "'DM Sans', sans-serif",
-            fontSize: 13, fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(160,68,90,0.3)",
+            background: "#C0768A",
+            border: "1px solid rgba(160,80,100,0.3)",
+            color: "#FDF0F3", fontFamily: "'DM Sans', sans-serif",
+            fontSize: 13, fontWeight: 600, cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(160,80,100,0.2)",
           }}>
             + Add Book
           </button>
