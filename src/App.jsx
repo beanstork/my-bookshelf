@@ -726,10 +726,9 @@ export default function App() {
         </div>
       </div>
 
-      {/* Stats + Controls band */}
+      {/* Stats + Controls — sits on page cream */}
       <div style={{
-        backgroundColor: "#F5C4A0",
-        marginTop: 12,
+        marginTop: 0,
         paddingBottom: 16,
       }}>
       {/* Stats */}
