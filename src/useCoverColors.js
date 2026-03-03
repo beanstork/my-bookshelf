@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
-import ColorThief from 'colorthief';
+import { getColor } from 'colorthief';
 
 const CACHE_KEY = 'bookshelf_cover_colors_v1';
 const BATCH_SIZE = 5;
-
-function rgbToHex(r, g, b) {
-  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
-}
 
 function getCoverUrl(isbn) {
   if (!isbn) return null;
@@ -34,11 +30,10 @@ async function extractColor(isbn) {
 
     const img = new Image();
     img.crossOrigin = 'Anonymous';
-    img.onload = () => {
+    img.onload = async () => {
       try {
-        const colorThief = new ColorThief();
-        const [r, g, b] = colorThief.getColor(img);
-        resolve(rgbToHex(r, g, b));
+        const color = await getColor(img);
+        resolve(color ? color.hex() : null);
       } catch {
         resolve(null);
       }
