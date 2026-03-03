@@ -207,7 +207,7 @@ function BookModal({ book, onClose }) {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
               <img
                 src={book.cover}
-                alt={`Cover of ${book.t}`}
+                alt={`Cover of ${book.t || 'this book'}`}
                 style={{
                   maxHeight: 200, maxWidth: 140,
                   borderRadius: 4,
