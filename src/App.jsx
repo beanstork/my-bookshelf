@@ -134,10 +134,12 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         animation: `slideUp 0.4s ease ${index * 0.015}s both`,
       }}
       onMouseEnter={e => {
+        if (isPulled) return;
         e.currentTarget.style.transform = "translateY(-8px)";
         e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 4px 12px rgba(0,0,0,0.4)";
       }}
       onMouseLeave={e => {
+        if (isPulled) return;
         e.currentTarget.style.transform = "";
         e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)";
       }}
@@ -200,6 +202,21 @@ function BookModal({ book, onClose }) {
         }} />
         
         <div style={{ padding: "28px 32px" }}>
+          {/* Cover image */}
+          {book.cover && (
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+              <img
+                src={book.cover}
+                alt={`Cover of ${book.t}`}
+                style={{
+                  maxHeight: 200, maxWidth: 140,
+                  borderRadius: 4,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+          )}
           {/* Title & Author */}
           <h2 style={{
             fontFamily: "'Playfair Display', 'Libre Baskerville', Georgia, serif",
