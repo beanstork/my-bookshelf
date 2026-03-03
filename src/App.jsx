@@ -691,14 +691,21 @@ export default function App() {
           backgroundPosition: "center 22%",
           backgroundRepeat: "no-repeat",
         }} />
-        {/* Gradient overlay — lighter at top to show branches, denser at bottom for text */}
+        {/* Gradient overlay — fades fully into page cream at bottom */}
         <div aria-hidden="true" style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, rgba(252,228,239,0.38) 0%, rgba(252,210,220,0.68) 60%, rgba(248,220,225,0.82) 100%)",
+          background: "linear-gradient(to bottom, rgba(252,228,239,0.38) 0%, rgba(252,210,220,0.65) 55%, rgba(242,232,217,0.92) 85%, rgba(242,232,217,1) 100%)",
         }} />
         {/* Content sits above overlays */}
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>📚</div>
+          <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
+            <svg width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 2C6 2 6 28 6 30C6 32 8 34 10 34L26 34L26 2L6 2Z" fill="#5C0F1E" opacity="0.15"/>
+              <path d="M8 2L8 32L22 32L22 2L8 2Z" fill="#5C0F1E" opacity="0.25"/>
+              <path d="M10 2L10 28L16 24L22 28L22 2L10 2Z" fill="#5C0F1E"/>
+              <path d="M10 2L10 28L16 24L22 28L22 2L10 2Z" stroke="#3A0810" strokeWidth="1" strokeLinejoin="round"/>
+            </svg>
+          </div>
           <h1 style={{
             fontFamily: "'Playfair Display', Georgia, serif",
             color: "#5C0F1E", fontSize: 42, fontWeight: 900, margin: 0,
