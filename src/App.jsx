@@ -507,28 +507,36 @@ function StatsBar({ books }) {
   const avgRating = rated.length > 0 ? (rated.reduce((s, b) => s + b.r, 0) / rated.length).toFixed(1) : "—";
   const fiveStars = read.filter(b => b.r === 5).length;
 
+  const StarIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 2L12.39 7.26L18 8.09L14 12L15.18 17.59L10 14.77L4.82 17.59L6 12L2 8.09L7.61 7.26L10 2Z"
+        stroke="#5C2010" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+
   const stats = [
     { label: "Books Read", value: read.length, icon: "📚" },
     { label: "Pages", value: totalPages.toLocaleString(), icon: "📄" },
     { label: "Audiobooks", value: audiobooks.length, icon: "🎧" },
-    { label: "Printed Books", value: printedBooks.length, icon: "📖", noLeftBorder: true },
-    { label: "Avg Rating", value: avgRating, icon: "🌡️" },
+    { label: "Printed Books", value: printedBooks.length, icon: "📖" },
+    { label: "Avg Rating", value: avgRating, icon: <StarIcon /> },
     { label: "5-Star Reads", value: fiveStars, icon: "⭐⭐⭐⭐⭐" },
   ];
 
   return (
     <div style={{
-      display: "flex", gap: 0, justifyContent: "center", flexWrap: "wrap",
-      background: "rgba(255,255,255,0.35)", borderRadius: 12,
-      border: "1px solid rgba(200,140,100,0.3)", overflow: "hidden",
-      margin: "0 20px",
+      display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
+      margin: "16px 20px 0",
     }}>
-      {stats.map((s, i) => (
+      {stats.map((s) => (
         <div key={s.label} style={{
-          padding: "16px 24px", textAlign: "center", flex: 1, minWidth: 100,
-          borderRight: (i < stats.length - 1 && !stats[i + 1]?.noLeftBorder) ? "1px solid rgba(0,0,0,0.1)" : "none",
+          padding: "14px 20px", textAlign: "center", minWidth: 100, flex: 1,
+          background: "rgba(255,255,255,0.75)",
+          borderRadius: 10,
+          boxShadow: "0 2px 10px rgba(120,70,40,0.10), 0 1px 3px rgba(120,70,40,0.07)",
+          border: "1px solid rgba(200,160,120,0.2)",
         }}>
-          <div style={{ fontSize: s.icon.length > 2 ? 13 : 20, marginBottom: 4, lineHeight: 1.4 }}>{s.icon}</div>
+          <div style={{ fontSize: 18, marginBottom: 4, lineHeight: 1.4, display: "flex", justifyContent: "center", alignItems: "center" }}>{s.icon}</div>
           <div style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#5C2010", fontSize: 22, fontWeight: 700 }}>{s.value}</div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#6B3520", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>{s.label}</div>
         </div>
