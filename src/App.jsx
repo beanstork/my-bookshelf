@@ -498,6 +498,15 @@ function Shelf({ books, onBookClick, shelfIndex }) {
   );
 }
 
+function StarIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 2L12.39 7.26L18 8.09L14 12L15.18 17.59L10 14.77L4.82 17.59L6 12L2 8.09L7.61 7.26L10 2Z"
+        stroke="#5C2010" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
 function StatsBar({ books }) {
   const read = books.filter(b => b.s === "read");
   const audiobooks = books.filter(b => b.au && b.s === "read");
@@ -506,13 +515,6 @@ function StatsBar({ books }) {
   const rated = read.filter(b => b.r > 0);
   const avgRating = rated.length > 0 ? (rated.reduce((s, b) => s + b.r, 0) / rated.length).toFixed(1) : "—";
   const fiveStars = read.filter(b => b.r === 5).length;
-
-  const StarIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 2L12.39 7.26L18 8.09L14 12L15.18 17.59L10 14.77L4.82 17.59L6 12L2 8.09L7.61 7.26L10 2Z"
-        stroke="#5C2010" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-    </svg>
-  );
 
   const stats = [
     { label: "Books Read", value: read.length, icon: "📚" },
