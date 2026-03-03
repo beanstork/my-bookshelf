@@ -25,13 +25,13 @@ export default async function handler(req, res) {
       /goal.*?(\d+)\s*book/i,
       /"readingChallengeGoal"[^>]*>(\d+)/i,
       /challenge-goal[^>]*>(\d+)/i,
-      /(\d+)\s*of\s*\d+\s*books/i,
+      /\d+\s*of\s*(\d+)\s*books/i,
     ];
 
     for (const pattern of patterns) {
       const match = html.match(pattern);
       if (match) {
-        const goal = parseInt(match[1]);
+        const goal = parseInt(match[1], 10);
         if (goal > 0 && goal < 10000) { // sanity check
           res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
           return res.status(200).json({ year, goal });
