@@ -19,7 +19,7 @@ const GENRE_ICONS = {
   classics: "📜", "historical-fiction": "⚔️", "non-fiction": "📊", biography: "👤",
   autobiography: "✍️", memoir: "📝", adventure: "🗺️", comedy: "😄",
   "young-adult": "🌟", travel: "✈️", politics: "🏛️", history: "📖",
-  law: "⚖️", palestine: "🫒", arabic: "📿", fanfiction: "✨"
+  law: "⚖️", palestine: "🇵🇸", arabic: "📿", fanfiction: "✨"
 };
 
 function seededRandom(seed) {
@@ -122,16 +122,16 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         padding: "20px 3px",
         boxSizing: "border-box",
         transition: isPulled
-          ? "transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.32s ease"
+          ? "opacity 0.18s ease"
           : "transform 0.2s ease, box-shadow 0.2s ease",
-        transform: isPulled ? "translateY(-150%)" : undefined,
+        opacity: isPulled ? 0 : undefined,
         boxShadow: isPulled
           ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 12px 24px rgba(0,0,0,0.5)"
           : "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)",
         alignSelf: "flex-end",
         flexShrink: 0,
         overflow: "hidden",
-        animation: `slideUp 0.4s ease ${index * 0.015}s both`,
+        animation: isPulled ? "none" : `slideUp 0.4s ease ${index * 0.015}s both`,
       }}
       onMouseEnter={e => {
         if (isPulled) return;
@@ -168,9 +168,16 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
   );
 }
 
-function BookModal({ book, onClose }) {
+function BookModal({ book, onClose, spineColor }) {
+  const [srcIndex, setSrcIndex] = useState(0);
   if (!book) return null;
-  
+
+  const coverSources = [
+    book.cover || null,
+    book.isbn ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg` : null,
+    book.isbn ? `https://books.google.com/books/content?vid=ISBN:${book.isbn}&printsec=frontcover&img=1&zoom=1` : null,
+  ].filter(Boolean);
+  const coverSrc = srcIndex < coverSources.length ? coverSources[srcIndex] : null;
   const genres = book.g || [];
   
   return (
@@ -180,7 +187,7 @@ function BookModal({ book, onClose }) {
         background: "rgba(15,10,5,0.85)", backdropFilter: "blur(8px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         zIndex: 1000, padding: 20,
-        animation: "fadeIn 0.25s ease",
+        animation: "fadeIn 0.15s ease",
       }}
       onClick={onClose}
     >
@@ -189,41 +196,93 @@ function BookModal({ book, onClose }) {
         style={{
           background: "linear-gradient(135deg, #2C1D12 0%, #1A120B 100%)",
           border: "1px solid #4A3728",
-          borderRadius: 12, padding: 0, maxWidth: 520, width: "100%",
+          borderRadius: 12, padding: 0, maxWidth: 720, width: "100%",
           maxHeight: "85vh", overflow: "auto",
           boxShadow: "0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,168,67,0.1)",
-          animation: "scaleIn 0.3s ease",
+          animation: "scaleIn 0.18s ease",
         }}
       >
         {/* Header with color bar */}
         <div style={{
           height: 6, borderRadius: "12px 12px 0 0",
-          background: `linear-gradient(90deg, ${getBookColor(book.id)}, ${getBookColor(book.id)}88)`,
+          background: `linear-gradient(90deg, ${spineColor || getBookColor(book.id)}, ${(spineColor || getBookColor(book.id))}88)`,
         }} />
         
-        <div style={{ padding: "28px 32px" }}>
-          {/* Cover image */}
-          {book.cover && (
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "stretch" }}>
+          {/* Cover image — left column */}
+          {coverSrc ? (
+            <div style={{
+              flexShrink: 0, width: 190, alignSelf: "stretch",
+              background: "#0D0905",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 10, boxSizing: "border-box",
+              borderRadius: "0 0 0 12px",
+            }}>
               <img
-                src={book.cover}
+                src={coverSrc}
                 alt={`Cover of ${book.t || 'this book'}`}
+                onError={() => setSrcIndex(i => i + 1)}
                 style={{
-                  maxHeight: 200, maxWidth: 140,
-                  borderRadius: 4,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                  width: "100%", height: "100%",
                   objectFit: "contain",
+                  display: "block",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
                 }}
               />
             </div>
+          ) : (
+            <div style={{
+              flexShrink: 0, width: 160, alignSelf: "stretch",
+              background: "linear-gradient(160deg, #211408 0%, #160D05 100%)",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              gap: 14, padding: "28px 16px",
+              borderRadius: "0 0 0 12px",
+              borderRight: "1px solid #2E1C10",
+            }}>
+              <svg width="44" height="52" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="2" width="32" height="48" rx="3" fill="#2A1810" stroke="#4A2E1A" strokeWidth="1.5"/>
+                <rect x="6" y="2" width="7" height="48" rx="2" fill="#1E100A" stroke="#3A2010" strokeWidth="1"/>
+                <line x1="18" y1="16" x2="34" y2="16" stroke="#4A2E1A" strokeWidth="1.2"/>
+                <line x1="18" y1="22" x2="34" y2="22" stroke="#4A2E1A" strokeWidth="1.2"/>
+                <line x1="18" y1="28" x2="30" y2="28" stroke="#4A2E1A" strokeWidth="1.2"/>
+                <circle cx="26" cy="38" r="5" stroke="#5A3A22" strokeWidth="1.2" fill="none"/>
+                <line x1="29.5" y1="41.5" x2="33" y2="45" stroke="#5A3A22" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <div style={{
+                color: "#5A4030",
+                fontSize: 10,
+                fontFamily: "'DM Sans', sans-serif",
+                textAlign: "center",
+                textTransform: "uppercase",
+                letterSpacing: 1.8,
+                lineHeight: 1.7,
+              }}>
+                Cover<br/>not available
+              </div>
+            </div>
           )}
+          <div style={{ padding: "28px 32px", flex: 1, minWidth: 0 }}>
           {/* Title & Author */}
           <h2 style={{
             fontFamily: "'Playfair Display', 'Libre Baskerville', Georgia, serif",
             color: "#F5ECD7", fontSize: 26, fontWeight: 700, margin: 0,
             lineHeight: 1.3, letterSpacing: "-0.3px",
           }}>
-            {book.t}
+            <a
+              href={`https://www.goodreads.com/book/show/${book.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "inherit", textDecoration: "none",
+                borderBottom: "1px solid rgba(245,236,215,0.25)",
+                transition: "border-color 0.15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.7)"}
+              onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.25)"}
+            >
+              {book.t}
+            </a>
           </h2>
           
           {book.sn && (
@@ -278,7 +337,7 @@ function BookModal({ book, onClose }) {
             <div>
               <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
               <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
-                {book.au ? "🎧 Audiobook" : `📖 ${book.bind || "Book"}`}
+                {book.au ? "🎧 Audiobook" : "📖 Hard Copy"}
               </span>
             </div>
           </div>
@@ -310,12 +369,6 @@ function BookModal({ book, onClose }) {
             </div>
           )}
 
-          {/* Publisher */}
-          {book.pub && (
-            <div style={{ marginTop: 16, color: "#5A4A3A", fontFamily: "'DM Sans', sans-serif", fontSize: 11 }}>
-              Published by {book.pub}
-            </div>
-          )}
 
           {/* Favourite badge */}
           {book.fav && (
@@ -327,7 +380,8 @@ function BookModal({ book, onClose }) {
               ❤️ Marked as a favourite
             </div>
           )}
-        </div>
+          </div>{/* end info column */}
+        </div>{/* end flex row */}
       </div>
     </div>
   );
@@ -580,7 +634,7 @@ function StatsBar({ books }) {
 
 export default function App() {
   const { books: syncedBooks, loading: syncLoading } = useGoodreadsSync(RAW_BOOKS);
-  const [books, setBooks] = useState(RAW_BOOKS);
+  const [manualBooks, setManualBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState("dateRead");
@@ -590,10 +644,25 @@ export default function App() {
   const coverColors = useCoverColors(syncedBooks);
   const [pulledBookId, setPulledBookId] = useState(null);
   const pullTimeoutRef = useRef(null);
+  const [currentView, setCurrentView] = useState('bookshelf');
+
+  const books = useMemo(() => {
+    const syncedIds = new Set(syncedBooks.map(b => b.id));
+    return [...syncedBooks, ...manualBooks.filter(b => !syncedIds.has(b.id))];
+  }, [syncedBooks, manualBooks]);
 
   useEffect(() => {
-    if (!syncLoading) setBooks(syncedBooks);
-  }, [syncedBooks, syncLoading]);
+    if (!selectedBook) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        clearTimeout(pullTimeoutRef.current);
+        setSelectedBook(null);
+        setPulledBookId(null);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [selectedBook]);
 
   const allGenres = useMemo(() => {
     const genres = new Set();
@@ -685,7 +754,7 @@ export default function App() {
   }, [filteredAndSorted]);
 
   const addBook = useCallback((newBook) => {
-    setBooks(prev => [...prev, newBook]);
+    setManualBooks(prev => [...prev, newBook]);
   }, []);
 
   const shelfCounts = useMemo(() => ({
@@ -707,6 +776,8 @@ export default function App() {
   });
 
   return (
+    <>
+      {currentView === 'bookshelf' && (
     <div style={{
       minHeight: "100vh",
       backgroundColor: "#F2E8D9",
@@ -817,6 +888,7 @@ export default function App() {
             { key: "read", label: "Read" },
             { key: "currently-reading", label: "Reading" },
             { key: "to-read", label: "To Read" },
+            { key: "dnf", label: "Did Not Finish" },
             { key: "all", label: "All" },
           ].map(s => (
             <button key={s.key} onClick={() => setFilterShelf(s.key)} style={pillStyle(filterShelf === s.key)}>
@@ -900,7 +972,7 @@ export default function App() {
                 books={shelfBooks}
                 onBookClick={(book) => {
                   setPulledBookId(book.id);
-                  pullTimeoutRef.current = setTimeout(() => setSelectedBook(book), 320);
+                  setSelectedBook(book);
                 }}
                 shelfIndex={i}
                 coverColors={coverColors}
@@ -922,11 +994,14 @@ export default function App() {
         borderRadius: 14,
       }} />
       </div>
+    </div>
+      )}
 
-      {/* Modals */}
+      {/* Modals stay outside the view conditional */}
       {selectedBook && (
         <BookModal
           book={selectedBook}
+          spineColor={coverColors[selectedBook.id] || null}
           onClose={() => {
             clearTimeout(pullTimeoutRef.current);
             setSelectedBook(null);
@@ -935,6 +1010,6 @@ export default function App() {
         />
       )}
       {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} />}
-    </div>
+    </>
   );
 }
