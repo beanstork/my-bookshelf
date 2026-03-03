@@ -822,7 +822,13 @@ export default function App() {
       </div>{/* end controls band */}
 
       {/* Bookshelf */}
-      <div style={{ padding: "20px 20px 60px", maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ padding: "20px 20px 60px", maxWidth: 1100, margin: "0 auto", position: "relative" }}>
+        {/* Vignette overlay */}
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1,
+          background: "radial-gradient(ellipse at center, transparent 55%, rgba(200,170,130,0.18) 80%, rgba(180,140,100,0.32) 100%)",
+          borderRadius: 14,
+        }} />
         {/* Wood frame */}
         <div style={{
           padding: 18,
