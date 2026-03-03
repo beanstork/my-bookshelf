@@ -82,7 +82,7 @@ export default function StatsGoals({ books, onBack }) {
           });
         }
       })
-      .catch(() => {})
+      .catch((err) => { console.warn('[StatsGoals] /api/reading-goal fetch failed:', err); })
       .finally(() => setFetching(false));
   }, [currentYear]);
 
