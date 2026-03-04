@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getPalette } from 'colorthief';
+import { getSwatches } from 'colorthief';
 
-const CACHE_KEY = 'bookshelf_cover_colors_v3';
+const CACHE_KEY = 'bookshelf_cover_colors_v4';
 const BATCH_SIZE = 5;
 
 function getCoverUrl(isbn) {
@@ -23,26 +23,7 @@ function saveCache(cache) {
   } catch {}
 }
 
-function hexLuminance(hex) {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const r = ((num >> 16) & 255) / 255;
-  const g = ((num >> 8) & 255) / 255;
-  const b = (num & 255) / 255;
-  const toLinear = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-}
-
-function hexSaturation(hex) {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const r = ((num >> 16) & 255) / 255;
-  const g = ((num >> 8) & 255) / 255;
-  const b = (num & 255) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  if (max === min) return 0;
-  const l = (max + min) / 2;
-  return l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
-}
+const SWATCH_PRIORITY = ['Vibrant', 'LightVibrant', 'DarkVibrant', 'Muted', 'LightMuted', 'DarkMuted'];
 
 async function extractColor(isbn) {
   return new Promise((resolve) => {
@@ -53,18 +34,14 @@ async function extractColor(isbn) {
     img.crossOrigin = 'Anonymous';
     img.onload = async () => {
       try {
-        const palette = await getPalette(img, 8);
-        if (!palette || palette.length === 0) return resolve(null);
-
-        const hexColors = palette.map(c => c.hex());
-        // Filter out near-black only — near-whites/grays have near-zero saturation
-        // and will lose the saturation contest naturally (avoids filtering bright yellows)
-        const filtered = hexColors.filter(hex => hexLuminance(hex) > 0.04);
-
-        const candidates = filtered.length > 0 ? filtered : hexColors;
-        // Pick the most saturated (most visually distinctive) color
-        const best = candidates.reduce((a, b) => hexSaturation(a) >= hexSaturation(b) ? a : b);
-        resolve(best);
+        const swatches = await getSwatches(img);
+        for (const role of SWATCH_PRIORITY) {
+          if (swatches[role]?.color) {
+            resolve(swatches[role].color.hex());
+            return;
+          }
+        }
+        resolve(null);
       } catch {
         resolve(null);
       }
