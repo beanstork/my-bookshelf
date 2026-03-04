@@ -60,6 +60,20 @@ function getBookHeight(id) {
   return 160 + r * 40; // 160-200px
 }
 
+function hexToHue(hex) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === min) return 0;
+  let h;
+  if (max === r) h = ((g - b) / (max - min) + 6) % 6;
+  else if (max === g) h = (b - r) / (max - min) + 2;
+  else h = (r - g) / (max - min) + 4;
+  return h * 60;
+}
+
 function formatDate(d) {
   if (!d) return "—";
   const [y, m, day] = d.split("/");
@@ -718,6 +732,7 @@ export default function App() {
       if (sortBy === "title") return b.t.toLowerCase();
       if (sortBy === "author") return b.a.toLowerCase();
       if (sortBy === "pages") return b.p;
+      if (sortBy === "color") return hexToHue(coverColors[b.id] || getBookColor(b.id));
       return 0;
     };
 
@@ -731,6 +746,7 @@ export default function App() {
       if (sortBy === "title") return arr[0].sn.toLowerCase();
       if (sortBy === "author") return arr[0].a.toLowerCase();
       if (sortBy === "pages") return arr.reduce((s, b) => s + b.p, 0);
+      if (sortBy === "color") return hexToHue(coverColors[arr[0].id] || getBookColor(arr[0].id));
       return 0;
     };
 
@@ -744,6 +760,7 @@ export default function App() {
       if (sortBy === "rating") return b.sortKey - a.sortKey;
       if (sortBy === "title" || sortBy === "author") return a.sortKey.localeCompare(b.sortKey);
       if (sortBy === "pages") return b.sortKey - a.sortKey;
+      if (sortBy === "color") return a.sortKey - b.sortKey;
       return 0;
     });
 
@@ -755,7 +772,7 @@ export default function App() {
     });
 
     return result;
-  }, [books, sortBy, filterShelf, filterGenre, searchQuery]);
+  }, [books, sortBy, filterShelf, filterGenre, searchQuery, coverColors]);
 
   // Split books into shelves of ~12-16 books each
   const shelves = useMemo(() => {
@@ -928,6 +945,7 @@ export default function App() {
               <option value="title">Title</option>
               <option value="author">Author</option>
               <option value="pages">Pages</option>
+              <option value="color">Colour</option>
             </select>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
