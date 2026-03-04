@@ -61,7 +61,7 @@ export default function StatsGoals({ books, onBack }) {
   const allYears = useMemo(() => {
     const yearsWithBooks = Object.keys(booksByYear).map(Number);
     const yearsWithGoals = Object.keys(goals).map(Number);
-    const all = new Set([...yearsWithBooks, ...yearsWithGoals, currentYear]);
+    const all = new Set([...yearsWithBooks, ...yearsWithGoals, currentYear].filter(y => y >= 2024));
     return Array.from(all).sort((a, b) => b - a); // newest first
   }, [booksByYear, goals, currentYear]);
 

@@ -48,12 +48,13 @@ export default function StatsAuthors({ books, onBack }) {
       }));
   }, [books]);
 
-  const chartData = useMemo(() => authorData.slice(0, 15).map(a => ({
-    name: a.name.split(' ').pop(),
-    fullName: a.name,
-    count: a.count,
-    pages: a.pages,
-  })), [authorData]);
+  const chartData = useMemo(() => authorData.slice(0, 15).map(a => {
+    const words = a.name.trim().split(/\s+/);
+    const displayName = a.name.length > 18
+      ? `${words[0]} ${words[words.length - 1]}`
+      : a.name;
+    return { name: displayName, fullName: a.name, count: a.count, pages: a.pages };
+  }), [authorData]);
 
   const toggleStyle = (active) => ({
     padding: '6px 16px', borderRadius: 20,
@@ -94,7 +95,7 @@ export default function StatsAuthors({ books, onBack }) {
           marginBottom: 32,
         }}>
           <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
+            <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 24, left: 4, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(160,120,70,0.15)" horizontal={false} />
               <XAxis
                 type="number"
@@ -102,8 +103,8 @@ export default function StatsAuthors({ books, onBack }) {
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                type="category" dataKey="name" width={90}
-                tick={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fill: '#6B3520' }}
+                type="category" dataKey="name" width={130}
+                tick={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fill: '#6B3520' }}
                 axisLine={false} tickLine={false}
               />
               <Tooltip

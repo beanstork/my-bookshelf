@@ -92,11 +92,13 @@ function StarRating({ rating, size = 16 }) {
 }
 
 function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }) {
+  const [tipPos, setTipPos] = useState(null);
   const color = coverColor || getBookColor(book.id);
   const width = getBookWidth(book.p);
   const height = getBookHeight(book.id);
   const r = seededRandom(parseInt(book.id) + 7);
   const darkFactor = 0.7 + r * 0.3;
+  useEffect(() => { if (isPulled) setTipPos(null); }, [isPulled]);
   
   // Create a slightly darker shade for the edge
   const darken = (hex, f) => {
@@ -135,6 +137,7 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
   }
 
   return (
+    <>
     <div
       onClick={() => onClick(book)}
       style={{
@@ -165,13 +168,15 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         if (isPulled) return;
         e.currentTarget.style.transform = "translateY(-8px)";
         e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 4px 12px rgba(0,0,0,0.4)";
+        setTipPos({ x: e.clientX, y: e.clientY });
       }}
+      onMouseMove={e => { if (!isPulled) setTipPos({ x: e.clientX, y: e.clientY }); }}
       onMouseLeave={e => {
         if (isPulled) return;
         e.currentTarget.style.transform = "";
         e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)";
+        setTipPos(null);
       }}
-      title={`${book.t} — ${book.a}`}
     >
       {decoration}
       {book.au && (
@@ -193,6 +198,28 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         {book.t}
       </div>
     </div>
+    {tipPos && (
+      <div style={{
+        position: "fixed",
+        left: tipPos.x,
+        top: tipPos.y - 14,
+        transform: "translate(-50%, -100%)",
+        zIndex: 500,
+        background: "linear-gradient(135deg, #2C1D12, #1A120B)",
+        border: "1px solid #4A3728",
+        borderRadius: 8,
+        padding: "10px 14px",
+        maxWidth: 260,
+        pointerEvents: "none",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+      }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", color: "#F5ECD7", fontSize: 14, fontWeight: 600, lineHeight: 1.3, marginBottom: 3 }}>{book.t}</div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", color: "#BFA88A", fontSize: 13 }}>{book.a}</div>
+        {book.r > 0 && <div style={{ color: "#D4A843", fontSize: 12, marginTop: 4, letterSpacing: 1 }}>{"★".repeat(book.r)}</div>}
+        {book.sn && <div style={{ color: "#8B7355", fontSize: 11, marginTop: 3, fontStyle: "italic" }}>{book.sn}</div>}
+      </div>
+    )}
+    </>
   );
 }
 
@@ -663,11 +690,60 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
   );
 }
 
+function IconBook() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#5C2010" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 4C3 3 4 2 5 2H10V18H5C4 18 3 17 3 16V4Z"/>
+      <path d="M10 2H15C16 2 17 3 17 4V16C17 17 16 18 15 18H10V2Z"/>
+      <line x1="10" y1="2" x2="10" y2="18"/>
+      <line x1="5" y1="7" x2="8" y2="7" strokeWidth="1"/>
+      <line x1="5" y1="10" x2="8" y2="10" strokeWidth="1"/>
+      <line x1="12" y1="7" x2="15" y2="7" strokeWidth="1"/>
+      <line x1="12" y1="10" x2="15" y2="10" strokeWidth="1"/>
+    </svg>
+  );
+}
+function IconPages() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#5C2010" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 2H5C4 2 3 3 3 4V16C3 17 4 18 5 18H15C16 18 17 17 17 16V6L13 2Z"/>
+      <polyline points="13,2 13,6 17,6"/>
+      <line x1="7" y1="10" x2="13" y2="10"/>
+      <line x1="7" y1="13" x2="13" y2="13"/>
+      <line x1="7" y1="7" x2="10" y2="7"/>
+    </svg>
+  );
+}
+function IconHeadphones() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#5C2010" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11V10a7 7 0 0 1 14 0v1"/>
+      <rect x="2" y="11" width="3" height="5" rx="1.5"/>
+      <rect x="15" y="11" width="3" height="5" rx="1.5"/>
+    </svg>
+  );
+}
+function IconClosedBook() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#5C2010" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="2" width="12" height="16" rx="1"/>
+      <line x1="4" y1="2" x2="4" y2="18"/>
+      <line x1="6" y1="2" x2="6" y2="18" strokeWidth="0.8" opacity="0.5"/>
+    </svg>
+  );
+}
 function StarIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M10 2L12.39 7.26L18 8.09L14 12L15.18 17.59L10 14.77L4.82 17.59L6 12L2 8.09L7.61 7.26L10 2Z"
         stroke="#5C2010" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+function StarFilledIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="#5C2010" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 2L12.39 7.26L18 8.09L14 12L15.18 17.59L10 14.77L4.82 17.59L6 12L2 8.09L7.61 7.26L10 2Z"/>
     </svg>
   );
 }
@@ -682,12 +758,12 @@ function StatsBar({ books }) {
   const fiveStars = read.filter(b => b.r === 5).length;
 
   const stats = [
-    { label: "Books Read", value: read.length, icon: "📚" },
-    { label: "Pages", value: totalPages.toLocaleString(), icon: "📄" },
-    { label: "Audiobooks", value: audiobooks.length, icon: "🎧" },
-    { label: "Printed Books", value: printedBooks.length, icon: "📖" },
+    { label: "Books Read", value: read.length, icon: <IconBook /> },
+    { label: "Pages", value: totalPages.toLocaleString(), icon: <IconPages /> },
+    { label: "Audiobooks", value: audiobooks.length, icon: <IconHeadphones /> },
+    { label: "Printed Books", value: printedBooks.length, icon: <IconClosedBook /> },
     { label: "Avg Rating", value: avgRating, icon: <StarIcon /> },
-    { label: "5-Star Reads", value: fiveStars, icon: <StarIcon /> },
+    { label: "5-Star Reads", value: fiveStars, icon: <StarFilledIcon /> },
   ];
 
   return (
@@ -718,6 +794,7 @@ export default function App() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState("dateRead");
+  const [sortAsc, setSortAsc] = useState(false);
   const [filterShelf, setFilterShelf] = useState("read");
   const [filterGenre, setFilterGenre] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -808,12 +885,14 @@ export default function App() {
     Object.entries(seriesMap).forEach(([name, arr]) => items.push({ type: "series", books: arr, sortKey: getSeriesSortKey(arr), name }));
 
     items.sort((a, b) => {
-      if (sortBy === "dateRead") return b.sortKey.localeCompare(a.sortKey);
-      if (sortBy === "rating") return b.sortKey - a.sortKey;
-      if (sortBy === "title" || sortBy === "author") return a.sortKey.localeCompare(b.sortKey);
-      if (sortBy === "pages") return b.sortKey - a.sortKey;
-      if (sortBy === "color") return a.sortKey - b.sortKey;
-      return 0;
+      let result;
+      if (sortBy === "dateRead") result = b.sortKey.localeCompare(a.sortKey);
+      else if (sortBy === "rating") result = b.sortKey - a.sortKey;
+      else if (sortBy === "title" || sortBy === "author") result = a.sortKey.localeCompare(b.sortKey);
+      else if (sortBy === "pages") result = b.sortKey - a.sortKey;
+      else if (sortBy === "color") result = a.sortKey - b.sortKey;
+      else result = 0;
+      return sortAsc ? -result : result;
     });
 
     // Flatten
@@ -824,7 +903,7 @@ export default function App() {
     });
 
     return result;
-  }, [books, sortBy, filterShelf, filterGenre, searchQuery, coverColors]);
+  }, [books, sortBy, sortAsc, filterShelf, filterGenre, searchQuery, coverColors]);
 
   // Split books into shelves of ~12-16 books each
   const shelves = useMemo(() => {
@@ -984,7 +1063,7 @@ export default function App() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Sort</span>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
+            <select value={sortBy} onChange={e => { setSortBy(e.target.value); setSortAsc(false); }} style={{
               padding: "7px 28px 7px 12px", borderRadius: 8, border: "1px solid rgba(160,100,70,0.35)",
               background: "rgba(255,255,255,0.75)", color: "#3A2010", fontSize: 13,
               fontFamily: "'DM Sans', sans-serif", cursor: "pointer", outline: "none",
@@ -997,6 +1076,18 @@ export default function App() {
               <option value="pages">Pages</option>
               <option value="color">Colour</option>
             </select>
+            <button
+              onClick={() => setSortAsc(v => !v)}
+              title={sortAsc ? "Currently ascending — click to reverse" : "Currently descending — click to reverse"}
+              style={{
+                padding: "6px 10px", borderRadius: 8,
+                border: "1px solid rgba(160,100,70,0.35)",
+                background: "rgba(255,255,255,0.75)", color: "#5C2010",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+                cursor: "pointer", lineHeight: 1,
+                boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
+              }}
+            >{sortAsc ? "↑" : "↓"}</button>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Genre</span>
