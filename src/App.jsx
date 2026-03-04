@@ -198,41 +198,43 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
 
 const BOOK_QUOTES = [
   { text: "A reader lives a thousand lives before he dies. The man who never reads lives only one.", book: "A Dance with Dragons", by: "George R.R. Martin" },
-  { text: "I am not afraid of storms, for I am learning how to sail my ship.", book: "Little Women", by: "Louisa May Alcott" },
-  { text: "Not all those who wander are lost.", book: "The Fellowship of the Ring", by: "J.R.R. Tolkien" },
-  { text: "I took a deep breath and listened to the old brag of my heart: I am, I am, I am.", book: "The Bell Jar", by: "Sylvia Plath" },
-  { text: "It does not do to dwell on dreams and forget to live.", book: "Harry Potter and the Philosopher\u2019s Stone", by: "J.K. Rowling" },
+  { text: "So we beat on, boats against the current, borne back ceaselessly into the past.", book: "The Great Gatsby", by: "F. Scott Fitzgerald" },
+  { text: "Whatever our souls are made of, his and mine are the same.", book: "Wuthering Heights", by: "Emily Brontë" },
+  { text: "I am no bird; and no net ensnares me: I am a free human being with an independent will.", book: "Jane Eyre", by: "Charlotte Brontë" },
+  { text: "It is only with the heart that one can see rightly; what is essential is invisible to the eye.", book: "The Little Prince", by: "Antoine de Saint-Exupéry" },
+  { text: "I must not fear. Fear is the mind-killer. Fear is the little-death that brings total obliteration.", book: "Dune", by: "Frank Herbert" },
+  { text: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.", book: "Pride and Prejudice", by: "Jane Austen" },
+  { text: "Who controls the past controls the future. Who controls the present controls the past.", book: "1984", by: "George Orwell" },
+  { text: "For you, a thousand times over.", book: "The Kite Runner", by: "Khaled Hosseini" },
+  { text: "And now that you don't have to be perfect, you can be good.", book: "East of Eden", by: "John Steinbeck" },
+  { text: "What I need is the dandelion in the spring. The bright yellow that means rebirth instead of destruction.", book: "Mockingjay", by: "Suzanne Collins" },
+  { text: "The finest of pleasures are always the unexpected ones.", book: "The Night Circus", by: "Erin Morgenstern" },
+  { text: "Humbling women seems to me a chief pastime of poets.", book: "Circe", by: "Madeline Miller" },
+  { text: "You never really understand a person until you consider things from his point of view.", book: "To Kill a Mockingbird", by: "Harper Lee" },
+  { text: "All animals are equal, but some animals are more equal than others.", book: "Animal Farm", by: "George Orwell" },
+  { text: "The books that the world calls immoral are books that show the world its own shame.", book: "The Picture of Dorian Gray", by: "Oscar Wilde" },
+  { text: "It is not the lives we regret not living that are the heaviest, but the regrets themselves.", book: "The Midnight Library", by: "Matt Haig" },
+  { text: "Name one hero who was happy.", book: "The Song of Achilles", by: "Madeline Miller" },
 ];
 
-function RotatingQuote() {
-  const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
+function RotatingQuote({ books }) {
+  const readTitles = new Set((books || []).filter(b => b.s === 'read').map(b => b.t));
+  const pool = readTitles.size > 0
+    ? BOOK_QUOTES.filter(q => readTitles.has(q.book))
+    : BOOK_QUOTES;
+  const activePool = pool.length > 0 ? pool : BOOK_QUOTES;
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setIndex(i => (i + 1) % BOOK_QUOTES.length);
-        setVisible(true);
-      }, 350);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
+  const [quote] = useState(() => activePool[Math.floor(Math.random() * activePool.length)]);
 
-  const q = BOOK_QUOTES[index];
   return (
-    <div style={{
-      opacity: visible ? 1 : 0,
-      transition: "opacity 0.3s ease",
-      marginTop: 8,
-    }}>
+    <div style={{ marginTop: 8 }}>
       <p style={{
         fontFamily: "'Cormorant Garamond', Georgia, serif",
         color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
         textShadow: "0 1px 6px rgba(252,228,239,0.95)",
         lineHeight: 1.5,
       }}>
-        &ldquo;{q.text}&rdquo;
+        &ldquo;{quote.text}&rdquo;
       </p>
       <p style={{
         fontFamily: "'DM Sans', sans-serif",
@@ -240,7 +242,7 @@ function RotatingQuote() {
         letterSpacing: "0.08em", textTransform: "uppercase",
         textShadow: "0 1px 4px rgba(252,228,239,0.9)",
       }}>
-        &mdash; {q.book} &middot; {q.by}
+        &mdash; {quote.book} &middot; {quote.by}
       </p>
     </div>
   );
@@ -262,7 +264,7 @@ function BookModal({ book, onClose, spineColor }) {
     <div
       style={{
         position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-        background: "rgba(40,20,10,0.65)", backdropFilter: "blur(8px)",
+        background: "rgba(15,10,5,0.85)", backdropFilter: "blur(8px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         zIndex: 1000, padding: 20,
         animation: "fadeIn 0.15s ease",
@@ -272,11 +274,11 @@ function BookModal({ book, onClose, spineColor }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "linear-gradient(160deg, #FBF3E4 0%, #F2E8D9 100%)",
-          border: "1px solid rgba(180,140,100,0.4)",
+          background: "linear-gradient(135deg, #2C1D12 0%, #1A120B 100%)",
+          border: "1px solid #4A3728",
           borderRadius: 12, padding: 0, maxWidth: 720, width: "100%",
           maxHeight: "85vh", overflow: "auto",
-          boxShadow: "0 20px 60px rgba(80,40,10,0.35), 0 0 0 1px rgba(180,130,80,0.15)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,168,67,0.1)",
           animation: "scaleIn 0.18s ease",
         }}
       >
@@ -344,7 +346,7 @@ function BookModal({ book, onClose, spineColor }) {
           {/* Title & Author */}
           <h2 style={{
             fontFamily: "'Playfair Display', 'Libre Baskerville', Georgia, serif",
-            color: "#3A2010", fontSize: 26, fontWeight: 700, margin: 0,
+            color: "#F5ECD7", fontSize: 26, fontWeight: 700, margin: 0,
             lineHeight: 1.3, letterSpacing: "-0.3px",
           }}>
             <a
@@ -353,11 +355,11 @@ function BookModal({ book, onClose, spineColor }) {
               rel="noopener noreferrer"
               style={{
                 color: "inherit", textDecoration: "none",
-                borderBottom: "1px solid rgba(58,32,16,0.25)",
+                borderBottom: "1px solid rgba(245,236,215,0.25)",
                 transition: "border-color 0.15s",
               }}
-              onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(58,32,16,0.7)"}
-              onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(58,32,16,0.25)"}
+              onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.7)"}
+              onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.25)"}
             >
               {book.t}
             </a>
@@ -366,7 +368,7 @@ function BookModal({ book, onClose, spineColor }) {
           {book.sn && (
             <p style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
-              color: "#8B5E3C", fontSize: 14, margin: "4px 0 0", fontStyle: "italic",
+              color: "#D4A843", fontSize: 14, margin: "4px 0 0", fontStyle: "italic",
             }}>
               {book.sn} #{book.si % 1 === 0 ? Math.floor(book.si) : book.si}
             </p>
@@ -374,48 +376,48 @@ function BookModal({ book, onClose, spineColor }) {
 
           <p style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
-            color: "#6B3520", fontSize: 18, margin: "8px 0 0",
+            color: "#BFA88A", fontSize: 18, margin: "8px 0 0",
           }}>
             by {book.a}
           </p>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "linear-gradient(90deg, rgba(180,140,100,0.4), transparent)", margin: "20px 0" }} />
+          <div style={{ height: 1, background: "linear-gradient(90deg, #4A3728, transparent)", margin: "20px 0" }} />
 
           {/* Stats grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {book.r > 0 && (
               <div>
-                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>My Rating</div>
+                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>My Rating</div>
                 <StarRating rating={book.r} size={20} />
               </div>
             )}
             <div>
-              <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Avg Rating</div>
-              <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 16 }}>{book.ar} ★</span>
+              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Avg Rating</div>
+              <span style={{ color: "#BFA88A", fontFamily: "'Libre Baskerville', serif", fontSize: 16 }}>{book.ar} ★</span>
             </div>
             {book.dr && (
               <div>
-                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Date Read</div>
-                <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{formatDate(book.dr)}</span>
+                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Date Read</div>
+                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{formatDate(book.dr)}</span>
               </div>
             )}
             {book.p > 0 && (
               <div>
-                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Pages</div>
-                <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.p.toLocaleString()}</span>
+                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Pages</div>
+                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.p.toLocaleString()}</span>
               </div>
             )}
             {book.y && (
               <div>
-                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Published</div>
-                <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.y}</span>
+                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Published</div>
+                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.y}</span>
               </div>
             )}
             <div>
-              <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
-              <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
-                {book.au ? "🎧 Audiobook" : book.ki ? "📱 Kindle" : "📖 Hard Copy"}
+              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
+              <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
+                {book.au ? "Audiobook" : book.ki ? "Kindle" : "Hard Copy"}
               </span>
             </div>
           </div>
@@ -426,9 +428,9 @@ function BookModal({ book, onClose, spineColor }) {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {genres.map(g => (
                   <span key={g} style={{
-                    background: "rgba(139,94,60,0.10)", border: "1px solid rgba(139,94,60,0.25)",
+                    background: "rgba(212,168,67,0.12)", border: "1px solid rgba(212,168,67,0.25)",
                     borderRadius: 20, padding: "4px 12px",
-                    color: "#6B3520", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                    color: "#D4A843", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
                   }}>
                     {GENRE_ICONS[g] || "📚"} {g}
                   </span>
@@ -440,8 +442,8 @@ function BookModal({ book, onClose, spineColor }) {
           {/* Review */}
           {book.rev && (
             <div style={{ marginTop: 20 }}>
-              <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>My Review</div>
-              <p style={{ color: "#6B3520", fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1.6, margin: 0, fontStyle: "italic" }}>
+              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>My Review</div>
+              <p style={{ color: "#BFA88A", fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1.6, margin: 0, fontStyle: "italic" }}>
                 "{book.rev}"
               </p>
             </div>
@@ -685,7 +687,7 @@ function StatsBar({ books }) {
     { label: "Audiobooks", value: audiobooks.length, icon: "🎧" },
     { label: "Printed Books", value: printedBooks.length, icon: "📖" },
     { label: "Avg Rating", value: avgRating, icon: <StarIcon /> },
-    { label: "5-Star Reads", value: fiveStars, icon: "⭐⭐⭐⭐⭐" },
+    { label: "5-Star Reads", value: fiveStars, icon: <StarIcon /> },
   ];
 
   return (
@@ -920,7 +922,7 @@ export default function App() {
           }}>
             My Bookshelf
           </h1>
-          <RotatingQuote />
+          <RotatingQuote books={books} />
         </div>
       </div>
 
@@ -945,7 +947,12 @@ export default function App() {
       <div style={{ padding: "24px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
         {/* Search */}
         <div style={{ position: "relative", marginBottom: 16 }}>
-          <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#3d5a40", fontSize: 16 }}>🔍</span>
+          <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8B5E3C", display: "flex" }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <circle cx="6.5" cy="6.5" r="4.5" />
+              <line x1="10" y1="10" x2="14" y2="14" />
+            </svg>
+          </span>
           <input
             value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search books, authors, or series..."
@@ -964,7 +971,7 @@ export default function App() {
             { key: "read", label: "Read" },
             { key: "currently-reading", label: "Reading" },
             { key: "to-read", label: "To Read" },
-            { key: "dnf", label: "Did Not Finish" },
+            { key: "dnf", label: "DNF" },
             { key: "all", label: "All" },
           ].map(s => (
             <button key={s.key} onClick={() => setFilterShelf(s.key)} style={pillStyle(filterShelf === s.key)}>

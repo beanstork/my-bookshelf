@@ -5,21 +5,6 @@ import {
 } from 'recharts';
 import { PAPER_BG } from '../paperBackground.js';
 
-function BackButton({ onBack }) {
-  return (
-    <button
-      onClick={onBack}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: '#8B2840', fontFamily: "'DM Sans', sans-serif",
-        fontSize: 14, fontWeight: 600, padding: '0 0 24px',
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}
-    >
-      ← Back to Bookshelf
-    </button>
-  );
-}
 
 export default function StatsTimeline({ books, onBack }) {
   const [metric, setMetric] = useState('books');
@@ -74,8 +59,6 @@ export default function StatsTimeline({ books, onBack }) {
   return (
     <div style={{ minHeight: '100vh', ...PAPER_BG, fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ padding: '48px 40px 60px', maxWidth: 1000, margin: '0 auto' }}>
-        <BackButton onBack={onBack} />
-
         <h1 style={{
           fontFamily: "'Playfair Display', Georgia, serif",
           color: '#5C0F1E', fontSize: 36, fontWeight: 900,
