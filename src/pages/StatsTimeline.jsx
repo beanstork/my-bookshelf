@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
+import { PAPER_BG } from '../paperBackground.js';
 
 function BackButton({ onBack }) {
   return (
@@ -71,7 +72,7 @@ export default function StatsTimeline({ books, onBack }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F2E8D9', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', ...PAPER_BG, fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ padding: '48px 40px 60px', maxWidth: 1000, margin: '0 auto' }}>
         <BackButton onBack={onBack} />
 

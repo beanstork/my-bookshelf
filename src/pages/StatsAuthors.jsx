@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
+import { PAPER_BG } from '../paperBackground.js';
 
 // Defined at module scope so it is not recreated on every render.
 // authorData is passed as a prop so the tooltip can look up author details.
@@ -66,7 +67,7 @@ export default function StatsAuthors({ books, onBack }) {
   });
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F2E8D9', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', ...PAPER_BG, fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ padding: '48px 40px 60px', maxWidth: 1000, margin: '0 auto' }}>
         <button
           onClick={onBack}

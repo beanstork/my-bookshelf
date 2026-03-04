@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PAPER_BG } from '../paperBackground.js';
 
 const COLOURS = [
   '#D4A843', '#8B2840', '#5C6B2E', '#2E5C6B', '#6B2E5C',
@@ -55,7 +56,7 @@ export default function StatsGenres({ books, onBack }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F2E8D9', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', ...PAPER_BG, fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ padding: '48px 40px 60px', maxWidth: 1000, margin: '0 auto' }}>
         <button
           onClick={onBack}

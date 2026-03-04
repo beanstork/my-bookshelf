@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { PAPER_BG } from '../paperBackground.js';
 
 const STORAGE_KEY = 'bookshelf_goals_v1';
 
@@ -111,7 +112,7 @@ export default function StatsGoals({ books, onBack }) {
   const toGo = currentGoal ? Math.max(0, currentGoal - currentRead) : null;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F2E8D9', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', ...PAPER_BG, fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ padding: '48px 40px 60px', maxWidth: 900, margin: '0 auto' }}>
         <button
           onClick={onBack}

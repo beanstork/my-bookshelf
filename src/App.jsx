@@ -196,6 +196,56 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
   );
 }
 
+const BOOK_QUOTES = [
+  { text: "A reader lives a thousand lives before he dies. The man who never reads lives only one.", book: "A Dance with Dragons", by: "George R.R. Martin" },
+  { text: "I am not afraid of storms, for I am learning how to sail my ship.", book: "Little Women", by: "Louisa May Alcott" },
+  { text: "Not all those who wander are lost.", book: "The Fellowship of the Ring", by: "J.R.R. Tolkien" },
+  { text: "I took a deep breath and listened to the old brag of my heart: I am, I am, I am.", book: "The Bell Jar", by: "Sylvia Plath" },
+  { text: "It does not do to dwell on dreams and forget to live.", book: "Harry Potter and the Philosopher\u2019s Stone", by: "J.K. Rowling" },
+];
+
+function RotatingQuote() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex(i => (i + 1) % BOOK_QUOTES.length);
+        setVisible(true);
+      }, 350);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const q = BOOK_QUOTES[index];
+  return (
+    <div style={{
+      opacity: visible ? 1 : 0,
+      transition: "opacity 0.3s ease",
+      marginTop: 8,
+    }}>
+      <p style={{
+        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
+        textShadow: "0 1px 6px rgba(252,228,239,0.95)",
+        lineHeight: 1.5,
+      }}>
+        &ldquo;{q.text}&rdquo;
+      </p>
+      <p style={{
+        fontFamily: "'DM Sans', sans-serif",
+        color: "#8B3040", fontSize: 11, margin: "5px 0 0",
+        letterSpacing: "0.08em", textTransform: "uppercase",
+        textShadow: "0 1px 4px rgba(252,228,239,0.9)",
+      }}>
+        &mdash; {q.book} &middot; {q.by}
+      </p>
+    </div>
+  );
+}
+
 function BookModal({ book, onClose, spineColor }) {
   const [srcIndex, setSrcIndex] = useState(0);
   if (!book) return null;
@@ -212,7 +262,7 @@ function BookModal({ book, onClose, spineColor }) {
     <div
       style={{
         position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-        background: "rgba(15,10,5,0.85)", backdropFilter: "blur(8px)",
+        background: "rgba(40,20,10,0.65)", backdropFilter: "blur(8px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         zIndex: 1000, padding: 20,
         animation: "fadeIn 0.15s ease",
@@ -222,11 +272,11 @@ function BookModal({ book, onClose, spineColor }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "linear-gradient(135deg, #2C1D12 0%, #1A120B 100%)",
-          border: "1px solid #4A3728",
+          background: "linear-gradient(160deg, #FBF3E4 0%, #F2E8D9 100%)",
+          border: "1px solid rgba(180,140,100,0.4)",
           borderRadius: 12, padding: 0, maxWidth: 720, width: "100%",
           maxHeight: "85vh", overflow: "auto",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,168,67,0.1)",
+          boxShadow: "0 20px 60px rgba(80,40,10,0.35), 0 0 0 1px rgba(180,130,80,0.15)",
           animation: "scaleIn 0.18s ease",
         }}
       >
@@ -294,7 +344,7 @@ function BookModal({ book, onClose, spineColor }) {
           {/* Title & Author */}
           <h2 style={{
             fontFamily: "'Playfair Display', 'Libre Baskerville', Georgia, serif",
-            color: "#F5ECD7", fontSize: 26, fontWeight: 700, margin: 0,
+            color: "#3A2010", fontSize: 26, fontWeight: 700, margin: 0,
             lineHeight: 1.3, letterSpacing: "-0.3px",
           }}>
             <a
@@ -303,68 +353,68 @@ function BookModal({ book, onClose, spineColor }) {
               rel="noopener noreferrer"
               style={{
                 color: "inherit", textDecoration: "none",
-                borderBottom: "1px solid rgba(245,236,215,0.25)",
+                borderBottom: "1px solid rgba(58,32,16,0.25)",
                 transition: "border-color 0.15s",
               }}
-              onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.7)"}
-              onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.25)"}
+              onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(58,32,16,0.7)"}
+              onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(58,32,16,0.25)"}
             >
               {book.t}
             </a>
           </h2>
-          
+
           {book.sn && (
             <p style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
-              color: "#D4A843", fontSize: 14, margin: "4px 0 0", fontStyle: "italic",
+              color: "#8B5E3C", fontSize: 14, margin: "4px 0 0", fontStyle: "italic",
             }}>
               {book.sn} #{book.si % 1 === 0 ? Math.floor(book.si) : book.si}
             </p>
           )}
-          
+
           <p style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
-            color: "#BFA88A", fontSize: 18, margin: "8px 0 0",
+            color: "#6B3520", fontSize: 18, margin: "8px 0 0",
           }}>
             by {book.a}
           </p>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "linear-gradient(90deg, #4A3728, transparent)", margin: "20px 0" }} />
+          <div style={{ height: 1, background: "linear-gradient(90deg, rgba(180,140,100,0.4), transparent)", margin: "20px 0" }} />
 
           {/* Stats grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {book.r > 0 && (
               <div>
-                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>My Rating</div>
+                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>My Rating</div>
                 <StarRating rating={book.r} size={20} />
               </div>
             )}
             <div>
-              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Avg Rating</div>
-              <span style={{ color: "#BFA88A", fontFamily: "'Libre Baskerville', serif", fontSize: 16 }}>{book.ar} ★</span>
+              <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Avg Rating</div>
+              <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 16 }}>{book.ar} ★</span>
             </div>
             {book.dr && (
               <div>
-                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Date Read</div>
-                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{formatDate(book.dr)}</span>
+                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Date Read</div>
+                <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{formatDate(book.dr)}</span>
               </div>
             )}
             {book.p > 0 && (
               <div>
-                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Pages</div>
-                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.p.toLocaleString()}</span>
+                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Pages</div>
+                <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.p.toLocaleString()}</span>
               </div>
             )}
             {book.y && (
               <div>
-                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Published</div>
-                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.y}</span>
+                <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Published</div>
+                <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.y}</span>
               </div>
             )}
             <div>
-              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
-              <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
+              <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
+              <span style={{ color: "#5C2010", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
                 {book.au ? "🎧 Audiobook" : book.ki ? "📱 Kindle" : "📖 Hard Copy"}
               </span>
             </div>
@@ -376,9 +426,9 @@ function BookModal({ book, onClose, spineColor }) {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {genres.map(g => (
                   <span key={g} style={{
-                    background: "rgba(212,168,67,0.12)", border: "1px solid rgba(212,168,67,0.25)",
+                    background: "rgba(139,94,60,0.10)", border: "1px solid rgba(139,94,60,0.25)",
                     borderRadius: 20, padding: "4px 12px",
-                    color: "#D4A843", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                    color: "#6B3520", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
                   }}>
                     {GENRE_ICONS[g] || "📚"} {g}
                   </span>
@@ -390,8 +440,8 @@ function BookModal({ book, onClose, spineColor }) {
           {/* Review */}
           {book.rev && (
             <div style={{ marginTop: 20 }}>
-              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>My Review</div>
-              <p style={{ color: "#BFA88A", fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1.6, margin: 0, fontStyle: "italic" }}>
+              <div style={{ color: "#8B6B45", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>My Review</div>
+              <p style={{ color: "#6B3520", fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1.6, margin: 0, fontStyle: "italic" }}>
                 "{book.rev}"
               </p>
             </div>
@@ -819,7 +869,6 @@ export default function App() {
       fontFamily: "'DM Sans', sans-serif",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700&display=swap');
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -871,13 +920,7 @@ export default function App() {
           }}>
             My Bookshelf
           </h1>
-          <p style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            color: "#6B2030", fontSize: 18, margin: "8px 0 0", fontStyle: "italic",
-            textShadow: "0 1px 6px rgba(252,228,239,0.95)",
-          }}>
-            Read, Listen, Share
-          </p>
+          <RotatingQuote />
         </div>
       </div>
 
