@@ -37,6 +37,15 @@ function getBookColor(id) {
   return SPINE_COLORS[idx];
 }
 
+function getLuminance(hex) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const toLinear = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
 function getBookWidth(pages) {
   if (!pages) return 32;
   if (pages < 150) return 22;
@@ -84,7 +93,7 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
     return `rgb(${R},${G},${B})`;
   };
 
-  const textColor = r > 0.5 ? "#E8D5B7" : "#F5ECD7";
+  const textColor = getLuminance(color) > 0.3 ? "#2C1810" : "#F5ECD7";
   const patternType = Math.floor(seededRandom(parseInt(book.id) + 3) * 5);
 
   let decoration = null;
@@ -342,7 +351,7 @@ function BookModal({ book, onClose, spineColor }) {
             <div>
               <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
               <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
-                {book.au ? "🎧 Audiobook" : "📖 Hard Copy"}
+                {book.au ? "🎧 Audiobook" : book.ki ? "📱 Kindle" : "📖 Hard Copy"}
               </span>
             </div>
           </div>

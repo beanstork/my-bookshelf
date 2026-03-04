@@ -19,7 +19,7 @@ function parseShelfAndGenres(userShelves) {
   if (!userShelves) return { shelf: 'read', genres: [] };
   const all = String(userShelves).split(',').map(s => s.trim()).filter(Boolean);
   const exclusive = all.find(s => EXCLUSIVE_SHELVES.has(s)) || 'read';
-  const genres = all.filter(s => !EXCLUSIVE_SHELVES.has(s) && s !== 'audiobook' && s !== 'favorites');
+  const genres = all.filter(s => !EXCLUSIVE_SHELVES.has(s) && s !== 'audiobook' && s !== 'audible' && s !== 'kindle' && s !== 'favorites');
   return { shelf: exclusive, genres };
 }
 
@@ -62,7 +62,8 @@ function itemToBook(item) {
     g: genres,
     sn: '',
     si: 0,
-    au: userShelves.includes('audiobook'),
+    au: userShelves.includes('audiobook') || userShelves.includes('audible'),
+    ki: userShelves.includes('kindle'),
     fav: userShelves.includes('favorites'),
     isbn,
     pub: String(bookNode.publisher || ''),
