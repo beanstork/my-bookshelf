@@ -460,12 +460,13 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
                       const res = await fetch(`/api/goodreads-book?url=${encodeURIComponent(url)}`);
                       if (res.ok) {
                         const meta = await res.json();
+                        // Overwrite GR-sourced metadata fields; leave personal annotations untouched
                         setEditState(s => ({
                           ...s,
-                          a: s.a.trim() || meta.author || s.a,
-                          p: (parseInt(s.p) || 0) === 0 ? String(meta.pages || '') : s.p,
-                          g: s.g.length === 0 ? [] : s.g, // keep existing genres
-                          cover: s.cover || meta.cover || '',
+                          ...(meta.title  ? { t: meta.title }         : {}),
+                          ...(meta.author ? { a: meta.author }        : {}),
+                          ...(meta.pages  ? { p: String(meta.pages) } : {}),
+                          ...(meta.cover  ? { cover: meta.cover }     : {}),
                         }));
                       }
                     } catch {}
