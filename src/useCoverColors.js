@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getSwatches } from 'colorthief';
 
-const CACHE_KEY = 'bookshelf_cover_colors_v4';
+const CACHE_KEY = 'bookshelf_cover_colors_v5';
 const BATCH_SIZE = 5;
-
-function getCoverUrl(isbn) {
-  if (!isbn) return null;
-  return `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
-}
 
 function loadCache() {
   try {
@@ -25,10 +20,9 @@ function saveCache(cache) {
 
 const SWATCH_PRIORITY = ['Vibrant', 'LightVibrant', 'DarkVibrant', 'Muted', 'LightMuted', 'DarkMuted'];
 
-async function extractColor(isbn) {
+async function extractColor(coverUrl) {
   return new Promise((resolve) => {
-    const url = getCoverUrl(isbn);
-    if (!url) return resolve(null);
+    if (!coverUrl) return resolve(null);
 
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -47,7 +41,7 @@ async function extractColor(isbn) {
       }
     };
     img.onerror = () => resolve(null);
-    img.src = url;
+    img.src = coverUrl;
   });
 }
 
@@ -58,7 +52,7 @@ export default function useCoverColors(books) {
     if (!books || books.length === 0) return;
 
     const cache = loadCache();
-    const toProcess = books.filter(b => b.isbn && !cache[b.id]);
+    const toProcess = books.filter(b => b.cover && !cache[b.id]);
 
     if (toProcess.length === 0) return;
 
@@ -67,7 +61,7 @@ export default function useCoverColors(books) {
     async function processBatch(batch) {
       const results = await Promise.all(
         batch.map(async b => {
-          const color = await extractColor(b.isbn);
+          const color = await extractColor(b.cover);
           return { id: b.id, color };
         })
       );
