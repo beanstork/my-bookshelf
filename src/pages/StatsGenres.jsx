@@ -8,7 +8,7 @@ const COLOURS = [
   '#8B6E2E', '#2E8B6E',
 ];
 
-export default function StatsGenres({ books, onBack }) {
+export default function StatsGenres({ books, onBack, onBookClick }) {
   const [selected, setSelected] = useState(null);
 
   const genreData = useMemo(() => {
@@ -135,7 +135,12 @@ export default function StatsGenres({ books, onBack }) {
                 <div style={{ color: '#6B3520', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 }}>Top Books</div>
                 {selectedData.topBooks.map(b => (
                   <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid rgba(200,160,120,0.15)' }}>
-                    <span style={{ color: '#3A2010', fontSize: 14 }}>{b.t}</span>
+                    <span
+                      onClick={() => onBookClick && onBookClick(b.id)}
+                      style={{ color: '#3A2010', fontSize: 14, cursor: onBookClick ? 'pointer' : 'default', transition: 'color 0.15s' }}
+                      onMouseEnter={e => { if (onBookClick) e.currentTarget.style.color = '#8B2840'; }}
+                      onMouseLeave={e => { if (onBookClick) e.currentTarget.style.color = '#3A2010'; }}
+                    >{b.t}</span>
                     <span style={{ color: '#D4A843', fontSize: 13 }}>{b.r > 0 ? '★'.repeat(b.r) : '—'}</span>
                   </div>
                 ))}

@@ -283,6 +283,7 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
   const [hoveredIcon, setHoveredIcon] = useState(null);
   const [newGenreInput, setNewGenreInput] = useState('');
   const [showNewGenreInput, setShowNewGenreInput] = useState(false);
+  const [saving, setSaving] = useState(false);
   const colorInputRef = useRef(null);
 
   if (!book) return null;
@@ -320,7 +321,9 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
     setMode('edit');
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
+    if (saving) return;
+    setSaving(true);
     const trimmedUrl = editState.grUrl.trim();
     const changes = {
       t: editState.t.trim() || book.t,
@@ -338,10 +341,20 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
       fav: editState.fav,
       reread: editState.reread,
       grUrl: trimmedUrl,
-      // If they provided a URL and the book had no link before, mark it no longer purely manual
       ...(trimmedUrl && book.manual ? { manual: false } : {}),
     };
+    // If a Goodreads URL was provided and no cover exists yet, fetch one
+    if (trimmedUrl && !book.cover) {
+      try {
+        const res = await fetch(`/api/goodreads-cover?url=${encodeURIComponent(trimmedUrl)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.cover) changes.cover = data.cover;
+        }
+      } catch {}
+    }
     onEdit(book.id, changes);
+    setSaving(false);
     onClose();
   };
 
@@ -520,7 +533,9 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
               <button style={actionBtnStyle('cancel')} onClick={() => setMode('view')}>Cancel</button>
-              <button style={actionBtnStyle('save')} onClick={saveEdit}>Save Changes</button>
+              <button style={{ ...actionBtnStyle('save'), opacity: saving ? 0.6 : 1 }} onClick={saveEdit} disabled={saving}>
+                {saving ? "Saving…" : "Save Changes"}
+              </button>
             </div>
           </div>
         )}
@@ -793,7 +808,7 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
   );
 }
 
-function AddBookForm({ onAdd, onClose }) {
+function AddBookForm({ onAdd, onClose, books = [] }) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [rating, setRating] = useState(0);
@@ -804,6 +819,27 @@ function AddBookForm({ onAdd, onClose }) {
   const [dateRead, setDateRead] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+
+  // Debounced duplicate check
+  useEffect(() => {
+    if (!title) { setDuplicateWarning(null); return; }
+    const timer = setTimeout(() => {
+      const norm = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      const nt = norm(title);
+      const match = books.find(b => {
+        const bt = norm(b.t);
+        if (!(bt === nt || bt.includes(nt) || nt.includes(bt))) return false;
+        if (!author) return true;
+        const na = norm(author);
+        const ba = norm(b.a);
+        return ba.split(' ').some(w => w.length > 2 && na.includes(w))
+          || na.split(' ').some(w => w.length > 2 && ba.includes(w));
+      });
+      setDuplicateWarning(match || null);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [title, author, books]);
 
   const handleSubmit = async () => {
     if (!title || !author || submitting) return;
@@ -818,6 +854,16 @@ function AddBookForm({ onAdd, onClose }) {
     } catch {
       // Network failure or blocked — proceed without GR ID
     }
+    let cover = '';
+    if (grId) {
+      try {
+        const res = await fetch(`/api/goodreads-cover?id=${encodeURIComponent(grId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.cover) cover = data.cover;
+        }
+      } catch {}
+    }
     const newBook = {
       id: grId || String(Date.now()),
       manual: !grId,
@@ -826,6 +872,7 @@ function AddBookForm({ onAdd, onClose }) {
       da: new Date().toISOString().slice(0,10).replace(/-/g, "/"),
       s: shelf, g: genre ? [genre] : [], sn: "", si: 0,
       au: isAudiobook, fav: false, isbn: "", pub: "", bind: isAudiobook ? "Audiobook" : "Paperback", rev: notes,
+      cover,
     };
     onAdd(newBook);
     onClose();
@@ -865,6 +912,19 @@ function AddBookForm({ onAdd, onClose }) {
           <div>
             <label style={labelStyle}>Title *</label>
             <input style={inputStyle} value={title} onChange={e => setTitle(e.target.value)} placeholder="Book title..." />
+            {duplicateWarning && (
+              <div style={{ marginTop: 8, background: "rgba(212,168,67,0.1)", border: "1px solid rgba(212,168,67,0.35)", borderRadius: 8, padding: "10px 12px" }}>
+                <div style={{ color: "#D4A843", fontWeight: 600, fontSize: 12, marginBottom: 4, fontFamily: "'DM Sans', sans-serif" }}>
+                  Possible duplicate
+                </div>
+                <div style={{ color: "#BFA88A", fontSize: 12, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.4 }}>
+                  "{duplicateWarning.t}" by {duplicateWarning.a} is already in your library.
+                </div>
+                <button onClick={() => setDuplicateWarning(null)} style={{ marginTop: 6, fontSize: 11, color: "#8B7355", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'DM Sans', sans-serif" }}>
+                  Dismiss and continue
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <label style={labelStyle}>Author *</label>
@@ -1325,11 +1385,20 @@ export default function App() {
         {/* Content sits above overlays */}
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-            <svg width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 2C6 2 6 28 6 30C6 32 8 34 10 34L26 34L26 2L6 2Z" fill="#5C0F1E" opacity="0.15"/>
-              <path d="M8 2L8 32L22 32L22 2L8 2Z" fill="#5C0F1E" opacity="0.25"/>
-              <path d="M10 2L10 28L16 24L22 28L22 2L10 2Z" fill="#5C0F1E"/>
-              <path d="M10 2L10 28L16 24L22 28L22 2L10 2Z" stroke="#3A0810" strokeWidth="1" strokeLinejoin="round"/>
+            <svg width="40" height="34" viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Back book (tallest) */}
+              <rect x="2" y="4" width="8" height="26" rx="1" fill="#8B2840" opacity="0.5"/>
+              <rect x="2" y="4" width="2" height="26" fill="#6B1830" opacity="0.5"/>
+              {/* Middle book */}
+              <rect x="11" y="8" width="9" height="22" rx="1" fill="#5C3A1E" opacity="0.65"/>
+              <rect x="11" y="8" width="2.5" height="22" fill="#3A2010" opacity="0.65"/>
+              {/* Front book (slightly leaning) */}
+              <rect x="21" y="6" width="10" height="24" rx="1" fill="#8B2840"/>
+              <rect x="21" y="6" width="3" height="24" fill="#6B1830"/>
+              {/* Small book on top */}
+              <rect x="23" y="2" width="7" height="6" rx="1" fill="#5C0F1E" opacity="0.8"/>
+              {/* Ground line */}
+              <line x1="1" y1="30" x2="33" y2="30" stroke="#5C0F1E" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round"/>
             </svg>
           </div>
           <h1 style={{
@@ -1338,7 +1407,6 @@ export default function App() {
             letterSpacing: "-1px",
             WebkitTextStroke: "1.5px #1a0810",
             paintOrder: "stroke fill",
-            textShadow: "0 2px 14px rgba(252,228,239,0.9), 0 1px 4px rgba(252,228,239,0.7)",
           }}>
             My Bookshelf
           </h1>
@@ -1519,11 +1587,11 @@ export default function App() {
       )}
 
       {currentView === 'genres' && (
-        <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} />
+        <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
       )}
 
       {currentView === 'authors' && (
-        <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} />
+        <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
       )}
 
       {currentView === 'goals' && (
@@ -1546,7 +1614,7 @@ export default function App() {
           allGenres={allGenres}
         />
       )}
-      {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} />}
+      {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} books={books} />}
     </>
   );
 }

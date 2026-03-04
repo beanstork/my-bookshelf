@@ -24,7 +24,7 @@ function CustomTooltip({ active, payload, authorData }) {
   );
 }
 
-export default function StatsAuthors({ books, onBack }) {
+export default function StatsAuthors({ books, onBack, onBookClick }) {
   const [metric, setMetric] = useState('count'); // 'count' | 'pages'
   const [expanded, setExpanded] = useState(null);
 
@@ -156,7 +156,12 @@ export default function StatsAuthors({ books, onBack }) {
                       padding: '6px 0', borderBottom: '1px solid rgba(200,160,120,0.1)',
                       fontSize: 13,
                     }}>
-                      <span style={{ color: '#3A2010' }}>{b.t}</span>
+                      <span
+                        onClick={() => onBookClick && onBookClick(b.id)}
+                        style={{ color: '#3A2010', cursor: onBookClick ? 'pointer' : 'default', transition: 'color 0.15s' }}
+                        onMouseEnter={e => { if (onBookClick) e.currentTarget.style.color = '#8B2840'; }}
+                        onMouseLeave={e => { if (onBookClick) e.currentTarget.style.color = '#3A2010'; }}
+                      >{b.t}</span>
                       <span style={{ color: '#D4A843' }}>{b.r > 0 ? '★'.repeat(b.r) : '—'}</span>
                     </div>
                   ))}
