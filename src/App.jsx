@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import cherryTreeImg from '../images/cherry-tree.jpg';
 import useGoodreadsSync from './useGoodreadsSync.js';
 import useCoverColors from './useCoverColors.js';
+import { useLocalData } from './useLocalData.js';
 import NavPanel from './components/NavPanel.jsx';
 import StatsTimeline from './pages/StatsTimeline.jsx';
 import StatsGenres from './pages/StatsGenres.jsx';
@@ -275,8 +276,11 @@ function RotatingQuote({ books }) {
   );
 }
 
-function BookModal({ book, onClose, spineColor }) {
+function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
   const [srcIndex, setSrcIndex] = useState(0);
+  const [mode, setMode] = useState('view'); // 'view' | 'edit' | 'delete'
+  const [editState, setEditState] = useState(null);
+
   if (!book) return null;
 
   const coverSources = [
@@ -286,7 +290,69 @@ function BookModal({ book, onClose, spineColor }) {
   ].filter(Boolean);
   const coverSrc = srcIndex < coverSources.length ? coverSources[srcIndex] : null;
   const genres = book.g || [];
-  
+
+  const enterEdit = () => {
+    setEditState({
+      t: book.t || '',
+      a: book.a || '',
+      r: String(book.r || 0),
+      s: book.s || 'read',
+      p: String(book.p || ''),
+      dr: book.dr ? book.dr.replace(/\//g, '-') : '',
+      au: book.au || false,
+      ki: book.ki || false,
+      g: (book.g || []).join(', '),
+      sn: book.sn || '',
+      si: book.si ? String(book.si) : '',
+      rev: book.rev || '',
+      fav: book.fav || false,
+    });
+    setMode('edit');
+  };
+
+  const saveEdit = () => {
+    const changes = {
+      t: editState.t.trim() || book.t,
+      a: editState.a.trim() || book.a,
+      r: Math.min(5, Math.max(0, parseInt(editState.r) || 0)),
+      s: editState.s,
+      p: parseInt(editState.p) || 0,
+      dr: editState.dr ? editState.dr.replace(/-/g, '/') : '',
+      au: editState.au,
+      ki: editState.ki && !editState.au,
+      g: editState.g ? editState.g.split(',').map(s => s.trim()).filter(Boolean) : [],
+      sn: editState.sn.trim(),
+      si: parseFloat(editState.si) || 0,
+      rev: editState.rev.trim(),
+      fav: editState.fav,
+    };
+    onEdit(book.id, changes);
+  };
+
+  const modalInputStyle = {
+    width: "100%", padding: "8px 12px", borderRadius: 7,
+    border: "1px solid #4A3728", background: "#2A1C10",
+    color: "#E8D5B7", fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+    outline: "none", boxSizing: "border-box",
+  };
+  const modalLabelStyle = {
+    color: "#8B7355", fontSize: 10, fontFamily: "'DM Sans', sans-serif",
+    textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4, display: "block",
+  };
+  const actionBtnStyle = (variant) => ({
+    padding: "7px 16px", borderRadius: 7, fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: 500,
+    ...(variant === 'edit' ? {
+      background: "transparent", border: "1px solid rgba(212,168,67,0.4)", color: "#D4A843",
+    } : variant === 'delete' ? {
+      background: "transparent", border: "1px solid rgba(139,40,64,0.4)", color: "#C0768A",
+    } : variant === 'save' ? {
+      background: "#8B2840", border: "none", color: "#FDF0F3",
+    } : {
+      background: "transparent", border: "1px solid #4A3728", color: "#8B7355",
+    }),
+  });
+
   return (
     <div
       style={{
@@ -296,7 +362,7 @@ function BookModal({ book, onClose, spineColor }) {
         zIndex: 1000, padding: 20,
         animation: "fadeIn 0.15s ease",
       }}
-      onClick={onClose}
+      onClick={mode === 'view' ? onClose : undefined}
     >
       <div
         onClick={e => e.stopPropagation()}
@@ -314,7 +380,111 @@ function BookModal({ book, onClose, spineColor }) {
           height: 6, borderRadius: "12px 12px 0 0",
           background: `linear-gradient(90deg, ${spineColor || getBookColor(book.id)}, ${(spineColor || getBookColor(book.id))}88)`,
         }} />
-        
+
+        {/* ── EDIT MODE ── */}
+        {mode === 'edit' && editState && (
+          <div style={{ padding: "24px 28px 28px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ fontFamily: "'Playfair Display', serif", color: "#F5ECD7", fontSize: 20, fontWeight: 700, margin: 0 }}>
+                Edit Book
+              </h2>
+              <button onClick={() => setMode('view')} style={{ background: "none", border: "none", color: "#8B7355", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={modalLabelStyle}>Title</label>
+                <input style={modalInputStyle} value={editState.t} onChange={e => setEditState(s => ({ ...s, t: e.target.value }))} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={modalLabelStyle}>Author</label>
+                <input style={modalInputStyle} value={editState.a} onChange={e => setEditState(s => ({ ...s, a: e.target.value }))} />
+              </div>
+              <div>
+                <label style={modalLabelStyle}>My Rating (0–5)</label>
+                <input style={modalInputStyle} type="number" min="0" max="5" value={editState.r} onChange={e => setEditState(s => ({ ...s, r: e.target.value }))} />
+              </div>
+              <div>
+                <label style={modalLabelStyle}>Shelf</label>
+                <select style={{ ...modalInputStyle, paddingRight: 28 }} value={editState.s} onChange={e => setEditState(s => ({ ...s, s: e.target.value }))}>
+                  <option value="read">Read</option>
+                  <option value="currently-reading">Currently Reading</option>
+                  <option value="to-read">To Read</option>
+                  <option value="dnf">DNF</option>
+                </select>
+              </div>
+              <div>
+                <label style={modalLabelStyle}>Pages</label>
+                <input style={modalInputStyle} type="number" min="0" value={editState.p} onChange={e => setEditState(s => ({ ...s, p: e.target.value }))} />
+              </div>
+              <div>
+                <label style={modalLabelStyle}>Date Read</label>
+                <input style={modalInputStyle} type="date" value={editState.dr} onChange={e => setEditState(s => ({ ...s, dr: e.target.value }))} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={modalLabelStyle}>Genres (comma-separated)</label>
+                <input style={modalInputStyle} value={editState.g} onChange={e => setEditState(s => ({ ...s, g: e.target.value }))} placeholder="e.g. fiction, fantasy" />
+              </div>
+              <div>
+                <label style={modalLabelStyle}>Series Name</label>
+                <input style={modalInputStyle} value={editState.sn} onChange={e => setEditState(s => ({ ...s, sn: e.target.value }))} placeholder="Leave blank if standalone" />
+              </div>
+              <div>
+                <label style={modalLabelStyle}>Series #</label>
+                <input style={modalInputStyle} type="number" min="0" step="0.5" value={editState.si} onChange={e => setEditState(s => ({ ...s, si: e.target.value }))} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={modalLabelStyle}>Notes / Review</label>
+                <textarea
+                  style={{ ...modalInputStyle, minHeight: 72, resize: "vertical" }}
+                  value={editState.rev}
+                  onChange={e => setEditState(s => ({ ...s, rev: e.target.value }))}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 20 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#BFA88A", fontSize: 13, fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
+                  <input type="checkbox" checked={editState.au} onChange={e => setEditState(s => ({ ...s, au: e.target.checked, ki: e.target.checked ? false : s.ki }))} />
+                  Audiobook
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#BFA88A", fontSize: 13, fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
+                  <input type="checkbox" checked={editState.ki && !editState.au} disabled={editState.au} onChange={e => setEditState(s => ({ ...s, ki: e.target.checked }))} />
+                  Kindle
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#BFA88A", fontSize: 13, fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
+                  <input type="checkbox" checked={editState.fav} onChange={e => setEditState(s => ({ ...s, fav: e.target.checked }))} />
+                  Favourite
+                </label>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
+              <button style={actionBtnStyle('cancel')} onClick={() => setMode('view')}>Cancel</button>
+              <button style={actionBtnStyle('save')} onClick={saveEdit}>Save Changes</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── DELETE CONFIRM MODE ── */}
+        {mode === 'delete' && (
+          <div style={{ padding: "32px 28px", textAlign: "center" }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", color: "#F5ECD7", fontSize: 20, fontWeight: 700, marginBottom: 10 }}>
+              Remove this book?
+            </div>
+            <div style={{ color: "#BFA88A", fontSize: 14, fontFamily: "'DM Sans', sans-serif", marginBottom: 24 }}>
+              "{book.t}" will be removed from your shelf. This won't affect Goodreads.
+            </div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button style={actionBtnStyle('cancel')} onClick={() => setMode('view')}>Cancel</button>
+              <button
+                style={{ ...actionBtnStyle('delete'), background: "#8B2840", border: "none", color: "#FDF0F3" }}
+                onClick={() => onDelete(book.id)}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── VIEW MODE ── */}
+        {mode === 'view' && (
         <div style={{ display: "flex", alignItems: "stretch" }}>
           {/* Cover image — left column */}
           {coverSrc ? (
@@ -476,7 +646,6 @@ function BookModal({ book, onClose, spineColor }) {
             </div>
           )}
 
-
           {/* Favourite badge */}
           {book.fav && (
             <div style={{
@@ -487,8 +656,17 @@ function BookModal({ book, onClose, spineColor }) {
               ❤️ Marked as a favourite
             </div>
           )}
+
+          {/* Edit / Delete actions */}
+          <div style={{ display: "flex", gap: 10, marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(74,55,40,0.5)" }}>
+            <button style={actionBtnStyle('edit')} onClick={enterEdit}>Edit</button>
+            <button style={actionBtnStyle('delete')} onClick={() => setMode('delete')}>Remove</button>
+            <div style={{ flex: 1 }} />
+            <button style={actionBtnStyle('cancel')} onClick={onClose}>Close</button>
+          </div>
           </div>{/* end info column */}
-        </div>{/* end flex row */}
+        </div>
+        )}{/* end view mode */}
       </div>
     </div>
   );
@@ -790,7 +968,7 @@ function StatsBar({ books }) {
 
 export default function App() {
   const { books: syncedBooks, loading: syncLoading } = useGoodreadsSync(RAW_BOOKS);
-  const [manualBooks, setManualBooks] = useState([]);
+  const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook } = useLocalData();
   const [selectedBook, setSelectedBook] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState("dateRead");
@@ -803,10 +981,19 @@ export default function App() {
   const pullTimeoutRef = useRef(null);
   const [currentView, setCurrentView] = useState('bookshelf');
 
+  const manualBookIds = useMemo(() => new Set(manualBooks.map(b => b.id)), [manualBooks]);
+
   const books = useMemo(() => {
-    const syncedIds = new Set(syncedBooks.map(b => b.id));
-    return [...syncedBooks, ...manualBooks.filter(b => !syncedIds.has(b.id))];
-  }, [syncedBooks, manualBooks]);
+    const applyOverrides = (b) => overrides[b.id] ? { ...b, ...overrides[b.id] } : b;
+    const syncedFiltered = syncedBooks
+      .filter(b => !deletedIds.has(b.id))
+      .map(applyOverrides);
+    const syncedIdSet = new Set(syncedBooks.map(b => b.id));
+    const manualFiltered = manualBooks
+      .filter(b => !deletedIds.has(b.id) && !syncedIdSet.has(b.id))
+      .map(applyOverrides);
+    return [...syncedFiltered, ...manualFiltered];
+  }, [syncedBooks, manualBooks, overrides, deletedIds]);
 
   useEffect(() => {
     if (!selectedBook) return;
@@ -915,9 +1102,15 @@ export default function App() {
     return result;
   }, [filteredAndSorted]);
 
-  const addBook = useCallback((newBook) => {
-    setManualBooks(prev => [...prev, newBook]);
-  }, []);
+  const handleEditBook = useCallback((id, changes) => {
+    editBook(id, changes, manualBookIds.has(id));
+  }, [editBook, manualBookIds]);
+
+  const handleDeleteBook = useCallback((id) => {
+    deleteBook(id);
+    setSelectedBook(null);
+    setPulledBookId(null);
+  }, [deleteBook]);
 
   const shelfCounts = useMemo(() => ({
     all: books.length,
@@ -1197,6 +1390,15 @@ export default function App() {
             clearTimeout(pullTimeoutRef.current);
             setSelectedBook(null);
             setPulledBookId(null);
+          }}
+          onEdit={(id, changes) => {
+            handleEditBook(id, changes);
+            clearTimeout(pullTimeoutRef.current);
+            setSelectedBook(null);
+            setPulledBookId(null);
+          }}
+          onDelete={(id) => {
+            handleDeleteBook(id);
           }}
         />
       )}
