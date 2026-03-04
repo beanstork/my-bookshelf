@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getSwatches } from 'colorthief';
+import { getColor, getSwatches } from 'colorthief';
 
-const CACHE_KEY = 'bookshelf_cover_colors_v5';
+const CACHE_KEY = 'bookshelf_cover_colors_v6';
 const BATCH_SIZE = 5;
 
 function loadCache() {
@@ -18,7 +18,28 @@ function saveCache(cache) {
   } catch {}
 }
 
-const SWATCH_PRIORITY = ['Vibrant', 'LightVibrant', 'DarkVibrant', 'Muted', 'LightMuted', 'DarkMuted'];
+function hexLuminance(hex) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const toLinear = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+function hexSaturation(hex) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === min) return 0;
+  const l = (max + min) / 2;
+  return l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
+}
+
+const SWATCH_ROLES = ['Vibrant', 'LightVibrant', 'DarkVibrant', 'Muted', 'LightMuted', 'DarkMuted'];
 
 async function extractColor(coverUrl) {
   return new Promise((resolve) => {
@@ -28,14 +49,28 @@ async function extractColor(coverUrl) {
     img.crossOrigin = 'Anonymous';
     img.onload = async () => {
       try {
-        const swatches = await getSwatches(img);
-        for (const role of SWATCH_PRIORITY) {
-          if (swatches[role]?.color) {
-            resolve(swatches[role].color.hex());
-            return;
-          }
+        // If the dominant color is dark, the cover is mostly dark — use it directly
+        const dominant = await getColor(img);
+        const dominantHex = dominant?.hex() ?? null;
+        if (dominantHex && hexLuminance(dominantHex) < 0.08) {
+          resolve(dominantHex);
+          return;
         }
-        resolve(null);
+
+        // Otherwise pick the most saturated swatch across all roles
+        // (avoids fixed priority mis-classifying e.g. bright yellow as LightVibrant)
+        const swatches = await getSwatches(img);
+        const swatchColors = SWATCH_ROLES
+          .map(role => swatches[role]?.color?.hex())
+          .filter(Boolean);
+
+        if (swatchColors.length > 0) {
+          const best = swatchColors.reduce((a, b) => hexSaturation(a) >= hexSaturation(b) ? a : b);
+          resolve(best);
+          return;
+        }
+
+        resolve(dominantHex);
       } catch {
         resolve(null);
       }
