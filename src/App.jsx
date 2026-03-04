@@ -276,10 +276,11 @@ function RotatingQuote({ books }) {
   );
 }
 
-function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
+function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange }) {
   const [srcIndex, setSrcIndex] = useState(0);
   const [mode, setMode] = useState('view'); // 'view' | 'edit' | 'delete'
   const [editState, setEditState] = useState(null);
+  const colorInputRef = useRef(null);
 
   if (!book) return null;
 
@@ -306,6 +307,7 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
       si: book.si ? String(book.si) : '',
       rev: book.rev || '',
       fav: book.fav || false,
+      reread: book.reread || false,
     });
     setMode('edit');
   };
@@ -325,8 +327,19 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
       si: parseFloat(editState.si) || 0,
       rev: editState.rev.trim(),
       fav: editState.fav,
+      reread: editState.reread,
     };
     onEdit(book.id, changes);
+    onClose();
+  };
+
+  const pickColor = () => {
+    if ('EyeDropper' in window) {
+      const dropper = new window.EyeDropper();
+      dropper.open().then(result => onColorChange(book.id, result.sRGBHex)).catch(() => {});
+    } else {
+      colorInputRef.current?.click();
+    }
   };
 
   const modalInputStyle = {
@@ -440,7 +453,7 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
                   onChange={e => setEditState(s => ({ ...s, rev: e.target.value }))}
                 />
               </div>
-              <div style={{ display: "flex", gap: 20 }}>
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#BFA88A", fontSize: 13, fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
                   <input type="checkbox" checked={editState.au} onChange={e => setEditState(s => ({ ...s, au: e.target.checked, ki: e.target.checked ? false : s.ki }))} />
                   Audiobook
@@ -452,6 +465,10 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
                 <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#BFA88A", fontSize: 13, fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
                   <input type="checkbox" checked={editState.fav} onChange={e => setEditState(s => ({ ...s, fav: e.target.checked }))} />
                   Favourite
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#BFA88A", fontSize: 13, fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
+                  <input type="checkbox" checked={editState.reread} onChange={e => setEditState(s => ({ ...s, reread: e.target.checked }))} />
+                  Mark to reread
                 </label>
               </div>
             </div>
@@ -546,20 +563,22 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
             color: "#F5ECD7", fontSize: 26, fontWeight: 700, margin: 0,
             lineHeight: 1.3, letterSpacing: "-0.3px",
           }}>
-            <a
-              href={`https://www.goodreads.com/book/show/${book.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: "inherit", textDecoration: "none",
-                borderBottom: "1px solid rgba(245,236,215,0.25)",
-                transition: "border-color 0.15s",
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.7)"}
-              onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.25)"}
-            >
-              {book.t}
-            </a>
+            {!book.manual ? (
+              <a
+                href={`https://www.goodreads.com/book/show/${book.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "inherit", textDecoration: "none",
+                  borderBottom: "1px solid rgba(245,236,215,0.25)",
+                  transition: "border-color 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.7)"}
+                onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(245,236,215,0.25)"}
+              >
+                {book.t}
+              </a>
+            ) : book.t}
           </h2>
 
           {book.sn && (
@@ -646,22 +665,70 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete }) {
             </div>
           )}
 
-          {/* Favourite badge */}
-          {book.fav && (
-            <div style={{
-              marginTop: 16, background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.2)",
-              borderRadius: 8, padding: "8px 14px", display: "inline-flex", alignItems: "center", gap: 6,
-              color: "#D4A843", fontSize: 13, fontFamily: "'DM Sans', sans-serif",
-            }}>
-              ❤️ Marked as a favourite
-            </div>
-          )}
+          {/* Badges row — favourite + reread */}
+          <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+            <button
+              onClick={() => onEdit(book.id, { fav: !book.fav })}
+              style={{
+                background: book.fav ? "rgba(212,168,67,0.12)" : "transparent",
+                border: `1px solid ${book.fav ? "rgba(212,168,67,0.35)" : "rgba(74,55,40,0.4)"}`,
+                borderRadius: 8, padding: "6px 12px",
+                display: "inline-flex", alignItems: "center", gap: 6,
+                color: book.fav ? "#D4A843" : "#6B5040",
+                fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                cursor: "pointer", transition: "all 0.15s",
+              }}
+            >
+              ❤️ {book.fav ? "Favourite" : "Mark favourite"}
+            </button>
+            <button
+              onClick={() => onEdit(book.id, { reread: !book.reread })}
+              style={{
+                background: book.reread ? "rgba(92,107,46,0.12)" : "transparent",
+                border: `1px solid ${book.reread ? "rgba(92,107,46,0.4)" : "rgba(74,55,40,0.4)"}`,
+                borderRadius: 8, padding: "6px 12px",
+                display: "inline-flex", alignItems: "center", gap: 6,
+                color: book.reread ? "#5C6B2E" : "#6B5040",
+                fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+                cursor: "pointer", transition: "all 0.15s",
+              }}
+            >
+              🔁 {book.reread ? "To reread" : "Mark to reread"}
+            </button>
+          </div>
 
-          {/* Edit / Delete actions */}
-          <div style={{ display: "flex", gap: 10, marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(74,55,40,0.5)" }}>
+          {/* Edit / Delete / Colour actions */}
+          <div style={{ display: "flex", gap: 10, marginTop: 20, paddingTop: 16, borderTop: "1px solid rgba(74,55,40,0.5)", alignItems: "center", flexWrap: "wrap" }}>
             <button style={actionBtnStyle('edit')} onClick={enterEdit}>Edit</button>
             <button style={actionBtnStyle('delete')} onClick={() => setMode('delete')}>Remove</button>
             <div style={{ flex: 1 }} />
+            {/* Spine colour picker */}
+            <button
+              onClick={pickColor}
+              title="Change spine colour"
+              style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "6px 12px", borderRadius: 7, cursor: "pointer",
+                background: "transparent", border: "1px solid rgba(74,55,40,0.4)",
+                color: "#8B7355", fontSize: 12, fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              <span style={{
+                width: 14, height: 14, borderRadius: "50%",
+                background: spineColor || "#8B7355",
+                display: "inline-block", border: "1px solid rgba(255,255,255,0.2)",
+                flexShrink: 0,
+              }} />
+              Spine colour
+            </button>
+            {/* Hidden colour input fallback for browsers without EyeDropper */}
+            <input
+              ref={colorInputRef}
+              type="color"
+              defaultValue={spineColor || "#8B7355"}
+              onChange={e => onColorChange(book.id, e.target.value)}
+              style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0 }}
+            />
             <button style={actionBtnStyle('cancel')} onClick={onClose}>Close</button>
           </div>
           </div>{/* end info column */}
@@ -682,11 +749,24 @@ function AddBookForm({ onAdd, onClose }) {
   const [genre, setGenre] = useState("");
   const [dateRead, setDateRead] = useState("");
   const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (!title || !author) return;
+  const handleSubmit = async () => {
+    if (!title || !author || submitting) return;
+    setSubmitting(true);
+    let grId = null;
+    try {
+      const res = await fetch(`/api/search-goodreads?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.id) grId = data.id;
+      }
+    } catch {
+      // Network failure or blocked — proceed without GR ID
+    }
     const newBook = {
-      id: String(Date.now()),
+      id: grId || String(Date.now()),
+      manual: !grId,
       t: title, a: author, r: rating, ar: 0,
       p: parseInt(pages) || 0, y: "", dr: dateRead ? dateRead.replace(/-/g, "/") : "",
       da: new Date().toISOString().slice(0,10).replace(/-/g, "/"),
@@ -790,10 +870,10 @@ function AddBookForm({ onAdd, onClose }) {
             background: "#A0445A", border: "none",
             borderRadius: 8, padding: "12px 24px", color: "#F9EDE8",
             fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 700,
-            cursor: title && author ? "pointer" : "not-allowed",
-            opacity: title && author ? 1 : 0.5, transition: "opacity 0.2s",
+            cursor: (title && author && !submitting) ? "pointer" : "not-allowed",
+            opacity: (title && author && !submitting) ? 1 : 0.5, transition: "opacity 0.2s",
           }}>
-            Add to Bookshelf
+            {submitting ? "Searching Goodreads…" : "Add to Bookshelf"}
           </button>
         </div>
       </div>
@@ -968,8 +1048,8 @@ function StatsBar({ books }) {
 
 export default function App() {
   const { books: syncedBooks, loading: syncLoading } = useGoodreadsSync(RAW_BOOKS);
-  const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook } = useLocalData();
-  const [selectedBook, setSelectedBook] = useState(null);
+  const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, customColors, setCustomColor } = useLocalData();
+  const [selectedBookId, setSelectedBookId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState("dateRead");
   const [sortAsc, setSortAsc] = useState(false);
@@ -995,18 +1075,30 @@ export default function App() {
     return [...syncedFiltered, ...manualFiltered];
   }, [syncedBooks, manualBooks, overrides, deletedIds]);
 
+  // Derive selectedBook from books array so the modal auto-reflects quick edits
+  const selectedBook = useMemo(
+    () => selectedBookId ? books.find(b => b.id === selectedBookId) ?? null : null,
+    [books, selectedBookId]
+  );
+
+  // Custom colours override auto-extracted colours
+  const effectiveColors = useMemo(
+    () => ({ ...coverColors, ...customColors }),
+    [coverColors, customColors]
+  );
+
   useEffect(() => {
-    if (!selectedBook) return;
+    if (!selectedBookId) return;
     const handleKey = (e) => {
       if (e.key === "Escape") {
         clearTimeout(pullTimeoutRef.current);
-        setSelectedBook(null);
+        setSelectedBookId(null);
         setPulledBookId(null);
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedBook]);
+  }, [selectedBookId]);
 
   const allGenres = useMemo(() => {
     const genres = new Set();
@@ -1016,7 +1108,8 @@ export default function App() {
 
   const filteredAndSorted = useMemo(() => {
     let filtered = books.filter(b => {
-      if (filterShelf !== "all" && b.s !== filterShelf) return false;
+      if (filterShelf === "reread") { if (!b.reread) return false; }
+      else if (filterShelf !== "all" && b.s !== filterShelf) return false;
       if (filterGenre !== "all" && !b.g.includes(filterGenre)) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -1048,7 +1141,7 @@ export default function App() {
       if (sortBy === "title") return b.t.toLowerCase();
       if (sortBy === "author") return b.a.toLowerCase();
       if (sortBy === "pages") return b.p;
-      if (sortBy === "color") return hexToHue(coverColors[b.id] || getBookColor(b.id));
+      if (sortBy === "color") return hexToHue(effectiveColors[b.id] || getBookColor(b.id));
       return 0;
     };
 
@@ -1062,7 +1155,7 @@ export default function App() {
       if (sortBy === "title") return arr[0].sn.toLowerCase();
       if (sortBy === "author") return arr[0].a.toLowerCase();
       if (sortBy === "pages") return arr.reduce((s, b) => s + b.p, 0);
-      if (sortBy === "color") return hexToHue(coverColors[arr[0].id] || getBookColor(arr[0].id));
+      if (sortBy === "color") return hexToHue(effectiveColors[arr[0].id] || getBookColor(arr[0].id));
       return 0;
     };
 
@@ -1090,7 +1183,7 @@ export default function App() {
     });
 
     return result;
-  }, [books, sortBy, sortAsc, filterShelf, filterGenre, searchQuery, coverColors]);
+  }, [books, sortBy, sortAsc, filterShelf, filterGenre, searchQuery, effectiveColors]);
 
   // Split books into shelves of ~12-16 books each
   const shelves = useMemo(() => {
@@ -1108,7 +1201,7 @@ export default function App() {
 
   const handleDeleteBook = useCallback((id) => {
     deleteBook(id);
-    setSelectedBook(null);
+    setSelectedBookId(null);
     setPulledBookId(null);
   }, [deleteBook]);
 
@@ -1118,6 +1211,7 @@ export default function App() {
     "currently-reading": books.filter(b => b.s === "currently-reading").length,
     "to-read": books.filter(b => b.s === "to-read").length,
     dnf: books.filter(b => b.s === "dnf").length,
+    reread: books.filter(b => b.reread).length,
   }), [books]);
 
   const pillStyle = (active) => ({
@@ -1244,6 +1338,7 @@ export default function App() {
             { key: "currently-reading", label: "Reading" },
             { key: "to-read", label: "To Read" },
             { key: "dnf", label: "DNF" },
+            { key: "reread", label: "To Reread" },
             { key: "all", label: "All" },
           ].map(s => (
             <button key={s.key} onClick={() => setFilterShelf(s.key)} style={pillStyle(filterShelf === s.key)}>
@@ -1340,10 +1435,10 @@ export default function App() {
                 books={shelfBooks}
                 onBookClick={(book) => {
                   setPulledBookId(book.id);
-                  setSelectedBook(book);
+                  setSelectedBookId(book.id);
                 }}
                 shelfIndex={i}
-                coverColors={coverColors}
+                coverColors={effectiveColors}
                 pulledBookId={pulledBookId}
               />
             ))
@@ -1385,21 +1480,15 @@ export default function App() {
       {selectedBook && (
         <BookModal
           book={selectedBook}
-          spineColor={coverColors[selectedBook.id] || null}
+          spineColor={effectiveColors[selectedBook.id] || null}
           onClose={() => {
             clearTimeout(pullTimeoutRef.current);
-            setSelectedBook(null);
+            setSelectedBookId(null);
             setPulledBookId(null);
           }}
-          onEdit={(id, changes) => {
-            handleEditBook(id, changes);
-            clearTimeout(pullTimeoutRef.current);
-            setSelectedBook(null);
-            setPulledBookId(null);
-          }}
-          onDelete={(id) => {
-            handleDeleteBook(id);
-          }}
+          onEdit={handleEditBook}
+          onDelete={handleDeleteBook}
+          onColorChange={setCustomColor}
         />
       )}
       {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} />}

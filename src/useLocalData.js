@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 const MANUAL_KEY = 'bookshelf_manual_v2';
 const OVERRIDES_KEY = 'bookshelf_overrides_v1';
 const DELETED_KEY = 'bookshelf_deleted_v1';
+const CUSTOM_COLORS_KEY = 'bookshelf_custom_colors_v1';
 
 function load(key, fallback) {
   try {
@@ -23,6 +24,7 @@ export function useLocalData() {
   const [manualBooks, setManualBooks] = useState(() => load(MANUAL_KEY, []));
   const [overrides, setOverrides] = useState(() => load(OVERRIDES_KEY, {}));
   const [deletedIds, setDeletedIds] = useState(() => new Set(load(DELETED_KEY, [])));
+  const [customColors, setCustomColorsState] = useState(() => load(CUSTOM_COLORS_KEY, {}));
 
   const addBook = useCallback((book) => {
     setManualBooks(prev => {
@@ -59,5 +61,13 @@ export function useLocalData() {
     });
   }, []);
 
-  return { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook };
+  const setCustomColor = useCallback((id, hex) => {
+    setCustomColorsState(prev => {
+      const next = { ...prev, [id]: hex };
+      save(CUSTOM_COLORS_KEY, next);
+      return next;
+    });
+  }, []);
+
+  return { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, customColors, setCustomColor };
 }
