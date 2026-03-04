@@ -276,10 +276,13 @@ function RotatingQuote({ books }) {
   );
 }
 
-function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange }) {
+function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange, allGenres = [] }) {
   const [srcIndex, setSrcIndex] = useState(0);
   const [mode, setMode] = useState('view'); // 'view' | 'edit' | 'delete'
   const [editState, setEditState] = useState(null);
+  const [hoveredIcon, setHoveredIcon] = useState(null);
+  const [newGenreInput, setNewGenreInput] = useState('');
+  const [showNewGenreInput, setShowNewGenreInput] = useState(false);
   const colorInputRef = useRef(null);
 
   if (!book) return null;
@@ -291,8 +294,12 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
   ].filter(Boolean);
   const coverSrc = srcIndex < coverSources.length ? coverSources[srcIndex] : null;
   const genres = book.g || [];
+  // Effective Goodreads link: manual override > auto-generated > none
+  const bookLink = book.grUrl || (!book.manual ? `https://www.goodreads.com/book/show/${book.id}` : null);
 
   const enterEdit = () => {
+    setNewGenreInput('');
+    setShowNewGenreInput(false);
     setEditState({
       t: book.t || '',
       a: book.a || '',
@@ -302,17 +309,19 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
       dr: book.dr ? book.dr.replace(/\//g, '-') : '',
       au: book.au || false,
       ki: book.ki || false,
-      g: (book.g || []).join(', '),
+      g: [...(book.g || [])],
       sn: book.sn || '',
       si: book.si ? String(book.si) : '',
       rev: book.rev || '',
       fav: book.fav || false,
       reread: book.reread || false,
+      grUrl: book.grUrl || (!book.manual ? `https://www.goodreads.com/book/show/${book.id}` : ''),
     });
     setMode('edit');
   };
 
   const saveEdit = () => {
+    const trimmedUrl = editState.grUrl.trim();
     const changes = {
       t: editState.t.trim() || book.t,
       a: editState.a.trim() || book.a,
@@ -322,12 +331,15 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
       dr: editState.dr ? editState.dr.replace(/-/g, '/') : '',
       au: editState.au,
       ki: editState.ki && !editState.au,
-      g: editState.g ? editState.g.split(',').map(s => s.trim()).filter(Boolean) : [],
+      g: editState.g,
       sn: editState.sn.trim(),
       si: parseFloat(editState.si) || 0,
       rev: editState.rev.trim(),
       fav: editState.fav,
       reread: editState.reread,
+      grUrl: trimmedUrl,
+      // If they provided a URL and the book had no link before, mark it no longer purely manual
+      ...(trimmedUrl && book.manual ? { manual: false } : {}),
     };
     onEdit(book.id, changes);
     onClose();
@@ -412,6 +424,10 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
                 <label style={modalLabelStyle}>Author</label>
                 <input style={modalInputStyle} value={editState.a} onChange={e => setEditState(s => ({ ...s, a: e.target.value }))} />
               </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={modalLabelStyle}>Goodreads URL</label>
+                <input style={modalInputStyle} value={editState.grUrl} onChange={e => setEditState(s => ({ ...s, grUrl: e.target.value }))} placeholder="https://www.goodreads.com/book/show/..." />
+              </div>
               <div>
                 <label style={modalLabelStyle}>My Rating (0–5)</label>
                 <input style={modalInputStyle} type="number" min="0" max="5" value={editState.r} onChange={e => setEditState(s => ({ ...s, r: e.target.value }))} />
@@ -434,8 +450,38 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
                 <input style={modalInputStyle} type="date" value={editState.dr} onChange={e => setEditState(s => ({ ...s, dr: e.target.value }))} />
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
-                <label style={modalLabelStyle}>Genres (comma-separated)</label>
-                <input style={modalInputStyle} value={editState.g} onChange={e => setEditState(s => ({ ...s, g: e.target.value }))} placeholder="e.g. fiction, fantasy" />
+                <label style={modalLabelStyle}>Genres</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                  {[...new Set([...allGenres, ...editState.g])].sort().map(g => {
+                    const selected = editState.g.includes(g);
+                    return (
+                      <button key={g} type="button"
+                        onClick={() => setEditState(s => ({ ...s, g: selected ? s.g.filter(x => x !== g) : [...s.g, g] }))}
+                        style={{ padding: "4px 12px", borderRadius: 20, fontSize: 12, fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: `1px solid ${selected ? "rgba(212,168,67,0.5)" : "rgba(74,55,40,0.4)"}`, background: selected ? "rgba(212,168,67,0.15)" : "rgba(255,255,255,0.04)", color: selected ? "#D4A843" : "#8B7355", transition: "all 0.12s" }}>
+                        {g}
+                      </button>
+                    );
+                  })}
+                </div>
+                {showNewGenreInput ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      style={{ ...modalInputStyle, flex: 1 }}
+                      value={newGenreInput}
+                      onChange={e => setNewGenreInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && newGenreInput.trim()) { setEditState(s => ({ ...s, g: [...s.g, newGenreInput.trim()] })); setNewGenreInput(''); setShowNewGenreInput(false); }
+                        if (e.key === 'Escape') setShowNewGenreInput(false);
+                      }}
+                      placeholder="New genre name"
+                      autoFocus
+                    />
+                    <button type="button" onClick={() => { if (newGenreInput.trim()) { setEditState(s => ({ ...s, g: [...s.g, newGenreInput.trim()] })); setNewGenreInput(''); setShowNewGenreInput(false); } }} style={{ padding: "8px 14px", borderRadius: 7, background: "#4A3728", border: "none", color: "#E8D5B7", cursor: "pointer", fontSize: 13 }}>Add</button>
+                    <button type="button" onClick={() => setShowNewGenreInput(false)} style={{ padding: "8px 12px", borderRadius: 7, background: "transparent", border: "1px solid #4A3728", color: "#8B7355", cursor: "pointer", fontSize: 13 }}>✕</button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => setShowNewGenreInput(true)} style={{ fontSize: 12, background: "transparent", border: "1px dashed rgba(74,55,40,0.5)", borderRadius: 20, padding: "3px 12px", color: "#6B5040", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>+ Add genre</button>
+                )}
               </div>
               <div>
                 <label style={modalLabelStyle}>Series Name</label>
@@ -556,16 +602,56 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
               </div>
             </div>
           )}
-          <div style={{ padding: "28px 32px", flex: 1, minWidth: 0 }}>
+          <div style={{ padding: "28px 32px", flex: 1, minWidth: 0, position: "relative" }}>
+          {/* ── Icon toggles: heart (fav) + reread ── */}
+          <div style={{ position: "absolute", top: 14, right: 14, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+            {/* Favourite heart */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => onEdit(book.id, { fav: !book.fav })}
+                onMouseEnter={() => setHoveredIcon('fav')}
+                onMouseLeave={() => setHoveredIcon(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", lineHeight: 1 }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill={book.fav ? "#E53E3E" : "none"} stroke={book.fav ? "#E53E3E" : "#6B5040"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+              {hoveredIcon === 'fav' && (
+                <div style={{ position: "absolute", right: "100%", top: "50%", transform: "translateY(-50%)", marginRight: 8, background: "#2C1D12", border: "1px solid #4A3728", borderRadius: 6, padding: "4px 10px", whiteSpace: "nowrap", color: "#E8D5B7", fontSize: 11, fontFamily: "'DM Sans', sans-serif", pointerEvents: "none", zIndex: 10 }}>
+                  {book.fav ? "Remove favourite" : "Mark favourite"}
+                </div>
+              )}
+            </div>
+            {/* Reread icon */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => onEdit(book.id, { reread: !book.reread })}
+                onMouseEnter={() => setHoveredIcon('reread')}
+                onMouseLeave={() => setHoveredIcon(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", lineHeight: 1 }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={book.reread ? "#4A7FD4" : "#6B5040"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="1 4 1 10 7 10"/>
+                  <path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+                </svg>
+              </button>
+              {hoveredIcon === 'reread' && (
+                <div style={{ position: "absolute", right: "100%", top: "50%", transform: "translateY(-50%)", marginRight: 8, background: "#2C1D12", border: "1px solid #4A3728", borderRadius: 6, padding: "4px 10px", whiteSpace: "nowrap", color: "#E8D5B7", fontSize: 11, fontFamily: "'DM Sans', sans-serif", pointerEvents: "none", zIndex: 10 }}>
+                  {book.reread ? "Remove reread" : "Mark to reread"}
+                </div>
+              )}
+            </div>
+          </div>
           {/* Title & Author */}
           <h2 style={{
             fontFamily: "'Playfair Display', 'Libre Baskerville', Georgia, serif",
             color: "#F5ECD7", fontSize: 26, fontWeight: 700, margin: 0,
             lineHeight: 1.3, letterSpacing: "-0.3px",
           }}>
-            {!book.manual ? (
+            {bookLink ? (
               <a
-                href={`https://www.goodreads.com/book/show/${book.id}`}
+                href={bookLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -664,38 +750,6 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange 
               </p>
             </div>
           )}
-
-          {/* Badges row — favourite + reread */}
-          <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-            <button
-              onClick={() => onEdit(book.id, { fav: !book.fav })}
-              style={{
-                background: book.fav ? "rgba(212,168,67,0.12)" : "transparent",
-                border: `1px solid ${book.fav ? "rgba(212,168,67,0.35)" : "rgba(74,55,40,0.4)"}`,
-                borderRadius: 8, padding: "6px 12px",
-                display: "inline-flex", alignItems: "center", gap: 6,
-                color: book.fav ? "#D4A843" : "#6B5040",
-                fontSize: 12, fontFamily: "'DM Sans', sans-serif",
-                cursor: "pointer", transition: "all 0.15s",
-              }}
-            >
-              ❤️ {book.fav ? "Favourite" : "Mark favourite"}
-            </button>
-            <button
-              onClick={() => onEdit(book.id, { reread: !book.reread })}
-              style={{
-                background: book.reread ? "rgba(92,107,46,0.12)" : "transparent",
-                border: `1px solid ${book.reread ? "rgba(92,107,46,0.4)" : "rgba(74,55,40,0.4)"}`,
-                borderRadius: 8, padding: "6px 12px",
-                display: "inline-flex", alignItems: "center", gap: 6,
-                color: book.reread ? "#5C6B2E" : "#6B5040",
-                fontSize: 12, fontFamily: "'DM Sans', sans-serif",
-                cursor: "pointer", transition: "all 0.15s",
-              }}
-            >
-              🔁 {book.reread ? "To reread" : "Mark to reread"}
-            </button>
-          </div>
 
           {/* Edit / Delete / Colour actions */}
           <div style={{ display: "flex", gap: 10, marginTop: 20, paddingTop: 16, borderTop: "1px solid rgba(74,55,40,0.5)", alignItems: "center", flexWrap: "wrap" }}>
@@ -1489,6 +1543,7 @@ export default function App() {
           onEdit={handleEditBook}
           onDelete={handleDeleteBook}
           onColorChange={setCustomColor}
+          allGenres={allGenres}
         />
       )}
       {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} />}
