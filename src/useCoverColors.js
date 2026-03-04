@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getPalette } from 'colorthief';
 
-const CACHE_KEY = 'bookshelf_cover_colors_v2';
+const CACHE_KEY = 'bookshelf_cover_colors_v3';
 const BATCH_SIZE = 5;
 
 function getCoverUrl(isbn) {
@@ -57,11 +57,9 @@ async function extractColor(isbn) {
         if (!palette || palette.length === 0) return resolve(null);
 
         const hexColors = palette.map(c => c.hex());
-        // Filter out near-black and near-white to avoid background colors
-        const filtered = hexColors.filter(hex => {
-          const lum = hexLuminance(hex);
-          return lum > 0.04 && lum < 0.92;
-        });
+        // Filter out near-black only — near-whites/grays have near-zero saturation
+        // and will lose the saturation contest naturally (avoids filtering bright yellows)
+        const filtered = hexColors.filter(hex => hexLuminance(hex) > 0.04);
 
         const candidates = filtered.length > 0 ? filtered : hexColors;
         // Pick the most saturated (most visually distinctive) color
