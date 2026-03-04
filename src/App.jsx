@@ -284,6 +284,8 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
   const [newGenreInput, setNewGenreInput] = useState('');
   const [showNewGenreInput, setShowNewGenreInput] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [grFetching, setGrFetching] = useState(false);
+  const lastFetchedUrl = useRef('');
   const colorInputRef = useRef(null);
 
   if (!book) return null;
@@ -317,7 +319,9 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
       fav: book.fav || false,
       reread: book.reread || false,
       grUrl: book.grUrl || (!book.manual ? `https://www.goodreads.com/book/show/${book.id}` : ''),
+      cover: book.cover || '',
     });
+    lastFetchedUrl.current = book.grUrl || (!book.manual ? `https://www.goodreads.com/book/show/${book.id}` : '');
     setMode('edit');
   };
 
@@ -343,8 +347,10 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
       grUrl: trimmedUrl,
       ...(trimmedUrl && book.manual ? { manual: false } : {}),
     };
-    // If a Goodreads URL was provided and no cover exists yet, fetch one
-    if (trimmedUrl && !book.cover) {
+    // Apply cover: use the one already fetched via onBlur, otherwise fall back to fetching now
+    if (editState.cover) {
+      changes.cover = editState.cover;
+    } else if (trimmedUrl && !book.cover) {
       try {
         const res = await fetch(`/api/goodreads-cover?url=${encodeURIComponent(trimmedUrl)}`);
         if (res.ok) {
@@ -438,8 +444,35 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
                 <input style={modalInputStyle} value={editState.a} onChange={e => setEditState(s => ({ ...s, a: e.target.value }))} />
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
-                <label style={modalLabelStyle}>Goodreads URL</label>
-                <input style={modalInputStyle} value={editState.grUrl} onChange={e => setEditState(s => ({ ...s, grUrl: e.target.value }))} placeholder="https://www.goodreads.com/book/show/..." />
+                <label style={modalLabelStyle}>
+                  Goodreads URL{grFetching && <span style={{ marginLeft: 8, color: "#D4A843", fontSize: 10, fontStyle: "italic" }}>Fetching…</span>}
+                </label>
+                <input
+                  style={modalInputStyle}
+                  value={editState.grUrl}
+                  onChange={e => setEditState(s => ({ ...s, grUrl: e.target.value }))}
+                  onBlur={async e => {
+                    const url = e.target.value.trim();
+                    if (!url || url === lastFetchedUrl.current) return;
+                    lastFetchedUrl.current = url;
+                    setGrFetching(true);
+                    try {
+                      const res = await fetch(`/api/goodreads-book?url=${encodeURIComponent(url)}`);
+                      if (res.ok) {
+                        const meta = await res.json();
+                        setEditState(s => ({
+                          ...s,
+                          a: s.a.trim() || meta.author || s.a,
+                          p: (parseInt(s.p) || 0) === 0 ? String(meta.pages || '') : s.p,
+                          g: s.g.length === 0 ? [] : s.g, // keep existing genres
+                          cover: s.cover || meta.cover || '',
+                        }));
+                      }
+                    } catch {}
+                    setGrFetching(false);
+                  }}
+                  placeholder="https://www.goodreads.com/book/show/..."
+                />
               </div>
               <div>
                 <label style={modalLabelStyle}>My Rating (0–5)</label>
@@ -662,7 +695,7 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
           <h2 style={{
             fontFamily: "'Playfair Display', 'Libre Baskerville', Georgia, serif",
             color: "#F5ECD7", fontSize: 26, fontWeight: 700, margin: 0,
-            lineHeight: 1.3, letterSpacing: "-0.3px",
+            lineHeight: 1.3, letterSpacing: "-0.3px", paddingRight: 52,
           }}>
             {bookLink ? (
               <a
@@ -842,37 +875,43 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   }, [title, author, books]);
 
   const handleSubmit = async () => {
-    if (!title || !author || submitting) return;
+    if (!title || submitting) return;
     setSubmitting(true);
     let grId = null;
     try {
-      const res = await fetch(`/api/search-goodreads?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
+      const params = new URLSearchParams({ title });
+      if (author) params.set('author', author);
+      const res = await fetch(`/api/search-goodreads?${params}`);
       if (res.ok) {
         const data = await res.json();
         if (data.id) grId = data.id;
       }
-    } catch {
-      // Network failure or blocked — proceed without GR ID
-    }
-    let cover = '';
+    } catch {}
+
+    // Fetch full metadata from Goodreads if we found an ID
+    let grMeta = null;
     if (grId) {
       try {
-        const res = await fetch(`/api/goodreads-cover?id=${encodeURIComponent(grId)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.cover) cover = data.cover;
-        }
+        const res = await fetch(`/api/goodreads-book?id=${encodeURIComponent(grId)}`);
+        if (res.ok) grMeta = await res.json();
       } catch {}
     }
+
     const newBook = {
       id: grId || String(Date.now()),
       manual: !grId,
-      t: title, a: author, r: rating, ar: 0,
-      p: parseInt(pages) || 0, y: "", dr: dateRead ? dateRead.replace(/-/g, "/") : "",
-      da: new Date().toISOString().slice(0,10).replace(/-/g, "/"),
-      s: shelf, g: genre ? [genre] : [], sn: "", si: 0,
-      au: isAudiobook, fav: false, isbn: "", pub: "", bind: isAudiobook ? "Audiobook" : "Paperback", rev: notes,
-      cover,
+      t: title,
+      a: author || grMeta?.author || '',
+      r: rating, ar: 0,
+      p: parseInt(pages) || grMeta?.pages || 0,
+      y: grMeta?.year || '',
+      dr: dateRead ? dateRead.replace(/-/g, '/') : '',
+      da: new Date().toISOString().slice(0, 10).replace(/-/g, '/'),
+      s: shelf, g: genre ? [genre] : [], sn: '', si: 0,
+      au: isAudiobook, fav: false,
+      isbn: grMeta?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : 'Paperback',
+      rev: notes,
+      cover: grMeta?.cover || '',
     };
     onAdd(newBook);
     onClose();
@@ -927,8 +966,8 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
             )}
           </div>
           <div>
-            <label style={labelStyle}>Author *</label>
-            <input style={inputStyle} value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author name..." />
+            <label style={labelStyle}>Author</label>
+            <input style={inputStyle} value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author name (optional — Goodreads will fill it in)" />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
@@ -984,8 +1023,8 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
             background: "#A0445A", border: "none",
             borderRadius: 8, padding: "12px 24px", color: "#F9EDE8",
             fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 700,
-            cursor: (title && author && !submitting) ? "pointer" : "not-allowed",
-            opacity: (title && author && !submitting) ? 1 : 0.5, transition: "opacity 0.2s",
+            cursor: (title && !submitting) ? "pointer" : "not-allowed",
+            opacity: (title && !submitting) ? 1 : 0.5, transition: "opacity 0.2s",
           }}>
             {submitting ? "Searching Goodreads…" : "Add to Bookshelf"}
           </button>
@@ -1395,8 +1434,6 @@ export default function App() {
               {/* Front book (slightly leaning) */}
               <rect x="21" y="6" width="10" height="24" rx="1" fill="#8B2840"/>
               <rect x="21" y="6" width="3" height="24" fill="#6B1830"/>
-              {/* Small book on top */}
-              <rect x="23" y="2" width="7" height="6" rx="1" fill="#5C0F1E" opacity="0.8"/>
               {/* Ground line */}
               <line x1="1" y1="30" x2="33" y2="30" stroke="#5C0F1E" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round"/>
             </svg>
