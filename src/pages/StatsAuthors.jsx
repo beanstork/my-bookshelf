@@ -94,7 +94,7 @@ export default function StatsAuthors({ books, onBack }) {
           border: '1px solid rgba(200,160,120,0.2)',
           marginBottom: 32,
         }}>
-          <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={420}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 24, left: 4, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(160,120,70,0.15)" horizontal={false} />
               <XAxis
@@ -104,6 +104,7 @@ export default function StatsAuthors({ books, onBack }) {
               />
               <YAxis
                 type="category" dataKey="name" width={130}
+                interval={0}
                 tick={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, fill: '#6B3520' }}
                 axisLine={false} tickLine={false}
               />
