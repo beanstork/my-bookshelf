@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getColor } from 'colorthief';
+import { getPalette } from 'colorthief';
 
-const CACHE_KEY = 'bookshelf_cover_colors_v1';
+const CACHE_KEY = 'bookshelf_cover_colors_v2';
 const BATCH_SIZE = 5;
 
 function getCoverUrl(isbn) {
@@ -23,6 +23,27 @@ function saveCache(cache) {
   } catch {}
 }
 
+function hexLuminance(hex) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const toLinear = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+function hexSaturation(hex) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === min) return 0;
+  const l = (max + min) / 2;
+  return l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
+}
+
 async function extractColor(isbn) {
   return new Promise((resolve) => {
     const url = getCoverUrl(isbn);
@@ -32,8 +53,20 @@ async function extractColor(isbn) {
     img.crossOrigin = 'Anonymous';
     img.onload = async () => {
       try {
-        const color = await getColor(img);
-        resolve(color ? color.hex() : null);
+        const palette = await getPalette(img, 8);
+        if (!palette || palette.length === 0) return resolve(null);
+
+        const hexColors = palette.map(c => c.hex());
+        // Filter out near-black and near-white to avoid background colors
+        const filtered = hexColors.filter(hex => {
+          const lum = hexLuminance(hex);
+          return lum > 0.04 && lum < 0.92;
+        });
+
+        const candidates = filtered.length > 0 ? filtered : hexColors;
+        // Pick the most saturated (most visually distinctive) color
+        const best = candidates.reduce((a, b) => hexSaturation(a) >= hexSaturation(b) ? a : b);
+        resolve(best);
       } catch {
         resolve(null);
       }
