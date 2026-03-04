@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getColor, getSwatches } from 'colorthief';
 
-const CACHE_KEY = 'bookshelf_cover_colors_v6';
+const CACHE_KEY = 'bookshelf_cover_colors_v7';
 const BATCH_SIZE = 5;
 
 function loadCache() {
@@ -49,12 +49,16 @@ async function extractColor(coverUrl) {
     img.crossOrigin = 'Anonymous';
     img.onload = async () => {
       try {
-        // If the dominant color is dark, the cover is mostly dark — use it directly
+        // If dominant color is very dark or very light, the cover is dominated
+        // by that tone — use it directly rather than hunting for a vibrant accent
         const dominant = await getColor(img);
         const dominantHex = dominant?.hex() ?? null;
-        if (dominantHex && hexLuminance(dominantHex) < 0.08) {
-          resolve(dominantHex);
-          return;
+        if (dominantHex) {
+          const lum = hexLuminance(dominantHex);
+          if (lum < 0.08 || lum > 0.85) {
+            resolve(dominantHex);
+            return;
+          }
         }
 
         // Otherwise pick the most saturated swatch across all roles
