@@ -1258,14 +1258,14 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
 }
 
 
-function getSeasonalProp(shelfIndex) {
+function getSeasonalProp(shelfIndex, vOverride) {
   const month = new Date().getMonth() + 1; // 1–12
-  const v = shelfIndex % 4;
+  const v = vOverride !== undefined ? vOverride % 4 : shelfIndex % 4;
 
   // Spring: March–May
   if (month >= 3 && month <= 5) {
     // Top shelf gets custom plant art in spring
-    if (shelfIndex === 0) {
+    if (shelfIndex === 0 && vOverride === undefined) {
       return <img src={plant2Img} alt="" style={{ height: 110, width: "auto", display: "block" }} />;
     }
     const plants = [
@@ -1475,7 +1475,15 @@ function getSeasonalProp(shelfIndex) {
   return items[v];
 }
 
-function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId = null }) {
+function getEffectiveProp(shelfIndex, override) {
+  if (override !== undefined && override !== null) {
+    if (typeof override === 'number') return getSeasonalProp(shelfIndex, override);
+    if (typeof override === 'string') return <img src={override} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
+  }
+  return getSeasonalProp(shelfIndex);
+}
+
+function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId = null, propOverride, onPropClick }) {
   const isRight = shelfIndex % 2 === 1;
   const shapeIndex = shelfIndex % 4;
 
@@ -1507,9 +1515,13 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
         flexWrap: "nowrap", overflowX: "auto",
       }}>
         {isRight && (
-          <div style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div
+            onClick={onPropClick}
+            title="Click to change decoration"
+            style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center", cursor: "pointer" }}
+          >
             <div style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.18))" }}>
-              {getSeasonalProp(shelfIndex)}
+              {getEffectiveProp(shelfIndex, propOverride)}
             </div>
           </div>
         )}
@@ -1526,9 +1538,13 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
         ))}
         {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {!isRight && (
-          <div style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div
+            onClick={onPropClick}
+            title="Click to change decoration"
+            style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center", cursor: "pointer" }}
+          >
             <div style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.18))" }}>
-              {getSeasonalProp(shelfIndex)}
+              {getEffectiveProp(shelfIndex, propOverride)}
             </div>
           </div>
         )}
@@ -1654,12 +1670,125 @@ function StatsBar({ books }) {
   );
 }
 
+const SEASON_LABEL = (() => {
+  const m = new Date().getMonth() + 1;
+  return m >= 3 && m <= 5 ? 'Spring' : m >= 6 && m <= 8 ? 'Summer' : m >= 9 && m <= 11 ? 'Autumn' : 'Winter';
+})();
+
+function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, onClose }) {
+  const fileRef = useRef(null);
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => onSelect(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const overlayStyle = {
+    position: "fixed", inset: 0, background: "rgba(20,10,5,0.75)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 600, padding: 20,
+  };
+
+  return (
+    <div style={overlayStyle} onClick={onClose}>
+      <div
+        style={{
+          background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16,
+          padding: 28, width: "100%", maxWidth: 380, fontFamily: "'DM Sans', sans-serif",
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <h3 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 4px", fontSize: 20 }}>
+          Change Decoration
+        </h3>
+        <p style={{ color: "#A08060", fontSize: 12, margin: "0 0 20px" }}>
+          {SEASON_LABEL} shelf {shelfIndex + 1} — pick a theme decoration or upload your own image
+        </p>
+
+        {/* 4 seasonal options */}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 20 }}>
+          {[0, 1, 2, 3].map(i => {
+            const isSelected = currentOverride === i;
+            return (
+              <button
+                key={i}
+                onClick={() => onSelect(i)}
+                title={`Option ${i + 1}`}
+                style={{
+                  width: 72, height: 96, border: isSelected ? "2px solid #D4A843" : "1px solid #4A3728",
+                  borderRadius: 10, background: isSelected ? "rgba(212,168,67,0.12)" : "#2C1D12",
+                  cursor: "pointer", overflow: "hidden", position: "relative", padding: 0,
+                }}
+              >
+                <div style={{
+                  position: "absolute", bottom: 0, left: "50%",
+                  transform: "translateX(-50%) scale(0.62)",
+                  transformOrigin: "bottom center",
+                  display: "flex",
+                }}>
+                  {getSeasonalProp(shelfIndex === 0 ? 999 : shelfIndex, i)}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Upload */}
+        <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+          <input type="file" accept="image/*" ref={fileRef} onChange={handleFile} style={{ display: "none" }} />
+          <button
+            onClick={() => fileRef.current.click()}
+            style={{
+              padding: "9px 18px", borderRadius: 8, border: "1px solid #4A3728",
+              background: "#2C1D12", color: "#D4A843",
+              fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
+            }}
+          >
+            Upload image
+          </button>
+          {currentOverride !== undefined && currentOverride !== null && (
+            <button
+              onClick={onClear}
+              style={{
+                padding: "9px 18px", borderRadius: 8, border: "1px solid #3A2820",
+                background: "transparent", color: "#8B6040",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
+              }}
+            >
+              Use default
+            </button>
+          )}
+        </div>
+
+        <div style={{ textAlign: "right" }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "9px 20px", borderRadius: 8, border: "1px solid #4A3728",
+              background: "transparent", color: "#BFA88A",
+              fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const [name, setName] = useState(settings.name || "My Bookshelf");
   const [imageUrl, setImageUrl] = useState(settings.imageUrl || "");
   const [urlInput, setUrlInput] = useState(settings.imageUrl || "");
   const [imagePosition, setImagePosition] = useState(settings.imagePosition !== undefined ? settings.imagePosition : 22);
   const [selectedIcon, setSelectedIcon] = useState(settings.headerIcon || 'books');
+  const [garlandEnabled, setGarlandEnabled] = useState(settings.garlandEnabled !== false);
+  const [profileImage, setProfileImage] = useState(settings.profileImage || '');
+  const profileFileRef = useRef(null);
 
   const handleFile = (e) => {
     const file = e.target.files[0];
@@ -1669,8 +1798,16 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
     reader.readAsDataURL(file);
   };
 
+  const handleProfileFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setProfileImage(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = () => {
-    onSave({ name: name.trim() || "My Bookshelf", imageUrl, imagePosition, headerIcon: selectedIcon });
+    onSave({ name: name.trim() || "My Bookshelf", imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage });
     onClose();
   };
 
@@ -1704,6 +1841,48 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
         <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Site Name</label>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="My Bookshelf" />
+        </div>
+
+        {/* Profile circle image */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Profile Circle Image</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
+              border: "2px solid #4A3728", background: "#2C1D12", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {profileImage
+                ? <img src={profileImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="#4A3728"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/></svg>
+              }
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <input type="file" accept="image/*" ref={profileFileRef} onChange={handleProfileFile} style={{ display: "none" }} />
+              <button
+                onClick={() => profileFileRef.current.click()}
+                style={{
+                  padding: "7px 14px", borderRadius: 7, border: "1px solid #4A3728",
+                  background: "#2C1D12", color: "#D4A843",
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
+                }}
+              >
+                Upload photo
+              </button>
+              {profileImage && (
+                <button
+                  onClick={() => setProfileImage('')}
+                  style={{
+                    padding: "5px 14px", borderRadius: 7, border: "1px solid #3A2820",
+                    background: "transparent", color: "#7A5040",
+                    fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer",
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={{ marginBottom: 16 }}>
@@ -1770,6 +1949,22 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
           </div>
         </div>
 
+        {/* Garland toggle */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Seasonal Frame Decorations</label>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={garlandEnabled}
+              onChange={e => setGarlandEnabled(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: "#D4A843", cursor: "pointer" }}
+            />
+            <span style={{ color: "#D4A843", fontSize: 13 }}>
+              Show seasonal decorations on the bookcase frame
+            </span>
+          </label>
+        </div>
+
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24 }}>
           <button onClick={onClose} style={{
             padding: "10px 20px", borderRadius: 8, border: "1px solid #4A3728",
@@ -1805,6 +2000,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}'); } catch { return {}; }
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [propPickerShelf, setPropPickerShelf] = useState(null);
 
   const updateSiteSettings = (changes) => {
     setSiteSettings(prev => {
@@ -1812,6 +2008,20 @@ export default function App() {
       localStorage.setItem('bookshelf_settings_v1', JSON.stringify(next));
       return next;
     });
+  };
+
+  const handlePropSelect = (shelfIndex, override) => {
+    updateSiteSettings({
+      shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: override },
+    });
+    setPropPickerShelf(null);
+  };
+
+  const handlePropClear = (shelfIndex) => {
+    const overrides = { ...(siteSettings.shelfPropOverrides || {}) };
+    delete overrides[shelfIndex];
+    updateSiteSettings({ shelfPropOverrides: overrides });
+    setPropPickerShelf(null);
   };
 
   const manualBookIds = useMemo(() => new Set(manualBooks.map(b => b.id)), [manualBooks]);
@@ -2054,11 +2264,15 @@ export default function App() {
               borderRadius: "50%", width: 36, height: 36,
               display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "pointer", backdropFilter: "blur(4px)",
+              overflow: "hidden", padding: 0,
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#5C0F1E">
-              <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
-            </svg>
+            {siteSettings.profileImage
+              ? <img src={siteSettings.profileImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="#5C0F1E">
+                  <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
+                </svg>
+            }
           </button>
 
           <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
@@ -2202,7 +2416,7 @@ export default function App() {
           border: "1px solid #C0986A",
           position: "relative",
         }}>
-        <SeasonalGarland />
+        {siteSettings.garlandEnabled !== false && <SeasonalGarland />}
         {/* Back panel texture */}
         <div style={{
           backgroundColor: "#7A6048",
@@ -2229,6 +2443,8 @@ export default function App() {
                 shelfIndex={i}
                 coverColors={effectiveColors}
                 pulledBookId={pulledBookId}
+                propOverride={(siteSettings.shelfPropOverrides || {})[i]}
+                onPropClick={() => setPropPickerShelf(i)}
               />
             ))
           )}
@@ -2288,6 +2504,15 @@ export default function App() {
           defaultImageUrl={cherryTreeImg}
           onSave={updateSiteSettings}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+      {propPickerShelf !== null && (
+        <ShelfPropPickerModal
+          shelfIndex={propPickerShelf}
+          currentOverride={(siteSettings.shelfPropOverrides || {})[propPickerShelf]}
+          onSelect={(override) => handlePropSelect(propPickerShelf, override)}
+          onClear={() => handlePropClear(propPickerShelf)}
+          onClose={() => setPropPickerShelf(null)}
         />
       )}
     </>
