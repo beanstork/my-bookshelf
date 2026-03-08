@@ -1293,7 +1293,7 @@ export default function App() {
       if (sortBy === "dateRead") return b.dr || b.da || "0000/00/00";
       if (sortBy === "rating") return b.r;
       if (sortBy === "title") return b.t.toLowerCase();
-      if (sortBy === "author") return b.a.toLowerCase();
+      if (sortBy === "author") return b.a.toLowerCase() + "\x00" + b.t.toLowerCase();
       if (sortBy === "pages") return b.p;
       if (sortBy === "color") return hexToHue(effectiveColors[b.id] || getBookColor(b.id));
       return 0;
@@ -1307,7 +1307,7 @@ export default function App() {
       }, "0000/00/00");
       if (sortBy === "rating") return Math.max(...arr.map(b => b.r));
       if (sortBy === "title") return arr[0].sn.toLowerCase();
-      if (sortBy === "author") return arr[0].a.toLowerCase();
+      if (sortBy === "author") return arr[0].a.toLowerCase() + "\x00" + arr[0].sn.toLowerCase();
       if (sortBy === "pages") return arr.reduce((s, b) => s + b.p, 0);
       if (sortBy === "color") return hexToHue(effectiveColors[arr[0].id] || getBookColor(arr[0].id));
       return 0;
