@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import cherryTreeImg from '../images/cherry-tree.jpg';
+import plant1Img from '../images/plant1.jpg';
 import useGoodreadsSync from './useGoodreadsSync.js';
 import useCoverColors from './useCoverColors.js';
 import { useLocalData } from './useLocalData.js';
@@ -1262,34 +1263,9 @@ function getSeasonalProp(shelfIndex) {
 
   // Spring: March–May
   if (month >= 3 && month <= 5) {
-    // Top shelf gets bonsai tree in spring
-    // viewBox trimmed to y=87 (pot bottom at y=86 + 1px margin)
+    // Top shelf gets custom plant art in spring
     if (shelfIndex === 0) {
-      return (
-        <svg width="100" height="109" viewBox="0 0 80 87" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Wide pot */}
-          <path d="M22 74 L24 86 L56 86 L58 74 Z" fill="#C4703A"/>
-          <rect x="20" y="70" width="40" height="6" rx="2" fill="#A8582A"/>
-          <ellipse cx="40" cy="73" rx="18" ry="2.5" fill="#5A3010" opacity="0.4"/>
-          {/* Trunk */}
-          <path d="M40 70 Q36 58 38 48 Q40 38 35 28 Q32 22 36 16" stroke="#6B4423" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-          {/* Branches */}
-          <path d="M37 44 Q26 40 18 37" stroke="#6B4423" strokeWidth="3" fill="none" strokeLinecap="round"/>
-          <path d="M36 34 Q46 29 54 27" stroke="#6B4423" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-          <path d="M35 24 Q26 20 20 17" stroke="#6B4423" strokeWidth="2" fill="none" strokeLinecap="round"/>
-          <path d="M36 18 Q40 13 44 11" stroke="#6B4423" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-          {/* Canopy */}
-          <circle cx="16" cy="34" r="11" fill="#3D6A2A"/>
-          <circle cx="28" cy="28" r="12" fill="#4A7A35"/>
-          <circle cx="52" cy="24" r="10" fill="#3D6A2A"/>
-          <circle cx="40" cy="18" r="10" fill="#4A7A35"/>
-          <circle cx="22" cy="22" r="9" fill="#5A8A40"/>
-          <circle cx="44" cy="12" r="7" fill="#4A7A35"/>
-          <circle cx="14" cy="31" r="3.5" fill="#6AA050" opacity="0.45"/>
-          <circle cx="50" cy="21" r="3" fill="#6AA050" opacity="0.45"/>
-          <circle cx="38" cy="15" r="2.5" fill="#6AA050" opacity="0.4"/>
-        </svg>
-      );
+      return <img src={plant1Img} alt="" style={{ height: 110, width: "auto", display: "block" }} />;
     }
     const plants = [
       // 0: Cactus — 1.5× (66×77, viewBox trimmed to pot bottom)
