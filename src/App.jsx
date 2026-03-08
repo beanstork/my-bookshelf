@@ -1290,6 +1290,7 @@ export default function App() {
 
     // Get sort key for a group (use first book's value for series)
     const getSortKey = (b) => {
+      // Empty string for dateless books; partition block below moves them definitively to the end
       if (sortBy === "dateRead") return b.dr || "";
       if (sortBy === "rating") return b.r;
       if (sortBy === "title") return b.t.toLowerCase();
