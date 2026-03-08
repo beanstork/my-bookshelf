@@ -1152,6 +1152,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
       }}>
         {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {!isRight && <div style={{ flex: 1 }} />}
+        {isRight && <div style={{ flex: 1 }} />}
         {books.map((book, i) => (
           <BookSpine
             key={book.id}
