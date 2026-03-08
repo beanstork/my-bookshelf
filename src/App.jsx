@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import cherryTreeImg from '../images/cherry-tree.jpg';
-import charizardImg from '../images/charizard.webp';
 import useGoodreadsSync from './useGoodreadsSync.js';
 import useCoverColors from './useCoverColors.js';
 import { useLocalData } from './useLocalData.js';
@@ -1119,62 +1118,6 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   );
 }
 
-function CharizardFigure() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const img = new Image();
-    img.onload = () => {
-      // Draw to offscreen canvas and remove near-white pixels
-      const tmp = document.createElement('canvas');
-      tmp.width = img.width;
-      tmp.height = img.height;
-      const tmpCtx = tmp.getContext('2d');
-      tmpCtx.drawImage(img, 0, 0);
-      const imageData = tmpCtx.getImageData(0, 0, tmp.width, tmp.height);
-      const d = imageData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        if (d[i] > 230 && d[i + 1] > 230 && d[i + 2] > 230) d[i + 3] = 0;
-      }
-      tmpCtx.putImageData(imageData, 0, 0);
-      // Find tight bounding box of non-transparent pixels
-      let top = tmp.height, bottom = 0, left = tmp.width, right = 0;
-      for (let y = 0; y < tmp.height; y++) {
-        for (let x = 0; x < tmp.width; x++) {
-          if (d[(y * tmp.width + x) * 4 + 3] > 0) {
-            if (y < top) top = y;
-            if (y > bottom) bottom = y;
-            if (x < left) left = x;
-            if (x > right) right = x;
-          }
-        }
-      }
-      // Draw cropped result to visible canvas
-      const cropW = right - left + 1;
-      const cropH = bottom - top + 1;
-      canvas.width = cropW;
-      canvas.height = cropH;
-      canvas.getContext('2d').drawImage(tmp, left, top, cropW, cropH, 0, 0, cropW, cropH);
-      // Set display size (height fixed, width proportional)
-      canvas.style.height = '118px';
-      canvas.style.width = Math.round(118 * cropW / cropH) + 'px';
-    };
-    img.src = charizardImg;
-  }, []);
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        height: 0, width: 0,
-        alignSelf: 'flex-end',
-        flexShrink: 0,
-        marginLeft: 8,
-        filter: 'drop-shadow(2px 4px 8px rgba(0,0,0,0.4))',
-      }}
-    />
-  );
-}
 
 function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId = null }) {
   const isRight = shelfIndex % 2 === 0;
@@ -1208,6 +1151,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
         flexWrap: "nowrap", overflowX: "auto",
       }}>
         {!isRight && <div aria-hidden="true" style={bookendStyle} />}
+        {!isRight && <div style={{ flex: 1 }} />}
         {books.map((book, i) => (
           <BookSpine
             key={book.id}
@@ -1218,7 +1162,6 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
             isPulled={pulledBookId === book.id}
           />
         ))}
-        {shelfIndex === 1 && <CharizardFigure />}
         {isRight && <div aria-hidden="true" style={bookendStyle} />}
       </div>
       {/* Shelf plank */}
