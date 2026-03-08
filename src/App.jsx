@@ -1135,10 +1135,10 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
     height: 130,
     alignSelf: "flex-end",
     flexShrink: 0,
-    background: "linear-gradient(180deg, #B8A07A 0%, #A08860 25%, #8A7248 65%, #6E5230 100%)",
+    background: "linear-gradient(180deg, #A83858 0%, #8B2840 30%, #722035 70%, #5C1828 100%)",
     boxShadow: isRight
-      ? "-4px 4px 12px rgba(0,0,0,0.48), inset 2px 0 5px rgba(255,210,160,0.18)"
-      : "4px 4px 12px rgba(0,0,0,0.48), inset -2px 0 5px rgba(255,210,160,0.18)",
+      ? "-4px 4px 12px rgba(0,0,0,0.48), inset 2px 0 5px rgba(255,180,200,0.15)"
+      : "4px 4px 12px rgba(0,0,0,0.48), inset -2px 0 5px rgba(255,180,200,0.15)",
     ...bookendShape,
   };
 
@@ -1172,6 +1172,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
               flexShrink: 0,
               marginLeft: 8,
               filter: "drop-shadow(2px 4px 8px rgba(0,0,0,0.45))",
+              mixBlendMode: "multiply",
             }}
           />
         )}
