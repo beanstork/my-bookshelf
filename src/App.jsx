@@ -1355,6 +1355,17 @@ export default function App() {
       return true;
     });
 
+    // For dateRead: sort purely by dr (no series grouping), dated items first, dateless at end
+    if (sortBy === "dateRead") {
+      const dated = filtered.filter(b => !!b.dr);
+      const dateless = filtered.filter(b => !b.dr);
+      dated.sort((a, b) => {
+        const result = b.dr.localeCompare(a.dr);
+        return sortAsc ? -result : result;
+      });
+      return [...dated, ...dateless];
+    }
+
     // Group series books together
     const seriesMap = {};
     const standalone = [];
@@ -1379,11 +1390,10 @@ export default function App() {
 
     // Get sort key for a group (use first book's value for series)
     const getSortKey = (b) => {
-      // Empty string for dateless books; partition block below moves them definitively to the end
       if (sortBy === "dateRead") return b.dr || "";
       if (sortBy === "rating") return b.r;
       if (sortBy === "title") return b.t.toLowerCase();
-      if (sortBy === "author") return b.a.toLowerCase() + "\t" + b.t.toLowerCase();
+      if (sortBy === "author") { const last = b.a.split(" ").pop().toLowerCase(); return last + "\t" + b.a.toLowerCase() + "\t" + (b.y || "0000"); }
       if (sortBy === "pages") return b.p;
       if (sortBy === "color") return hexToHue(effectiveColors[b.id] || getBookColor(b.id));
       return 0;
@@ -1391,13 +1401,9 @@ export default function App() {
 
     // For series, use the latest/highest/first value in the series for sorting
     const getSeriesSortKey = (arr) => {
-      if (sortBy === "dateRead") return arr.reduce((max, b) => {
-        const k = b.dr || "";
-        return k > max ? k : max;
-      }, "");
       if (sortBy === "rating") return Math.max(...arr.map(b => b.r));
       if (sortBy === "title") return arr[0].sn.toLowerCase();
-      if (sortBy === "author") return arr[0].a.toLowerCase() + "\t" + arr[0].sn.toLowerCase();
+      if (sortBy === "author") { const last = arr[0].a.split(" ").pop().toLowerCase(); return last + "\t" + arr[0].a.toLowerCase() + "\t" + (arr[0].y || "0000"); }
       if (sortBy === "pages") return arr.reduce((s, b) => s + b.p, 0);
       if (sortBy === "color") return hexToHue(effectiveColors[arr[0].id] || getBookColor(arr[0].id));
       return 0;
@@ -1409,17 +1415,16 @@ export default function App() {
     Object.entries(seriesMap).forEach(([name, arr]) => items.push({ type: "series", books: arr, sortKey: getSeriesSortKey(arr), name }));
 
     items.sort((a, b) => {
-      if (sortBy === "dateRead") {
-        // Dateless items always sink to the bottom regardless of sort direction
-        if (!a.sortKey && !b.sortKey) return 0;
-        if (!a.sortKey) return 1;
-        if (!b.sortKey) return -1;
-        const result = b.sortKey.localeCompare(a.sortKey);
-        return sortAsc ? -result : result;
-      }
       let result;
       if (sortBy === "rating") result = b.sortKey - a.sortKey;
-      else if (sortBy === "title" || sortBy === "author") result = a.sortKey.localeCompare(b.sortKey);
+      else if (sortBy === "author") {
+        const [aLast, aFull, aYear] = a.sortKey.split("\t");
+        const [bLast, bFull, bYear] = b.sortKey.split("\t");
+        const nameCmp = aLast !== bLast ? aLast.localeCompare(bLast) : aFull.localeCompare(bFull);
+        if (nameCmp !== 0) return sortAsc ? -nameCmp : nameCmp;
+        return parseInt(aYear || "0") - parseInt(bYear || "0");
+      }
+      else if (sortBy === "title") result = a.sortKey.localeCompare(b.sortKey);
       else if (sortBy === "pages") result = b.sortKey - a.sortKey;
       else if (sortBy === "color") result = a.sortKey - b.sortKey;
       else result = 0;
