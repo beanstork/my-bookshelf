@@ -1368,8 +1368,14 @@ export default function App() {
       }
     });
 
-    // Sort within each series by series number
-    Object.values(seriesMap).forEach(arr => arr.sort((a, b) => a.si - b.si));
+    // Sort within each series: by year (ascending) for author sort, otherwise by series number
+    Object.values(seriesMap).forEach(arr => {
+      if (sortBy === "author") {
+        arr.sort((a, b) => parseInt(a.y || "0") - parseInt(b.y || "0"));
+      } else {
+        arr.sort((a, b) => a.si - b.si);
+      }
+    });
 
     // Get sort key for a group (use first book's value for series)
     const getSortKey = (b) => {
