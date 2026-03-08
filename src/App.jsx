@@ -1911,6 +1911,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const [imagePosition, setImagePosition] = useState(settings.imagePosition !== undefined ? settings.imagePosition : 22);
   const [selectedIcon, setSelectedIcon] = useState(settings.headerIcon || 'books');
   const [garlandEnabled, setGarlandEnabled] = useState(settings.garlandEnabled !== false);
+  const [currentlyReadingEnabled, setCurrentlyReadingEnabled] = useState(settings.currentlyReadingEnabled || false);
   const [profileImage, setProfileImage] = useState(settings.profileImage || '');
   const profileFileRef = useRef(null);
 
@@ -1937,7 +1938,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   };
 
   const handleSave = () => {
-    onSave({ name: name.trim() || "My Bookshelf", imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage });
+    onSave({ name: name.trim() || "My Bookshelf", imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage, currentlyReadingEnabled });
     onClose();
   };
 
@@ -2091,6 +2092,21 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
             />
             <span style={{ color: "#D4A843", fontSize: 13 }}>
               Show seasonal decorations on the bookcase frame
+            </span>
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Currently Reading Panel</label>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={currentlyReadingEnabled}
+              onChange={e => setCurrentlyReadingEnabled(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: "#D4A843", cursor: "pointer" }}
+            />
+            <span style={{ color: "#D4A843", fontSize: 13 }}>
+              Show currently reading panel beside the bookshelf
             </span>
           </label>
         </div>
