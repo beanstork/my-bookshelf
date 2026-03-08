@@ -5,6 +5,7 @@ import useGoodreadsSync from './useGoodreadsSync.js';
 import useCoverColors from './useCoverColors.js';
 import { useLocalData } from './useLocalData.js';
 import NavPanel from './components/NavPanel.jsx';
+import SeasonalGarland from './components/SeasonalGarland.jsx';
 import StatsTimeline from './pages/StatsTimeline.jsx';
 import StatsGenres from './pages/StatsGenres.jsx';
 import StatsAuthors from './pages/StatsAuthors.jsx';
@@ -2199,7 +2200,9 @@ export default function App() {
           borderRadius: 14,
           boxShadow: "0 8px 32px rgba(80,50,20,0.45), inset 0 2px 4px rgba(255,220,170,0.2), inset 0 -2px 4px rgba(0,0,0,0.25)",
           border: "1px solid #C0986A",
+          position: "relative",
         }}>
+        <SeasonalGarland />
         {/* Back panel texture */}
         <div style={{
           backgroundColor: "#7A6048",
