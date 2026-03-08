@@ -1,11 +1,8 @@
 function IconShelf() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      {/* Bottom book (wide) */}
       <rect x="3" y="13" width="14" height="4" rx="1" />
-      {/* Top-left book */}
       <rect x="3" y="7" width="5" height="5" rx="1" />
-      {/* Top-right book */}
       <rect x="10" y="7" width="7" height="5" rx="1" />
     </svg>
   );
@@ -35,10 +32,8 @@ function IconGenres() {
 function IconAuthors() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      {/* Pen nib */}
       <path d="M14 3 L17 6 L9 14 L5 15 L6 11 Z" />
       <line x1="12" y1="5" x2="15" y2="8" />
-      {/* Underline */}
       <line x1="4" y1="17" x2="16" y2="17" />
     </svg>
   );
@@ -64,57 +59,84 @@ const NAV_ITEMS = [
 
 export default function NavPanel({ currentView, onNavigate }) {
   return (
-    <div style={{
-      position: 'fixed',
-      left: 16,
-      top: '50%',
-      transform: 'translateY(-50%)',
-      zIndex: 200,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 4,
-      background: 'rgba(255,251,245,0.6)',
-      backdropFilter: 'blur(10px)',
-      borderRadius: 18,
-      padding: '10px 6px',
-      boxShadow: '0 4px 24px rgba(80,40,20,0.18), 0 1px 4px rgba(80,40,20,0.08)',
-      border: '1px solid rgba(200,160,120,0.35)',
-    }}>
-      {NAV_ITEMS.map(({ key, Icon, label }) => {
-        const active = currentView === key;
-        return (
-          <button
-            key={key}
-            onClick={() => onNavigate(key)}
-            title={label}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-              padding: '9px 10px',
-              borderRadius: 12,
-              border: 'none',
-              cursor: 'pointer',
-              background: active ? '#8B2840' : 'transparent',
-              color: active ? '#FDF0F3' : '#6B3520',
-              transition: 'all 0.18s',
-              minWidth: 54,
-            }}
-            onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(139,40,64,0.10)'; }}
-            onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
-          >
-            <Icon />
-            <span style={{
-              fontSize: 9, fontFamily: "'DM Sans', sans-serif",
-              fontWeight: 600, letterSpacing: 0.6,
-              textTransform: 'uppercase', lineHeight: 1,
-            }}>
-              {label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <style>{`
+        .nav-panel {
+          position: fixed;
+          left: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 200;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          background: rgba(255,251,245,0.6);
+          backdrop-filter: blur(10px);
+          border-radius: 18px;
+          padding: 10px 6px;
+          box-shadow: 0 4px 24px rgba(80,40,20,0.18), 0 1px 4px rgba(80,40,20,0.08);
+          border: 1px solid rgba(200,160,120,0.35);
+        }
+        .nav-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
+          padding: 9px 10px;
+          border-radius: 12px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.18s;
+          min-width: 54px;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .nav-label {
+          font-size: 9px;
+          font-weight: 600;
+          letter-spacing: 0.6px;
+          text-transform: uppercase;
+          line-height: 1;
+        }
+        @media (max-width: 768px) {
+          .nav-panel {
+            left: 0;
+            right: 0;
+            top: 0;
+            transform: none;
+            flex-direction: row;
+            justify-content: center;
+            border-radius: 0 0 16px 16px;
+            padding: 6px 8px;
+            gap: 2px;
+          }
+          .nav-btn {
+            padding: 7px 10px;
+            min-width: 48px;
+          }
+        }
+      `}</style>
+      <div className="nav-panel">
+        {NAV_ITEMS.map(({ key, Icon, label }) => {
+          const active = currentView === key;
+          return (
+            <button
+              key={key}
+              className="nav-btn"
+              onClick={() => onNavigate(key)}
+              title={label}
+              style={{
+                background: active ? '#8B2840' : 'transparent',
+                color: active ? '#FDF0F3' : '#6B3520',
+              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(139,40,64,0.10)'; }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <Icon />
+              <span className="nav-label">{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }

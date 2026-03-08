@@ -2367,7 +2367,7 @@ export default function App() {
       <NavPanel currentView={currentView} onNavigate={setCurrentView} />
 
       {currentView === 'bookshelf' && (
-    <div style={{
+    <div className="page-root" style={{
       minHeight: "100vh",
       backgroundColor: "#F2E8D9",
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
@@ -2389,6 +2389,9 @@ export default function App() {
   .bookshelf-row { flex-direction: column !important; }
   .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; gap: 16px; padding-bottom: 12px; }
   .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin-bottom: 0; align-self: center; margin-right: 8px; }
+}
+        @media (max-width: 768px) {
+  .page-root { padding-top: 64px; }
 }
       `}</style>
 
@@ -2646,19 +2649,27 @@ export default function App() {
       )}
 
       {currentView === 'timeline' && (
-        <StatsTimeline books={books} onBack={() => setCurrentView('bookshelf')} />
+        <div className="page-root">
+          <StatsTimeline books={books} onBack={() => setCurrentView('bookshelf')} />
+        </div>
       )}
 
       {currentView === 'genres' && (
-        <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
+        <div className="page-root">
+          <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
+        </div>
       )}
 
       {currentView === 'authors' && (
-        <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
+        <div className="page-root">
+          <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
+        </div>
       )}
 
       {currentView === 'goals' && (
-        <StatsGoals books={books} onBack={() => setCurrentView('bookshelf')} />
+        <div className="page-root">
+          <StatsGoals books={books} onBack={() => setCurrentView('bookshelf')} />
+        </div>
       )}
 
       {/* Modals stay outside the view conditional */}
