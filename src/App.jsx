@@ -1456,10 +1456,10 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
     height: 155,
     alignSelf: "flex-end",
     flexShrink: 0,
-    background: "linear-gradient(180deg, #A83858 0%, #8B2840 30%, #722035 70%, #5C1828 100%)",
+    background: "linear-gradient(180deg, #7A5030 0%, #5C3A1E 30%, #4A2C14 70%, #3A2010 100%)",
     boxShadow: isRight
-      ? "-4px 4px 12px rgba(0,0,0,0.48), inset 2px 0 5px rgba(255,180,200,0.15)"
-      : "4px 4px 12px rgba(0,0,0,0.48), inset -2px 0 5px rgba(255,180,200,0.15)",
+      ? "-4px 4px 12px rgba(0,0,0,0.48), inset 2px 0 5px rgba(255,200,150,0.1)"
+      : "4px 4px 12px rgba(0,0,0,0.48), inset -2px 0 5px rgba(255,200,150,0.1)",
     ...bookendShape,
   };
 
@@ -1619,6 +1619,106 @@ function StatsBar({ books }) {
   );
 }
 
+function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
+  const [name, setName] = useState(settings.name || "My Bookshelf");
+  const [imageUrl, setImageUrl] = useState(settings.imageUrl || "");
+  const [urlInput, setUrlInput] = useState(settings.imageUrl || "");
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { setImageUrl(ev.target.result); setUrlInput(""); };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    onSave({ name: name.trim() || "My Bookshelf", imageUrl });
+    onClose();
+  };
+
+  const overlayStyle = {
+    position: "fixed", inset: 0, background: "rgba(20,10,5,0.7)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 1000, padding: 20,
+  };
+  const modalStyle = {
+    background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16,
+    padding: 32, width: "100%", maxWidth: 420,
+    fontFamily: "'DM Sans', sans-serif",
+  };
+  const labelStyle = { color: "#D4A843", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, display: "block", marginBottom: 6 };
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", borderRadius: 8,
+    border: "1px solid #4A3728", background: "#2C1D12",
+    color: "#E8D5B7", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+    outline: "none", boxSizing: "border-box",
+  };
+
+  const preview = imageUrl || defaultImageUrl;
+
+  return (
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={modalStyle} onClick={e => e.stopPropagation()}>
+        <h2 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 24px", fontSize: 22 }}>
+          Edit Profile
+        </h2>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Site Name</label>
+          <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="My Bookshelf" />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Header Image</label>
+          {preview && (
+            <div style={{ marginBottom: 10, borderRadius: 8, overflow: "hidden", height: 80 }}>
+              <img src={preview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div>
+              <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Upload from device</label>
+              <input type="file" accept="image/*" onChange={handleFile}
+                style={{ color: "#BFA88A", fontSize: 13, cursor: "pointer" }} />
+            </div>
+            <div>
+              <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Or paste an image URL</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input style={{ ...inputStyle, flex: 1 }} value={urlInput}
+                  onChange={e => setUrlInput(e.target.value)}
+                  placeholder="https://..." />
+                <button onClick={() => setImageUrl(urlInput)}
+                  style={{
+                    padding: "10px 14px", borderRadius: 8, border: "1px solid #4A3728",
+                    background: "#2C1D12", color: urlInput ? "#D4A843" : "#4A3728",
+                    fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+                    cursor: urlInput ? "pointer" : "not-allowed",
+                  }}>
+                  Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24 }}>
+          <button onClick={onClose} style={{
+            padding: "10px 20px", borderRadius: 8, border: "1px solid #4A3728",
+            background: "transparent", color: "#BFA88A",
+            fontFamily: "'DM Sans', sans-serif", fontSize: 14, cursor: "pointer",
+          }}>Cancel</button>
+          <button onClick={handleSave} style={{
+            padding: "10px 24px", borderRadius: 8, border: "none",
+            background: "#8B2840", color: "#F9EDE8",
+            fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer",
+          }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { books: syncedBooks, loading: syncLoading } = useGoodreadsSync(RAW_BOOKS);
   const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, customColors, setCustomColor } = useLocalData();
@@ -1633,6 +1733,18 @@ export default function App() {
   const [pulledBookId, setPulledBookId] = useState(null);
   const pullTimeoutRef = useRef(null);
   const [currentView, setCurrentView] = useState('bookshelf');
+  const [siteSettings, setSiteSettings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}'); } catch { return {}; }
+  });
+  const [showSettings, setShowSettings] = useState(false);
+
+  const updateSiteSettings = (changes) => {
+    setSiteSettings(prev => {
+      const next = { ...prev, ...changes };
+      localStorage.setItem('bookshelf_settings_v1', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const manualBookIds = useMemo(() => new Set(manualBooks.map(b => b.id)), [manualBooks]);
 
@@ -1846,39 +1958,50 @@ export default function App() {
         select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B3520' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
       `}</style>
 
-      {/* Header */}
-      <div style={{
-        padding: "36px 20px 24px", textAlign: "center",
-        position: "relative", overflow: "hidden",
-        borderRadius: "0 0 40px 40px",
-      }}>
+      {/* Cherry tree + Stats wrapper — single background layer */}
+      <div style={{ position: "relative", overflow: "hidden", borderRadius: "0 0 40px 40px" }}>
         {/* Cherry tree photo */}
         <div aria-hidden="true" style={{
           position: "absolute", inset: 0,
-          backgroundImage: `url("${cherryTreeImg}")`,
+          backgroundImage: `url("${siteSettings.imageUrl || cherryTreeImg}")`,
           backgroundSize: "cover",
           backgroundPosition: "center 22%",
           backgroundRepeat: "no-repeat",
         }} />
-        {/* Gradient overlay — fades fully into page cream at bottom */}
+        {/* Gradient — stays transparent through header + stats, fades to cream at very bottom */}
         <div aria-hidden="true" style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, rgba(252,228,239,0.38) 0%, rgba(252,210,220,0.65) 55%, rgba(242,232,217,0.92) 85%, rgba(242,232,217,1) 100%)",
+          background: "linear-gradient(to bottom, rgba(252,228,239,0.28) 0%, rgba(252,220,230,0.42) 35%, rgba(252,210,220,0.6) 60%, rgba(242,232,217,0.88) 85%, rgba(242,232,217,1) 100%)",
         }} />
-        {/* Content sits above overlays */}
-        <div style={{ position: "relative", zIndex: 1 }}>
+
+        {/* Header content */}
+        <div style={{ padding: "36px 20px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
+          {/* Profile / edit button — top right */}
+          <button
+            onClick={() => setShowSettings(true)}
+            title="Edit profile"
+            style={{
+              position: "absolute", top: 16, right: 16,
+              background: "rgba(255,255,255,0.28)", border: "1px solid rgba(92,15,30,0.3)",
+              borderRadius: "50%", width: 36, height: 36,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", backdropFilter: "blur(4px)",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C0F1E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+
           <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
             <svg width="40" height="34" viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Back book (tallest) */}
               <rect x="2" y="4" width="8" height="26" rx="1" fill="#8B2840" opacity="0.5"/>
               <rect x="2" y="4" width="2" height="26" fill="#6B1830" opacity="0.5"/>
-              {/* Middle book */}
               <rect x="11" y="8" width="9" height="22" rx="1" fill="#5C3A1E" opacity="0.65"/>
               <rect x="11" y="8" width="2.5" height="22" fill="#3A2010" opacity="0.65"/>
-              {/* Front book (slightly leaning) */}
               <rect x="21" y="6" width="10" height="24" rx="1" fill="#8B2840"/>
               <rect x="21" y="6" width="3" height="24" fill="#6B1830"/>
-              {/* Ground line */}
               <line x1="1" y1="30" x2="33" y2="30" stroke="#5C0F1E" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round"/>
             </svg>
           </div>
@@ -1889,28 +2012,30 @@ export default function App() {
             WebkitTextStroke: "1.5px #1a0810",
             paintOrder: "stroke fill",
           }}>
-            My Bookshelf
+            {siteSettings.name || "My Bookshelf"}
           </h1>
           <RotatingQuote books={books} />
         </div>
+
+        {syncLoading && (
+          <div style={{
+            textAlign: 'center', padding: '6px', fontSize: 12,
+            color: '#8B5E3C', fontFamily: "'DM Sans', sans-serif",
+            opacity: 0.7, position: "relative", zIndex: 1,
+          }}>
+            Syncing with Goodreads…
+          </div>
+        )}
+
+        {/* Stats — still over the cherry tree */}
+        <div style={{ position: "relative", zIndex: 1, paddingBottom: 28 }}>
+          <StatsBar books={books} />
+        </div>
       </div>
 
-      {syncLoading && (
-        <div style={{
-          textAlign: 'center', padding: '6px', fontSize: 12,
-          color: '#8B5E3C', fontFamily: "'DM Sans', sans-serif",
-          opacity: 0.7,
-        }}>
-          Syncing with Goodreads…
-        </div>
-      )}
-      {/* Stats + Controls — sits on page cream */}
-      <div style={{
-        marginTop: 0,
-        paddingBottom: 16,
-      }}>
-      {/* Stats */}
-      <StatsBar books={books} />
+      {/* Controls */}
+      <div style={{ paddingBottom: 16 }}>
+      <div style={{ display: "none" }} />{/* placeholder to preserve structure */}
 
       {/* Controls */}
       <div style={{ padding: "24px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
@@ -2005,7 +2130,7 @@ export default function App() {
           </button>
         </div>
       </div>
-      </div>{/* end controls band */}
+      </div>{/* end controls */}
 
       {/* Bookshelf */}
       <div style={{ padding: "20px 20px 60px", maxWidth: 1100, margin: "0 auto", position: "relative" }}>
@@ -2096,6 +2221,14 @@ export default function App() {
         />
       )}
       {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} books={books} />}
+      {showSettings && (
+        <SiteSettingsModal
+          settings={siteSettings}
+          defaultImageUrl={cherryTreeImg}
+          onSave={updateSiteSettings}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </>
   );
 }
