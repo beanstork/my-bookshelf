@@ -258,6 +258,25 @@ const BOOK_QUOTES = [
   { text: "The books that the world calls immoral are books that show the world its own shame.", book: "The Picture of Dorian Gray", by: "Oscar Wilde" },
   { text: "It is not the lives we regret not living that are the heaviest, but the regrets themselves.", book: "The Midnight Library", by: "Matt Haig" },
   { text: "Name one hero who was happy.", book: "The Song of Achilles", by: "Madeline Miller" },
+  { text: "There are three things all wise men fear: the sea in storm, a night with no moon, and the anger of a gentle man.", book: "The Name of the Wind", by: "Patrick Rothfuss" },
+  { text: "There's always another secret.", book: "Mistborn: The Final Empire", by: "Brandon Sanderson" },
+  { text: "Life before death. Strength before weakness. Journey before destination.", book: "The Way of Kings", by: "Brandon Sanderson" },
+  { text: "The most important words a man can say are, 'I will do better.'", book: "Oathbringer", by: "Brandon Sanderson" },
+  { text: "Ralph wept for the end of innocence, the darkness of man's heart.", book: "Lord of the Flies", by: "William Golding" },
+  { text: "In the moment when I truly understand my enemy, understand him well enough to defeat him, then in that very moment I also love him.", book: "Ender's Game", by: "Orson Scott Card" },
+  { text: "If people were rain, I was drizzle and she was a hurricane.", book: "Looking for Alaska", by: "John Green" },
+  { text: "God does not play dice with the universe; He plays an ineffable game of His own devising.", book: "Good Omens", by: "Terry Pratchett & Neil Gaiman" },
+  { text: "I am afraid. Not of life, or death, or nothingness, but of wasting it as if I had never been.", book: "Flowers for Algernon", by: "Daniel Keyes" },
+  { text: "All human wisdom is summed up in two words — wait and hope.", book: "The Count of Monte Cristo", by: "Alexandre Dumas" },
+  { text: "I think it pisses God off if you walk by the color purple in a field somewhere and don't notice it.", book: "The Color Purple", by: "Alice Walker" },
+  { text: "A guy goes nuts if he ain't got nobody.", book: "Of Mice and Men", by: "John Steinbeck" },
+  { text: "We tell people to follow their dreams, but you can only dream of what you can imagine.", book: "Born a Crime", by: "Trevor Noah" },
+  { text: "You could call it forgiveness; it was really just the decision to pay attention to something else.", book: "Educated", by: "Tara Westover" },
+  { text: "Time takes it all whether you want it to or not.", book: "It", by: "Stephen King" },
+  { text: "What is the point of being alive if you don't at least try to do something remarkable?", book: "An Abundance of Katherines", by: "John Green" },
+  { text: "The thing about a spiral is, if you follow it inward, it never actually ends.", book: "Turtles All the Way Down", by: "John Green" },
+  { text: "There is only one sin, only one. And that is theft.", book: "The Kite Runner", by: "Khaled Hosseini" },
+  { text: "It is very hard for evil to take hold of the unconsenting soul.", book: "A Wizard of Earthsea", by: "Ursula K. Le Guin" },
 ];
 
 function RotatingQuote({ books }) {
@@ -275,7 +294,7 @@ function RotatingQuote({ books }) {
     setTimeout(() => {
       setIdx(i => (i + dir + activePool.length) % activePool.length);
       setVisible(true);
-    }, 300);
+    }, 500);
   }, [activePool.length]);
 
   useEffect(() => {
@@ -300,7 +319,7 @@ function RotatingQuote({ books }) {
         onMouseLeave={e => e.currentTarget.style.opacity = 0.55}
         aria-label="Previous quote"
       >‹</button>
-      <div style={{ transition: "opacity 0.3s ease", opacity: visible ? 1 : 0, textAlign: "center", maxWidth: 520 }}>
+      <div style={{ transition: "opacity 0.5s ease-in-out", opacity: visible ? 1 : 0, textAlign: "center", maxWidth: 520, minHeight: 85 }}>
         <p style={{
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
@@ -1319,12 +1338,12 @@ function StatsBar({ books }) {
 
   return (
     <div style={{
-      display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
+      display: "flex", gap: 10, justifyContent: "center", flexWrap: "nowrap",
       maxWidth: 900, margin: "16px auto 0", padding: "0 20px",
     }}>
       {stats.map((s) => (
         <div key={s.label} style={{
-          padding: "14px 20px", textAlign: "center", minWidth: 100, flex: 1, maxWidth: 160,
+          padding: "14px 20px", textAlign: "center", minWidth: 70, flex: 1, maxWidth: 160,
           background: "rgba(255,255,255,0.75)",
           borderRadius: 10,
           boxShadow: "0 2px 10px rgba(120,70,40,0.10), 0 1px 3px rgba(120,70,40,0.07)",
@@ -1657,12 +1676,12 @@ export default function App() {
         {/* Shelf filter */}
         <div style={{ display: "flex", marginBottom: 12 }}>
           {[
+            { key: "all", label: "All" },
             { key: "read", label: "Read" },
             { key: "currently-reading", label: "Reading" },
             { key: "to-read", label: "To Read" },
             { key: "dnf", label: "DNF" },
             { key: "reread", label: "To Reread" },
-            { key: "all", label: "All" },
           ].map(s => (
             <button key={s.key} onClick={() => setFilterShelf(s.key)} style={pillStyle(filterShelf === s.key)}>
               {s.label} <span style={{ opacity: 0.6, marginLeft: 4 }}>({shelfCounts[s.key]})</span>
