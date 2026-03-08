@@ -1290,7 +1290,7 @@ export default function App() {
 
     // Get sort key for a group (use first book's value for series)
     const getSortKey = (b) => {
-      if (sortBy === "dateRead") return b.dr || b.da || "0000/00/00";
+      if (sortBy === "dateRead") return b.dr || "";
       if (sortBy === "rating") return b.r;
       if (sortBy === "title") return b.t.toLowerCase();
       if (sortBy === "author") return b.a.toLowerCase() + "\t" + b.t.toLowerCase();
@@ -1302,9 +1302,9 @@ export default function App() {
     // For series, use the latest/highest/first value in the series for sorting
     const getSeriesSortKey = (arr) => {
       if (sortBy === "dateRead") return arr.reduce((max, b) => {
-        const k = b.dr || b.da || "0000/00/00";
+        const k = b.dr || "";
         return k > max ? k : max;
-      }, "0000/00/00");
+      }, "");
       if (sortBy === "rating") return Math.max(...arr.map(b => b.r));
       if (sortBy === "title") return arr[0].sn.toLowerCase();
       if (sortBy === "author") return arr[0].a.toLowerCase() + "\t" + arr[0].sn.toLowerCase();
@@ -1329,9 +1329,21 @@ export default function App() {
       return sortAsc ? -result : result;
     });
 
+    // For dateRead sort: move items with no date read to the end
+    let sortedItems = items;
+    if (sortBy === "dateRead") {
+      const hasDate = items.filter(item =>
+        item.type === "single" ? item.book.dr : item.books.some(b => b.dr)
+      );
+      const noDate = items.filter(item =>
+        item.type === "single" ? !item.book.dr : !item.books.some(b => b.dr)
+      );
+      sortedItems = [...hasDate, ...noDate];
+    }
+
     // Flatten
     const result = [];
-    items.forEach(item => {
+    sortedItems.forEach(item => {
       if (item.type === "single") result.push(item.book);
       else item.books.forEach(b => result.push(b));
     });
