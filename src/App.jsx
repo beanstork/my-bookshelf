@@ -856,6 +856,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [grSearching, setGrSearching] = useState(false);
   const [grUrl, setGrUrl] = useState("");
+  const [grError, setGrError] = useState(false);
 
   // Debounced duplicate check
   useEffect(() => {
@@ -879,6 +880,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
 
   const fetchAndPopulate = async ({ url } = {}) => {
     setGrSearching(true);
+    setGrError(false);
     try {
       let meta = null;
       if (url) {
@@ -900,13 +902,18 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
         if (meta.title)  setTitle(meta.title);
         if (meta.author) setAuthor(meta.author);
         if (meta.pages)  setPages(String(meta.pages));
+      } else {
+        setGrError(true);
       }
-    } catch {}
-    setGrSearching(false);
+    } catch {
+      setGrError(true);
+    } finally {
+      setGrSearching(false);
+    }
   };
 
   const handleSubmit = async () => {
-    if (!title || submitting) return;
+    if (!title || submitting || grSearching) return;
     setSubmitting(true);
     let grId = null;
     try {
@@ -998,6 +1005,11 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
                 {grSearching ? "…" : "🔍"}
               </button>
             </div>
+            {grError && (
+              <div style={{ marginTop: 6, color: "#C0735A", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
+                Couldn't find this book on Goodreads.
+              </div>
+            )}
             {duplicateWarning && (
               <div style={{ marginTop: 8, background: "rgba(212,168,67,0.1)", border: "1px solid rgba(212,168,67,0.35)", borderRadius: 8, padding: "10px 12px" }}>
                 <div style={{ color: "#D4A843", fontWeight: 600, fontSize: 12, marginBottom: 4, fontFamily: "'DM Sans', sans-serif" }}>
@@ -1095,8 +1107,8 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
             background: "#A0445A", border: "none",
             borderRadius: 8, padding: "12px 24px", color: "#F9EDE8",
             fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 700,
-            cursor: (title && !submitting) ? "pointer" : "not-allowed",
-            opacity: (title && !submitting) ? 1 : 0.5, transition: "opacity 0.2s",
+            cursor: (title && !submitting && !grSearching) ? "pointer" : "not-allowed",
+            opacity: (title && !submitting && !grSearching) ? 1 : 0.5, transition: "opacity 0.2s",
           }}>
             {submitting ? "Searching Goodreads…" : "Add to Bookshelf"}
           </button>
