@@ -2393,6 +2393,10 @@ export default function App() {
         @media (max-width: 768px) {
   .page-root { padding-top: 64px; }
 }
+        @media (max-width: 768px) {
+  .stats-bar-wrap { padding: 0 8px 14px; box-sizing: border-box; width: 100%; }
+  .controls-wrap { padding: 10px 10px 6px; box-sizing: border-box; width: 100%; }
+}
       `}</style>
 
       {/* Cherry tree + Stats wrapper — single background layer */}
@@ -2460,7 +2464,7 @@ export default function App() {
         )}
 
         {/* Stats — still over the cherry tree */}
-        <div style={{ position: "relative", zIndex: 1, paddingBottom: 14 }}>
+        <div className="stats-bar-wrap" style={{ position: "relative", zIndex: 1, paddingBottom: 14 }}>
           <StatsBar books={books} />
         </div>
       </div>
@@ -2470,7 +2474,7 @@ export default function App() {
       <div style={{ display: "none" }} />{/* placeholder to preserve structure */}
 
       {/* Controls */}
-      <div style={{ padding: "12px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
+      <div className="controls-wrap" style={{ padding: "12px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
         {/* Search */}
         <div style={{ position: "relative", marginBottom: 16 }}>
           <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8B5E3C", display: "flex" }}>
