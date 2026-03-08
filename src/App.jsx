@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import cherryTreeImg from '../images/cherry-tree.jpg';
+import charizardImg from '../images/charizard.webp';
 import useGoodreadsSync from './useGoodreadsSync.js';
 import useCoverColors from './useCoverColors.js';
 import { useLocalData } from './useLocalData.js';
@@ -1130,14 +1131,14 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
   ][shapeIndex];
 
   const bookendStyle = {
-    width: 26,
+    width: 34,
     height: 130,
     alignSelf: "flex-end",
     flexShrink: 0,
-    background: "linear-gradient(180deg, #D4BC96 0%, #C4A882 25%, #B89A70 65%, #A88055 100%)",
+    background: "linear-gradient(180deg, #B8A07A 0%, #A08860 25%, #8A7248 65%, #6E5230 100%)",
     boxShadow: isRight
-      ? "-4px 4px 10px rgba(0,0,0,0.38), inset 2px 0 4px rgba(255,220,180,0.2)"
-      : "4px 4px 10px rgba(0,0,0,0.38), inset -2px 0 4px rgba(255,220,180,0.2)",
+      ? "-4px 4px 12px rgba(0,0,0,0.48), inset 2px 0 5px rgba(255,210,160,0.18)"
+      : "4px 4px 12px rgba(0,0,0,0.48), inset -2px 0 5px rgba(255,210,160,0.18)",
     ...bookendShape,
   };
 
@@ -1160,6 +1161,20 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
             isPulled={pulledBookId === book.id}
           />
         ))}
+        {shelfIndex === 1 && (
+          <img
+            src={charizardImg}
+            alt="Charizard LEGO figure"
+            style={{
+              height: 118,
+              width: "auto",
+              alignSelf: "flex-end",
+              flexShrink: 0,
+              marginLeft: 8,
+              filter: "drop-shadow(2px 4px 8px rgba(0,0,0,0.45))",
+            }}
+          />
+        )}
         {isRight && <div aria-hidden="true" style={bookendStyle} />}
       </div>
       {/* Shelf plank */}
