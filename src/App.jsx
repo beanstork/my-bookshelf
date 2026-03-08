@@ -1150,8 +1150,8 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
         padding: "0 12px", minHeight: 170,
         flexWrap: "nowrap", overflowX: "auto",
       }}>
-        {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {!isRight && <div style={{ flex: 1 }} />}
+        {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {isRight && <div style={{ flex: 1 }} />}
         {books.map((book, i) => (
           <BookSpine
