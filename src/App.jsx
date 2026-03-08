@@ -286,6 +286,59 @@ const BOOK_QUOTES = [
   { text: "It is very hard for evil to take hold of the unconsenting soul.", book: "A Wizard of Earthsea", by: "Ursula K. Le Guin" },
 ];
 
+const HEADER_ICONS = {
+  books: (
+    <svg width="40" height="34" viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="4" width="8" height="26" rx="1" fill="#8B2840" opacity="0.5"/>
+      <rect x="2" y="4" width="2" height="26" fill="#6B1830" opacity="0.5"/>
+      <rect x="11" y="8" width="9" height="22" rx="1" fill="#5C3A1E" opacity="0.65"/>
+      <rect x="11" y="8" width="2.5" height="22" fill="#3A2010" opacity="0.65"/>
+      <rect x="21" y="6" width="10" height="24" rx="1" fill="#8B2840"/>
+      <rect x="21" y="6" width="3" height="24" fill="#6B1830"/>
+      <line x1="1" y1="30" x2="33" y2="30" stroke="#5C0F1E" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round"/>
+    </svg>
+  ),
+  feather: (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M34 4 C20 6 10 16 6 34" stroke="#8B2840" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      <path d="M34 4 C36 12 34 22 22 32 L6 34 C14 22 22 14 34 4 Z" fill="#8B2840" opacity="0.75"/>
+      <path d="M34 4 C28 10 18 18 6 34 C12 26 18 18 28 10 L34 4 Z" fill="#6B1830" opacity="0.45"/>
+      <path d="M6 34 C4 38 3 39 2 38 C3 37 4 35 6 34 Z" fill="#8B2840"/>
+    </svg>
+  ),
+  moon: (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30 20 C30 27.7 23.7 34 16 34 C14.1 34 12.3 33.6 10.6 33 C16.4 31.1 20.5 25.5 20.5 19 C20.5 12.5 16.4 6.9 10.6 5 C12.3 4.4 14.1 4 16 4 C23.7 4 30 12.3 30 20 Z" fill="#8B2840"/>
+      <circle cx="29" cy="10" r="1.5" fill="#8B2840" opacity="0.5"/>
+      <circle cx="33" cy="16" r="1" fill="#8B2840" opacity="0.35"/>
+      <circle cx="27" cy="6" r="1" fill="#8B2840" opacity="0.4"/>
+    </svg>
+  ),
+  openbook: (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 10 L20 34" stroke="#8B2840" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M20 10 C15 8 8 8 4 10 L4 32 C8 30 15 30 20 32 Z" fill="#8B2840" opacity="0.55"/>
+      <line x1="8" y1="15" x2="17" y2="13" stroke="#F5ECD7" strokeWidth="1" opacity="0.5"/>
+      <line x1="7" y1="19" x2="17" y2="17" stroke="#F5ECD7" strokeWidth="1" opacity="0.4"/>
+      <line x1="7" y1="23" x2="17" y2="21" stroke="#F5ECD7" strokeWidth="1" opacity="0.4"/>
+      <path d="M20 10 C25 8 32 8 36 10 L36 32 C32 30 25 30 20 32 Z" fill="#8B2840" opacity="0.4"/>
+      <line x1="23" y1="13" x2="33" y2="15" stroke="#F5ECD7" strokeWidth="1" opacity="0.4"/>
+      <line x1="23" y1="17" x2="33" y2="19" stroke="#F5ECD7" strokeWidth="1" opacity="0.4"/>
+      <line x1="23" y1="21" x2="33" y2="23" stroke="#F5ECD7" strokeWidth="1" opacity="0.4"/>
+    </svg>
+  ),
+  compass: (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="16" stroke="#8B2840" strokeWidth="1.2" opacity="0.45"/>
+      <polygon points="20,5 17,20 23,20" fill="#8B2840"/>
+      <polygon points="20,35 23,20 17,20" fill="#8B2840" opacity="0.35"/>
+      <polygon points="35,20 20,17 20,23" fill="#8B2840" opacity="0.5"/>
+      <polygon points="5,20 20,23 20,17" fill="#8B2840" opacity="0.35"/>
+      <circle cx="20" cy="20" r="2.5" fill="#8B2840"/>
+    </svg>
+  ),
+};
+
 function RotatingQuote({ books }) {
   const readTitles = new Set((books || []).filter(b => b.s === 'read').map(b => b.t));
   const pool = readTitles.size > 0
@@ -318,7 +371,7 @@ function RotatingQuote({ books }) {
   };
 
   return (
-    <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <button
         style={arrowStyle}
         onClick={() => navigate(-1)}
@@ -327,22 +380,27 @@ function RotatingQuote({ books }) {
         aria-label="Previous quote"
       >‹</button>
       <div style={{ transition: "opacity 0.5s ease-in-out", opacity: visible ? 1 : 0, textAlign: "center", maxWidth: 520, minHeight: 85 }}>
-        <p style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
-          color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
-          textShadow: "0 1px 6px rgba(252,228,239,0.95)",
-          lineHeight: 1.5,
+        <div style={{
+          background: "rgba(255,248,244,0.28)",
+          borderRadius: 14,
+          padding: "10px 18px",
+          display: "inline-block",
         }}>
-          &ldquo;{quote.text}&rdquo;
-        </p>
-        <p style={{
-          fontFamily: "'DM Sans', sans-serif",
-          color: "#8B3040", fontSize: 11, margin: "5px 0 0",
-          letterSpacing: "0.08em", textTransform: "uppercase",
-          textShadow: "0 1px 4px rgba(252,228,239,0.9)",
-        }}>
-          &mdash; {quote.book} &middot; {quote.by}
-        </p>
+          <p style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
+            lineHeight: 1.5,
+          }}>
+            &ldquo;{quote.text}&rdquo;
+          </p>
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            color: "#8B3040", fontSize: 11, margin: "5px 0 0",
+            letterSpacing: "0.08em", textTransform: "uppercase",
+          }}>
+            &mdash; {quote.book} &middot; {quote.by}
+          </p>
+        </div>
       </div>
       <button
         style={arrowStyle}
@@ -1600,7 +1658,7 @@ function StatsBar({ books }) {
   return (
     <div style={{
       display: "flex", gap: 10, justifyContent: "center", flexWrap: "nowrap",
-      maxWidth: 900, margin: "16px auto 0", padding: "0 20px",
+      maxWidth: 900, margin: "8px auto 0", padding: "0 20px",
     }}>
       {stats.map((s) => (
         <div key={s.label} style={{
@@ -1623,6 +1681,8 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const [name, setName] = useState(settings.name || "My Bookshelf");
   const [imageUrl, setImageUrl] = useState(settings.imageUrl || "");
   const [urlInput, setUrlInput] = useState(settings.imageUrl || "");
+  const [imagePosition, setImagePosition] = useState(settings.imagePosition !== undefined ? settings.imagePosition : 22);
+  const [selectedIcon, setSelectedIcon] = useState(settings.headerIcon || 'books');
 
   const handleFile = (e) => {
     const file = e.target.files[0];
@@ -1633,7 +1693,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   };
 
   const handleSave = () => {
-    onSave({ name: name.trim() || "My Bookshelf", imageUrl });
+    onSave({ name: name.trim() || "My Bookshelf", imageUrl, imagePosition, headerIcon: selectedIcon });
     onClose();
   };
 
@@ -1672,8 +1732,18 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Header Image</label>
           {preview && (
-            <div style={{ marginBottom: 10, borderRadius: 8, overflow: "hidden", height: 80 }}>
-              <img src={preview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden", height: 80 }}>
+              <img src={preview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `center ${imagePosition}%` }} />
+            </div>
+          )}
+          {preview && (
+            <div style={{ marginBottom: 10 }}>
+              <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Drag to reposition image</label>
+              <input
+                type="range" min="0" max="100" value={imagePosition}
+                onChange={e => setImagePosition(Number(e.target.value))}
+                style={{ width: "100%", cursor: "ns-resize", accentColor: "#8B2840" }}
+              />
             </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1699,6 +1769,27 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Header Icon</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {Object.entries(HEADER_ICONS).map(([key, icon]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelectedIcon(key)}
+                style={{
+                  padding: 10, borderRadius: 10, cursor: "pointer",
+                  border: selectedIcon === key ? "2px solid #D4A843" : "1px solid #4A3728",
+                  background: selectedIcon === key ? "rgba(212,168,67,0.15)" : "#2C1D12",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {icon}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1965,7 +2056,7 @@ export default function App() {
           position: "absolute", inset: 0,
           backgroundImage: `url("${siteSettings.imageUrl || cherryTreeImg}")`,
           backgroundSize: "cover",
-          backgroundPosition: "center 22%",
+          backgroundPosition: `center ${siteSettings.imagePosition !== undefined ? siteSettings.imagePosition : 22}%`,
           backgroundRepeat: "no-repeat",
         }} />
         {/* Gradient — stays transparent through header + stats, fades to cream at very bottom */}
@@ -1975,7 +2066,7 @@ export default function App() {
         }} />
 
         {/* Header content */}
-        <div style={{ padding: "36px 20px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
+        <div style={{ padding: "28px 20px 8px", textAlign: "center", position: "relative", zIndex: 1 }}>
           {/* Profile / edit button — top right */}
           <button
             onClick={() => setShowSettings(true)}
@@ -1989,21 +2080,13 @@ export default function App() {
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C0F1E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              <path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/>
+              <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1 1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
             </svg>
           </button>
 
-          <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-            <svg width="40" height="34" viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="4" width="8" height="26" rx="1" fill="#8B2840" opacity="0.5"/>
-              <rect x="2" y="4" width="2" height="26" fill="#6B1830" opacity="0.5"/>
-              <rect x="11" y="8" width="9" height="22" rx="1" fill="#5C3A1E" opacity="0.65"/>
-              <rect x="11" y="8" width="2.5" height="22" fill="#3A2010" opacity="0.65"/>
-              <rect x="21" y="6" width="10" height="24" rx="1" fill="#8B2840"/>
-              <rect x="21" y="6" width="3" height="24" fill="#6B1830"/>
-              <line x1="1" y1="30" x2="33" y2="30" stroke="#5C0F1E" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round"/>
-            </svg>
+          <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
+            {HEADER_ICONS[siteSettings.headerIcon || 'books']}
           </div>
           <h1 style={{
             fontFamily: "'Playfair Display', Georgia, serif",
@@ -2028,7 +2111,7 @@ export default function App() {
         )}
 
         {/* Stats — still over the cherry tree */}
-        <div style={{ position: "relative", zIndex: 1, paddingBottom: 28 }}>
+        <div style={{ position: "relative", zIndex: 1, paddingBottom: 14 }}>
           <StatsBar books={books} />
         </div>
       </div>
@@ -2038,7 +2121,7 @@ export default function App() {
       <div style={{ display: "none" }} />{/* placeholder to preserve structure */}
 
       {/* Controls */}
-      <div style={{ padding: "24px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ padding: "12px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
         {/* Search */}
         <div style={{ position: "relative", marginBottom: 16 }}>
           <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8B5E3C", display: "flex" }}>
