@@ -1403,9 +1403,16 @@ export default function App() {
     Object.entries(seriesMap).forEach(([name, arr]) => items.push({ type: "series", books: arr, sortKey: getSeriesSortKey(arr), name }));
 
     items.sort((a, b) => {
+      if (sortBy === "dateRead") {
+        // Dateless items always sink to the bottom regardless of sort direction
+        if (!a.sortKey && !b.sortKey) return 0;
+        if (!a.sortKey) return 1;
+        if (!b.sortKey) return -1;
+        const result = b.sortKey.localeCompare(a.sortKey);
+        return sortAsc ? -result : result;
+      }
       let result;
-      if (sortBy === "dateRead") result = b.sortKey.localeCompare(a.sortKey);
-      else if (sortBy === "rating") result = b.sortKey - a.sortKey;
+      if (sortBy === "rating") result = b.sortKey - a.sortKey;
       else if (sortBy === "title" || sortBy === "author") result = a.sortKey.localeCompare(b.sortKey);
       else if (sortBy === "pages") result = b.sortKey - a.sortKey;
       else if (sortBy === "color") result = a.sortKey - b.sortKey;
@@ -1413,21 +1420,9 @@ export default function App() {
       return sortAsc ? -result : result;
     });
 
-    // For dateRead sort: move items with no date read to the end
-    let sortedItems = items;
-    if (sortBy === "dateRead") {
-      const hasDate = items.filter(item =>
-        item.type === "single" ? item.book.dr : item.books.some(b => b.dr)
-      );
-      const noDate = items.filter(item =>
-        item.type === "single" ? !item.book.dr : !item.books.some(b => b.dr)
-      );
-      sortedItems = [...hasDate, ...noDate];
-    }
-
     // Flatten
     const result = [];
-    sortedItems.forEach(item => {
+    items.forEach(item => {
       if (item.type === "single") result.push(item.book);
       else item.books.forEach(b => result.push(b));
     });
