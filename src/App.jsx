@@ -1150,9 +1150,8 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
         padding: "0 12px", minHeight: 170,
         flexWrap: "nowrap", overflowX: "auto",
       }}>
-        {!isRight && <div style={{ flex: 1 }} />}
-        {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {isRight && <div style={{ flex: 1 }} />}
+        {isRight && <div aria-hidden="true" style={bookendStyle} />}
         {books.map((book, i) => (
           <BookSpine
             key={book.id}
@@ -1163,7 +1162,8 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
             isPulled={pulledBookId === book.id}
           />
         ))}
-        {isRight && <div aria-hidden="true" style={bookendStyle} />}
+        {!isRight && <div aria-hidden="true" style={bookendStyle} />}
+        {!isRight && <div style={{ flex: 1 }} />}
       </div>
       {/* Shelf plank */}
       <div style={{
