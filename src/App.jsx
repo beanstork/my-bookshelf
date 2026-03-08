@@ -1120,7 +1120,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
 
 
 function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId = null }) {
-  const isRight = shelfIndex % 2 === 0;
+  const isRight = shelfIndex % 2 === 1;
   const shapeIndex = shelfIndex % 4;
 
   const bookendShape = [
