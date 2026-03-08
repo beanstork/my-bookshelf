@@ -854,6 +854,8 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [grSearching, setGrSearching] = useState(false);
+  const [grUrl, setGrUrl] = useState("");
 
   // Debounced duplicate check
   useEffect(() => {
@@ -874,6 +876,34 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
     }, 400);
     return () => clearTimeout(timer);
   }, [title, author, books]);
+
+  const fetchAndPopulate = async ({ url } = {}) => {
+    setGrSearching(true);
+    try {
+      let meta = null;
+      if (url) {
+        const res = await fetch(`/api/goodreads-book?url=${encodeURIComponent(url)}`);
+        if (res.ok) meta = await res.json();
+      } else {
+        const params = new URLSearchParams({ title });
+        if (author) params.set('author', author);
+        const searchRes = await fetch(`/api/search-goodreads?${params}`);
+        if (searchRes.ok) {
+          const data = await searchRes.json();
+          if (data.id) {
+            const metaRes = await fetch(`/api/goodreads-book?id=${encodeURIComponent(data.id)}`);
+            if (metaRes.ok) meta = await metaRes.json();
+          }
+        }
+      }
+      if (meta) {
+        if (meta.title)  setTitle(meta.title);
+        if (meta.author) setAuthor(meta.author);
+        if (meta.pages)  setPages(String(meta.pages));
+      }
+    } catch {}
+    setGrSearching(false);
+  };
 
   const handleSubmit = async () => {
     if (!title || submitting) return;
@@ -951,7 +981,23 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <label style={labelStyle}>Title *</label>
-            <input style={inputStyle} value={title} onChange={e => setTitle(e.target.value)} placeholder="Book title..." />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input style={{ ...inputStyle, flex: 1 }} value={title} onChange={e => setTitle(e.target.value)} placeholder="Book title..." />
+              <button
+                type="button"
+                onClick={() => fetchAndPopulate()}
+                disabled={!title || grSearching}
+                style={{
+                  padding: "10px 14px", borderRadius: 8, border: "1px solid #4A3728",
+                  background: "#2C1D12", color: title && !grSearching ? "#D4A843" : "#4A3728",
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+                  cursor: title && !grSearching ? "pointer" : "not-allowed",
+                  whiteSpace: "nowrap", transition: "color 0.15s",
+                }}
+              >
+                {grSearching ? "…" : "🔍"}
+              </button>
+            </div>
             {duplicateWarning && (
               <div style={{ marginTop: 8, background: "rgba(212,168,67,0.1)", border: "1px solid rgba(212,168,67,0.35)", borderRadius: 8, padding: "10px 12px" }}>
                 <div style={{ color: "#D4A843", fontWeight: 600, fontSize: 12, marginBottom: 4, fontFamily: "'DM Sans', sans-serif" }}>
@@ -969,6 +1015,31 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
           <div>
             <label style={labelStyle}>Author</label>
             <input style={inputStyle} value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author name (optional — Goodreads will fill it in)" />
+          </div>
+          <div>
+            <label style={labelStyle}>Goodreads URL</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                style={{ ...inputStyle, flex: 1 }}
+                value={grUrl}
+                onChange={e => setGrUrl(e.target.value)}
+                placeholder="https://www.goodreads.com/book/show/..."
+              />
+              <button
+                type="button"
+                onClick={() => fetchAndPopulate({ url: grUrl })}
+                disabled={!grUrl || grSearching}
+                style={{
+                  padding: "10px 14px", borderRadius: 8, border: "1px solid #4A3728",
+                  background: "#2C1D12", color: grUrl && !grSearching ? "#D4A843" : "#4A3728",
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+                  cursor: grUrl && !grSearching ? "pointer" : "not-allowed",
+                  whiteSpace: "nowrap", transition: "color 0.15s",
+                }}
+              >
+                {grSearching ? "…" : "🔍"}
+              </button>
+            </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
