@@ -1205,9 +1205,10 @@ function getSeasonalProp(shelfIndex) {
   // Spring: March–May
   if (month >= 3 && month <= 5) {
     // Top shelf gets bonsai tree in spring
+    // viewBox trimmed to y=87 (pot bottom at y=86 + 1px margin)
     if (shelfIndex === 0) {
       return (
-        <svg width="100" height="112" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="100" height="109" viewBox="0 0 80 87" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Wide pot */}
           <path d="M22 74 L24 86 L56 86 L58 74 Z" fill="#C4703A"/>
           <rect x="20" y="70" width="40" height="6" rx="2" fill="#A8582A"/>
@@ -1233,8 +1234,8 @@ function getSeasonalProp(shelfIndex) {
       );
     }
     const plants = [
-      // 0: Cactus — 1.5× (66×81)
-      <svg width="66" height="81" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 0: Cactus — 1.5× (66×77, viewBox trimmed to pot bottom)
+      <svg width="66" height="77" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 36 L14 50 L30 50 L32 36 Z" fill="#C4703A"/>
         <rect x="10" y="32" width="24" height="5" rx="2" fill="#A8582A"/>
         <ellipse cx="22" cy="34" rx="10" ry="2.5" fill="#5A3010" opacity="0.35"/>
@@ -1245,8 +1246,8 @@ function getSeasonalProp(shelfIndex) {
         <line x1="23" y1="24" x2="26" y2="22" stroke="#8BC870" strokeWidth="1"/>
         <line x1="20" y1="30" x2="17" y2="29" stroke="#8BC870" strokeWidth="1"/>
       </svg>,
-      // 1: Leafy plant — 2× (88×108)
-      <svg width="88" height="108" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 1: Leafy plant — 2× (88×102, viewBox trimmed to pot bottom)
+      <svg width="88" height="102" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 36 L14 50 L30 50 L32 36 Z" fill="#C4703A"/>
         <rect x="10" y="32" width="24" height="5" rx="2" fill="#A8582A"/>
         <ellipse cx="22" cy="34" rx="10" ry="2.5" fill="#5A3010" opacity="0.35"/>
@@ -1257,8 +1258,8 @@ function getSeasonalProp(shelfIndex) {
         <ellipse cx="28" cy="12" rx="7" ry="3.5" fill="#6BAA35" transform="rotate(30 28 12)"/>
         <ellipse cx="22" cy="10" rx="5" ry="3" fill="#5A9A28"/>
       </svg>,
-      // 2: Flower — 1.75× (77×95)
-      <svg width="77" height="95" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 2: Flower — 1.75× (77×89, viewBox trimmed to pot bottom)
+      <svg width="77" height="89" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 36 L14 50 L30 50 L32 36 Z" fill="#C4703A"/>
         <rect x="10" y="32" width="24" height="5" rx="2" fill="#A8582A"/>
         <ellipse cx="22" cy="34" rx="10" ry="2.5" fill="#5A3010" opacity="0.35"/>
@@ -1270,8 +1271,8 @@ function getSeasonalProp(shelfIndex) {
         ))}
         <circle cx="22" cy="20" r="4.5" fill="#E07820"/>
       </svg>,
-      // 3: Succulent — 1.5× (66×81)
-      <svg width="66" height="81" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 3: Succulent — 1.5× (66×77, viewBox trimmed to pot bottom)
+      <svg width="66" height="77" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 36 L14 50 L30 50 L32 36 Z" fill="#7A9BAA"/>
         <rect x="10" y="32" width="24" height="5" rx="2" fill="#6A8898"/>
         <ellipse cx="22" cy="34" rx="10" ry="2.5" fill="#5A3010" opacity="0.35"/>
@@ -1290,8 +1291,8 @@ function getSeasonalProp(shelfIndex) {
   // Summer: June–August
   if (month >= 6 && month <= 8) {
     const items = [
-      // 0: Seashell — 1.75× (77×77)
-      <svg width="77" height="77" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 0: Seashell — 1.75× (77×72, viewBox trimmed to bottom at y=41)
+      <svg width="77" height="72" viewBox="0 0 44 41" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="22" cy="30" rx="14" ry="10" fill="#E8C890"/>
         <ellipse cx="22" cy="30" rx="14" ry="10" stroke="#C4A060" strokeWidth="1"/>
         <path d="M22 20 Q28 24 30 30" stroke="#C4A060" strokeWidth="1" fill="none"/>
@@ -1299,8 +1300,8 @@ function getSeasonalProp(shelfIndex) {
         <path d="M22 20 Q23 26 22 30" stroke="#C4A060" strokeWidth="0.8" fill="none"/>
         <ellipse cx="22" cy="19" rx="3" ry="2" fill="#D4B070"/>
       </svg>,
-      // 1: Candle — 1.5× (66×81)
-      <svg width="66" height="81" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 1: Candle — 1.5× (66×77, viewBox trimmed to candle bottom at y=50+1)
+      <svg width="66" height="77" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="16" y="28" width="12" height="22" rx="2" fill="#F5ECD7" stroke="#E0D0B0" strokeWidth="0.5"/>
         {[34, 38, 42].map(y => (
           <path key={y} d={`M18 ${y} Q22 ${y - 2} 26 ${y}`} stroke="#D4B878" strokeWidth="1" fill="none" opacity="0.4"/>
@@ -1309,8 +1310,8 @@ function getSeasonalProp(shelfIndex) {
         <ellipse cx="22" cy="21" rx="3" ry="4" fill="#F4A020" opacity="0.9"/>
         <ellipse cx="22" cy="20" rx="1.5" ry="2" fill="#FFDD80"/>
       </svg>,
-      // 2: Sunflower — 2× (88×108)
-      <svg width="88" height="108" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 2: Sunflower — 2× (88×102, viewBox trimmed to pot bottom)
+      <svg width="88" height="102" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 36 L14 50 L30 50 L32 36 Z" fill="#C4703A"/>
         <rect x="10" y="32" width="24" height="5" rx="2" fill="#A8582A"/>
         <ellipse cx="22" cy="34" rx="10" ry="2.5" fill="#5A3010" opacity="0.35"/>
@@ -1324,8 +1325,8 @@ function getSeasonalProp(shelfIndex) {
         <circle cx="24" cy="17" r="1" fill="#C07838" opacity="0.6"/>
         <circle cx="22" cy="21" r="1" fill="#C07838" opacity="0.6"/>
       </svg>,
-      // 3: Beach bucket — 1.75× (77×95)
-      <svg width="77" height="95" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 3: Beach bucket — 1.75× (77×89, viewBox trimmed to bucket bottom)
+      <svg width="77" height="89" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M13 30 L15 50 L29 50 L31 30 Z" fill="#E8A030"/>
         <rect x="12" y="26" width="20" height="5" rx="2" fill="#D49020"/>
         <path d="M14 26 Q22 20 30 26" stroke="#B07010" strokeWidth="1.5" fill="none"/>
@@ -1339,8 +1340,8 @@ function getSeasonalProp(shelfIndex) {
   // Autumn: September–November
   if (month >= 9 && month <= 11) {
     const items = [
-      // 0: Mini pumpkin — 1.75× (77×84)
-      <svg width="77" height="84" viewBox="0 0 44 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 0: Mini pumpkin — 1.75× (77×81, viewBox trimmed to shadow bottom at y=46)
+      <svg width="77" height="81" viewBox="0 0 44 46" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="22" cy="34" rx="14" ry="10" fill="#E87820"/>
         <ellipse cx="22" cy="34" rx="9" ry="10" fill="#D06010" opacity="0.6"/>
         <ellipse cx="22" cy="34" rx="4" ry="10" fill="#E87820" opacity="0.5"/>
@@ -1348,16 +1349,16 @@ function getSeasonalProp(shelfIndex) {
         <path d="M22 24 Q26 20 28 24" stroke="#5A7830" strokeWidth="1.5" fill="none"/>
         <ellipse cx="22" cy="43" rx="8" ry="2" fill="#C05C00" opacity="0.3"/>
       </svg>,
-      // 1: Acorn — 1.5× (66×66)
-      <svg width="66" height="66" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 1: Acorn — 1.5× (66×65, viewBox trimmed to body bottom at y=43)
+      <svg width="66" height="65" viewBox="0 0 44 43" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="22" cy="32" rx="9" ry="10" fill="#C07838"/>
         <path d="M13 26 Q13 18 22 18 Q31 18 31 26 Z" fill="#7A5428"/>
         <ellipse cx="22" cy="18" rx="9" ry="3" fill="#8A6438"/>
         <line x1="22" y1="15" x2="22" y2="10" stroke="#5A4020" strokeWidth="1.5"/>
         <path d="M22 11 Q25 9 27 12" stroke="#5A4020" strokeWidth="1" fill="none"/>
       </svg>,
-      // 2: Mushroom — 1.75× (77×77)
-      <svg width="77" height="77" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 2: Mushroom — 1.75× (77×74, viewBox trimmed to stem bottom at y=42)
+      <svg width="77" height="74" viewBox="0 0 44 42" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="18" y="30" width="8" height="11" rx="2" fill="#F0E0C8"/>
         <path d="M8 30 Q8 14 22 14 Q36 14 36 30 Z" fill="#C83028"/>
         <ellipse cx="22" cy="30" rx="14" ry="4" fill="#A02018"/>
@@ -1366,8 +1367,8 @@ function getSeasonalProp(shelfIndex) {
         <circle cx="29" cy="26" r="2.5" fill="white" opacity="0.8"/>
         <circle cx="19" cy="29" r="1.5" fill="white" opacity="0.6"/>
       </svg>,
-      // 3: Fallen leaf — 1.75× (77×84)
-      <svg width="77" height="84" viewBox="0 0 44 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      // 3: Fallen leaf — 1.75× (77×75, viewBox trimmed to leaf bottom at y=43)
+      <svg width="77" height="75" viewBox="0 0 44 43" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M22 42 Q6 30 8 16 Q12 6 22 6 Q32 6 36 16 Q38 30 22 42 Z" fill="#D4601C"/>
         <line x1="22" y1="42" x2="22" y2="10" stroke="#B04010" strokeWidth="1.5"/>
         <line x1="22" y1="26" x2="13" y2="19" stroke="#B04010" strokeWidth="1"/>
@@ -1381,8 +1382,8 @@ function getSeasonalProp(shelfIndex) {
 
   // Winter: December–February
   const items = [
-    // 0: Snow globe — 1.75× (77×95)
-    <svg width="77" height="95" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+    // 0: Snow globe — 1.75× (77×93, viewBox trimmed to base bottom at y=53)
+    <svg width="77" height="93" viewBox="0 0 44 53" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="14" y="46" width="16" height="6" rx="2" fill="#B0B0B8"/>
       <rect x="12" y="42" width="20" height="6" rx="2" fill="#A0A0A8"/>
       <circle cx="22" cy="28" r="14" fill="#C8DDF0" opacity="0.85"/>
@@ -1394,8 +1395,8 @@ function getSeasonalProp(shelfIndex) {
       <circle cx="27" cy="22" r="1" fill="white" opacity="0.9"/>
       <circle cx="25" cy="28" r="1" fill="white" opacity="0.9"/>
     </svg>,
-    // 1: Pine sprig in pot — 1.75× (77×95)
-    <svg width="77" height="95" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+    // 1: Pine sprig in pot — 1.75× (77×89, viewBox trimmed to pot bottom)
+    <svg width="77" height="89" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 36 L14 50 L30 50 L32 36 Z" fill="#8B6038"/>
       <rect x="10" y="32" width="24" height="5" rx="2" fill="#7A5028"/>
       <ellipse cx="22" cy="34" rx="10" ry="2.5" fill="#5A3010" opacity="0.35"/>
@@ -1407,8 +1408,8 @@ function getSeasonalProp(shelfIndex) {
       <circle cx="15" cy="23" r="1.5" fill="#E8C030"/>
       <circle cx="29" cy="23" r="1.5" fill="#E8C030"/>
     </svg>,
-    // 2: Candle with holly — 1.5× (66×81)
-    <svg width="66" height="81" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+    // 2: Candle with holly — 1.5× (66×77, viewBox trimmed to candle bottom)
+    <svg width="66" height="77" viewBox="0 0 44 51" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="16" y="28" width="12" height="22" rx="2" fill="#F5ECD7" stroke="#E0D0B0" strokeWidth="0.5"/>
       {[34, 38, 42].map(y => (
         <path key={y} d={`M18 ${y} Q22 ${y - 2} 26 ${y}`} stroke="#D4B878" strokeWidth="1" fill="none" opacity="0.4"/>
@@ -1422,8 +1423,8 @@ function getSeasonalProp(shelfIndex) {
       <circle cx="18" cy="30" r="1.5" fill="#C83028"/>
       <circle cx="26" cy="30" r="1.5" fill="#C83028"/>
     </svg>,
-    // 3: Snowman — 1.75× (77×95)
-    <svg width="77" height="95" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+    // 3: Snowman — 1.75× (77×93, viewBox trimmed to bottom circle at y=53)
+    <svg width="77" height="93" viewBox="0 0 44 53" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="22" cy="44" r="8" fill="#F0F4F8" stroke="#D0D8E0" strokeWidth="1"/>
       <circle cx="22" cy="30" r="6" fill="#F0F4F8" stroke="#D0D8E0" strokeWidth="1"/>
       <circle cx="22" cy="20" r="4.5" fill="#F0F4F8" stroke="#D0D8E0" strokeWidth="1"/>
@@ -1472,7 +1473,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
       }}>
         {isRight && (
           <div style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-            <div style={{ marginBottom: -6, filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.18))" }}>
+            <div style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.18))" }}>
               {getSeasonalProp(shelfIndex)}
             </div>
           </div>
@@ -1491,7 +1492,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
         {!isRight && <div aria-hidden="true" style={bookendStyle} />}
         {!isRight && (
           <div style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-            <div style={{ marginBottom: -6, filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.18))" }}>
+            <div style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.18))" }}>
               {getSeasonalProp(shelfIndex)}
             </div>
           </div>
