@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import cherryTreeImg from '../images/cherry-tree.jpg';
-import plant1Img from '../images/plant1.jpg';
+import plant2Img from '../images/plant2.png';
 import useGoodreadsSync from './useGoodreadsSync.js';
 import useCoverColors from './useCoverColors.js';
 import { useLocalData } from './useLocalData.js';
@@ -1265,7 +1265,7 @@ function getSeasonalProp(shelfIndex) {
   if (month >= 3 && month <= 5) {
     // Top shelf gets custom plant art in spring
     if (shelfIndex === 0) {
-      return <img src={plant1Img} alt="" style={{ height: 110, width: "auto", display: "block" }} />;
+      return <img src={plant2Img} alt="" style={{ height: 110, width: "auto", display: "block" }} />;
     }
     const plants = [
       // 0: Cactus — 1.5× (66×77, viewBox trimmed to pot bottom)
@@ -2055,9 +2055,8 @@ export default function App() {
               cursor: "pointer", backdropFilter: "blur(4px)",
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C0F1E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/>
-              <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1 1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#5C0F1E">
+              <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
             </svg>
           </button>
 
