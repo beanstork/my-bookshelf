@@ -1686,6 +1686,113 @@ const SEASON_LABEL = (() => {
   return m >= 3 && m <= 5 ? 'Spring' : m >= 6 && m <= 8 ? 'Summer' : m >= 9 && m <= 11 ? 'Autumn' : 'Winter';
 })();
 
+function CurrentlyReadingCard({ book, onClick, tiltRight }) {
+  const [hovered, setHovered] = useState(false);
+  const [srcIndex, setSrcIndex] = useState(0);
+
+  const coverSources = [
+    book.cover || null,
+    book.isbn ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg` : null,
+    book.isbn ? `https://books.google.com/books/content?vid=ISBN:${book.isbn}&printsec=frontcover&img=1&zoom=1` : null,
+  ].filter(Boolean);
+  const coverSrc = srcIndex < coverSources.length ? coverSources[srcIndex] : null;
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: 'pointer',
+        marginBottom: 20,
+        transform: hovered
+          ? `rotate(${tiltRight ? 3 : -3}deg) scale(1.04)`
+          : 'rotate(0deg) scale(1)',
+        transition: 'transform 0.2s ease',
+        transformOrigin: 'bottom center',
+        display: 'inline-block',
+        width: '100%',
+      }}
+    >
+      {coverSrc ? (
+        <img
+          src={coverSrc}
+          alt={book.t}
+          onError={() => setSrcIndex(i => i + 1)}
+          style={{
+            width: '100%', maxWidth: 140, display: 'block',
+            borderRadius: 4,
+            boxShadow: '0 6px 20px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.25)',
+          }}
+        />
+      ) : (
+        <div style={{
+          width: '100%', maxWidth: 140, height: 190, borderRadius: 4,
+          background: 'linear-gradient(135deg, #8B6040, #5C3A1E)',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, padding: 8, textAlign: 'center', fontFamily: "'DM Sans', sans-serif" }}>
+            {book.t}
+          </span>
+        </div>
+      )}
+      <p style={{
+        margin: '7px 0 2px', fontSize: 12, fontWeight: 600,
+        color: '#3A2010', fontFamily: "'DM Sans', sans-serif",
+        lineHeight: 1.3, maxWidth: 140,
+        overflow: 'hidden', display: '-webkit-box',
+        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+      }}>
+        {book.t}
+      </p>
+      <p style={{
+        margin: 0, fontSize: 11, color: '#7A5030',
+        fontFamily: "'DM Sans', sans-serif",
+        maxWidth: 140, overflow: 'hidden',
+        whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+      }}>
+        {book.a}
+      </p>
+    </div>
+  );
+}
+
+function CurrentlyReadingPanel({ books, onBookClick }) {
+  return (
+    <div className="cr-panel" style={{
+      width: 180, flexShrink: 0,
+      paddingTop: 4,
+    }}>
+      <h3 style={{
+        fontFamily: "'Playfair Display', Georgia, serif",
+        color: '#5C0F1E', fontSize: 15, fontWeight: 700,
+        margin: '0 0 16px', letterSpacing: '-0.3px',
+      }}>
+        Currently Reading
+      </h3>
+      {books.length === 0 ? (
+        <p style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          color: '#8B7355', fontSize: 14, fontStyle: 'italic',
+          lineHeight: 1.5,
+        }}>
+          Nothing on the nightstand yet
+        </p>
+      ) : (
+        books.map((book, i) => (
+          <CurrentlyReadingCard
+            key={book.id}
+            book={book}
+            onClick={() => onBookClick(book)}
+            tiltRight={i % 2 === 0}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
 function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, onClose }) {
   const fileRef = useRef(null);
 
