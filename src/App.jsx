@@ -427,6 +427,12 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
   const lastFetchedUrl = useRef('');
   const colorInputRef = useRef(null);
 
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   if (!book) return null;
 
   const coverSources = [
@@ -545,7 +551,6 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
         zIndex: 1000, padding: 20,
         animation: "fadeIn 0.15s ease",
       }}
-      onClick={mode === 'view' ? onClose : undefined}
     >
       <div
         onClick={e => e.stopPropagation()}
@@ -997,6 +1002,12 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   const [grUrl, setGrUrl] = useState("");
   const [grError, setGrError] = useState(false);
 
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   // Debounced duplicate check
   useEffect(() => {
     if (!title) { setDuplicateWarning(null); return; }
@@ -1112,7 +1123,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
       background: "rgba(15,10,5,0.85)", backdropFilter: "blur(8px)",
       display: "flex", alignItems: "center", justifyContent: "center",
       zIndex: 1000, padding: 20, animation: "fadeIn 0.25s ease",
-    }} onClick={onClose}>
+    }}>
       <div onClick={e => e.stopPropagation()} style={{
         background: "linear-gradient(135deg, #2C1D12 0%, #1A120B 100%)",
         border: "1px solid #4A3728", borderRadius: 12, padding: 32,
@@ -1678,6 +1689,12 @@ const SEASON_LABEL = (() => {
 function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, onClose }) {
   const fileRef = useRef(null);
 
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1693,7 +1710,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
   };
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
+    <div style={overlayStyle}>
       <div
         style={{
           background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16,
@@ -1790,6 +1807,12 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const [profileImage, setProfileImage] = useState(settings.profileImage || '');
   const profileFileRef = useRef(null);
 
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1832,7 +1855,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const preview = imageUrl || defaultImageUrl;
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
+    <div style={overlayStyle}>
       <div style={modalStyle} onClick={e => e.stopPropagation()}>
         <h2 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 24px", fontSize: 22 }}>
           Edit Profile
