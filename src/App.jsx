@@ -56,9 +56,13 @@ function getBookWidth(pages) {
   return 52;
 }
 
-function getBookHeight(id) {
+function getBookHeight(id, pages) {
   const r = seededRandom(parseInt(id));
-  return 160 + r * 40; // 160-200px
+  if (!pages || pages < 150) return 138 + r * 10;  // 138–148px
+  if (pages < 300)           return 154 + r * 14;  // 154–168px
+  if (pages < 500)           return 171 + r * 14;  // 171–185px
+  if (pages < 700)           return 187 + r * 13;  // 187–200px
+  return                            200 + r * 15;  // 200–215px
 }
 
 function hexToHue(hex) {
@@ -96,7 +100,7 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
   const [tipPos, setTipPos] = useState(null);
   const color = coverColor || getBookColor(book.id);
   const width = getBookWidth(book.p);
-  const height = getBookHeight(book.id);
+  const height = getBookHeight(book.id, book.p);
   const r = seededRandom(parseInt(book.id) + 7);
   const darkFactor = 0.7 + r * 0.3;
   useEffect(() => { if (isPulled) setTipPos(null); }, [isPulled]);
@@ -1204,7 +1208,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
 
   const bookendStyle = {
     width: 34,
-    height: 130,
+    height: 155,
     alignSelf: "flex-end",
     flexShrink: 0,
     background: "linear-gradient(180deg, #A83858 0%, #8B2840 30%, #722035 70%, #5C1828 100%)",
@@ -1219,7 +1223,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
       {/* Books row */}
       <div style={{
         display: "flex", alignItems: "flex-end", justifyContent: "flex-start", gap: 3,
-        padding: "0 12px", minHeight: 170,
+        padding: "0 12px", minHeight: 220,
         flexWrap: "nowrap", overflowX: "auto",
       }}>
         {isRight && <div style={{ flex: 1 }} />}
