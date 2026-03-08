@@ -73,7 +73,7 @@ export default function NavPanel({ currentView, onNavigate }) {
       display: 'flex',
       flexDirection: 'column',
       gap: 4,
-      background: 'rgba(255,251,245,0.92)',
+      background: 'rgba(255,251,245,0.6)',
       backdropFilter: 'blur(10px)',
       borderRadius: 18,
       padding: '10px 6px',

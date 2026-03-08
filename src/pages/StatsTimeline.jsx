@@ -67,13 +67,11 @@ export default function StatsTimeline({ books, onBack }) {
     return [finalize(childhood), finalize(uni), ...individualYears];
   }, [books]);
 
-  // Dropdown options: Childhood, Uni, 2019, 2020, …, current year
-  const dropdownOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let y = 2019; y <= currentYear; y++) years.push(String(y));
-    return ['Childhood', 'Uni', ...years];
-  }, []);
+  // Dropdown options: only groups that actually have books
+  const dropdownOptions = useMemo(
+    () => allGroupedData.filter(g => g.books > 0).map(g => g.label),
+    [allGroupedData]
+  );
 
   // Slice allGroupedData from the selected label onwards
   const chartData = useMemo(() => {
@@ -106,8 +104,13 @@ export default function StatsTimeline({ books, onBack }) {
           {books.filter(b => b.s === 'read' && b.dr).length} books read across {chartData.length} period{chartData.length !== 1 ? 's' : ''}
         </p>
 
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <button style={toggleStyle(metric === 'books')} onClick={() => setMetric('books')}>Books</button>
+          <button style={toggleStyle(metric === 'pages')} onClick={() => setMetric('pages')}>Pages</button>
+        </div>
+
         {/* From selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
           <span style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 13,
             color: '#6B3520', fontWeight: 600,
@@ -127,11 +130,6 @@ export default function StatsTimeline({ books, onBack }) {
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
-          <button style={toggleStyle(metric === 'books')} onClick={() => setMetric('books')}>Books</button>
-          <button style={toggleStyle(metric === 'pages')} onClick={() => setMetric('pages')}>Pages</button>
         </div>
 
         <div style={{
@@ -191,7 +189,11 @@ export default function StatsTimeline({ books, onBack }) {
                   key={row.label}
                   style={{ borderBottom: i < chartData.length - 1 ? '1px solid rgba(200,160,120,0.12)' : 'none' }}
                 >
-                  <td style={{ padding: '12px 20px', fontFamily: "'Playfair Display', serif", color: '#3A2010', fontWeight: 700 }}>{row.label}</td>
+                  <td style={{ padding: '12px 20px', fontFamily: "'Playfair Display', serif", color: '#3A2010', fontWeight: 700 }}>
+                    {row.label}
+                    {row.label === 'Childhood' && <div style={{ fontSize: 10, color: '#8B7355', fontWeight: 400, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>2010–2012</div>}
+                    {row.label === 'Uni' && <div style={{ fontSize: 10, color: '#8B7355', fontWeight: 400, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>2013–2018</div>}
+                  </td>
                   <td style={{ padding: '12px 20px', color: '#3A2010', fontSize: 14 }}>{row.books}</td>
                   <td style={{ padding: '12px 20px', color: '#3A2010', fontSize: 14 }}>{row.pages.toLocaleString()}</td>
                   <td style={{ padding: '12px 20px', color: '#3A2010', fontSize: 14 }}>{row.avgRating}</td>

@@ -1360,8 +1360,13 @@ export default function App() {
       const dated = filtered.filter(b => !!b.dr);
       const dateless = filtered.filter(b => !b.dr);
       dated.sort((a, b) => {
-        const result = b.dr.localeCompare(a.dr);
-        return sortAsc ? -result : result;
+        const drResult = b.dr.localeCompare(a.dr);
+        if (drResult !== 0) return sortAsc ? -drResult : drResult;
+        const aLast = (a.a || '').trim().split(' ').pop().toLowerCase();
+        const bLast = (b.a || '').trim().split(' ').pop().toLowerCase();
+        const authorResult = aLast.localeCompare(bLast);
+        if (authorResult !== 0) return authorResult;
+        return parseInt(a.y || 0) - parseInt(b.y || 0);
       });
       return [...dated, ...dateless];
     }
