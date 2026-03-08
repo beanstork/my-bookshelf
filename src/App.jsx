@@ -163,7 +163,7 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         alignSelf: "flex-end",
         flexShrink: 0,
         overflow: "hidden",
-        animation: isPulled ? "none" : `slideUp 0.4s ease ${index * 0.015}s both`,
+        animation: isPulled ? "none" : `slideUp 0.15s ease ${index * 0.005}s both`,
       }}
       onMouseEnter={e => {
         if (isPulled) return;
