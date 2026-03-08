@@ -137,8 +137,22 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
     );
   }
 
+  const isCurrentlyReading = book.s === 'currently-reading';
+
   return (
     <>
+    <div style={{ position: "relative", alignSelf: "flex-end", flexShrink: 0 }}>
+      {isCurrentlyReading && !isPulled && (
+        <div aria-hidden="true" style={{
+          position: "absolute",
+          top: -13, left: "50%", transform: "translateX(-50%)",
+          width: 7, height: 22,
+          background: "linear-gradient(to bottom, #E8B84B, #C07A1A)",
+          zIndex: 2,
+          clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 87%, 0 100%)",
+          filter: "drop-shadow(0 -1px 3px rgba(212,168,67,0.6))",
+        }} />
+      )}
     <div
       onClick={() => onClick(book)}
       style={{
@@ -159,9 +173,9 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         opacity: isPulled ? 0 : undefined,
         boxShadow: isPulled
           ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 12px 24px rgba(0,0,0,0.5)"
+          : isCurrentlyReading
+          ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2), 0 0 0 1.5px rgba(212,168,67,0.7)"
           : "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)",
-        alignSelf: "flex-end",
-        flexShrink: 0,
         overflow: "hidden",
         animation: isPulled ? "none" : `slideUp 0.15s ease ${index * 0.005}s both`,
       }}
@@ -198,6 +212,7 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
       }}>
         {book.t}
       </div>
+    </div>
     </div>
     {tipPos && (
       <div style={{
@@ -252,26 +267,64 @@ function RotatingQuote({ books }) {
     : BOOK_QUOTES;
   const activePool = pool.length > 0 ? pool : BOOK_QUOTES;
 
-  const [quote] = useState(() => activePool[Math.floor(Math.random() * activePool.length)]);
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * activePool.length));
+  const [visible, setVisible] = useState(true);
+
+  const navigate = useCallback((dir) => {
+    setVisible(false);
+    setTimeout(() => {
+      setIdx(i => (i + dir + activePool.length) % activePool.length);
+      setVisible(true);
+    }, 300);
+  }, [activePool.length]);
+
+  useEffect(() => {
+    const timer = setInterval(() => navigate(1), 20000);
+    return () => clearInterval(timer);
+  }, [navigate]);
+
+  const quote = activePool[idx % activePool.length];
+
+  const arrowStyle = {
+    background: "none", border: "none", cursor: "pointer",
+    color: "#8B3040", opacity: 0.55, fontSize: 22, padding: "0 10px",
+    lineHeight: 1, transition: "opacity 0.15s", flexShrink: 0,
+  };
 
   return (
-    <div style={{ marginTop: 8 }}>
-      <p style={{
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
-        color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
-        textShadow: "0 1px 6px rgba(252,228,239,0.95)",
-        lineHeight: 1.5,
-      }}>
-        &ldquo;{quote.text}&rdquo;
-      </p>
-      <p style={{
-        fontFamily: "'DM Sans', sans-serif",
-        color: "#8B3040", fontSize: 11, margin: "5px 0 0",
-        letterSpacing: "0.08em", textTransform: "uppercase",
-        textShadow: "0 1px 4px rgba(252,228,239,0.9)",
-      }}>
-        &mdash; {quote.book} &middot; {quote.by}
-      </p>
+    <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <button
+        style={arrowStyle}
+        onClick={() => navigate(-1)}
+        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+        onMouseLeave={e => e.currentTarget.style.opacity = 0.55}
+        aria-label="Previous quote"
+      >‹</button>
+      <div style={{ transition: "opacity 0.3s ease", opacity: visible ? 1 : 0, textAlign: "center", maxWidth: 520 }}>
+        <p style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
+          textShadow: "0 1px 6px rgba(252,228,239,0.95)",
+          lineHeight: 1.5,
+        }}>
+          &ldquo;{quote.text}&rdquo;
+        </p>
+        <p style={{
+          fontFamily: "'DM Sans', sans-serif",
+          color: "#8B3040", fontSize: 11, margin: "5px 0 0",
+          letterSpacing: "0.08em", textTransform: "uppercase",
+          textShadow: "0 1px 4px rgba(252,228,239,0.9)",
+        }}>
+          &mdash; {quote.book} &middot; {quote.by}
+        </p>
+      </div>
+      <button
+        style={arrowStyle}
+        onClick={() => navigate(1)}
+        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+        onMouseLeave={e => e.currentTarget.style.opacity = 0.55}
+        aria-label="Next quote"
+      >›</button>
     </div>
   );
 }
@@ -1267,11 +1320,11 @@ function StatsBar({ books }) {
   return (
     <div style={{
       display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
-      margin: "16px 20px 0",
+      maxWidth: 900, margin: "16px auto 0", padding: "0 20px",
     }}>
       {stats.map((s) => (
         <div key={s.label} style={{
-          padding: "14px 20px", textAlign: "center", minWidth: 100, flex: 1,
+          padding: "14px 20px", textAlign: "center", minWidth: 100, flex: 1, maxWidth: 160,
           background: "rgba(255,255,255,0.75)",
           borderRadius: 10,
           boxShadow: "0 2px 10px rgba(120,70,40,0.10), 0 1px 3px rgba(120,70,40,0.07)",
