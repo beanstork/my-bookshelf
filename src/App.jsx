@@ -2328,6 +2328,11 @@ export default function App() {
     return result;
   }, [filteredAndSorted]);
 
+  const currentlyReadingBooks = useMemo(
+    () => books.filter(b => b.s === 'currently-reading'),
+    [books]
+  );
+
   const handleEditBook = useCallback((id, changes) => {
     editBook(id, changes, manualBookIds.has(id));
   }, [editBook, manualBookIds]);
@@ -2380,6 +2385,11 @@ export default function App() {
         input:focus, select:focus, textarea:focus { border-color: #A0445A !important; box-shadow: 0 0 0 2px rgba(160,68,90,0.15); }
         select option { background: #F2E8D9; color: #3A2515; }
         select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B3520' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
+        @media (max-width: 768px) {
+  .bookshelf-row { flex-direction: column !important; }
+  .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; gap: 16px; padding-bottom: 12px; }
+  .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin-bottom: 0; align-self: center; margin-right: 8px; }
+}
       `}</style>
 
       {/* Cherry tree + Stats wrapper — single background layer */}
@@ -2551,8 +2561,21 @@ export default function App() {
       </div>
       </div>{/* end controls */}
 
-      {/* Bookshelf */}
-      <div style={{ padding: "20px 20px 60px", maxWidth: 1100, margin: "0 auto", position: "relative" }}>
+      {/* Bookshelf + Currently Reading row */}
+      <div
+        className="bookshelf-row"
+        style={{
+          display: 'flex',
+          gap: 24,
+          alignItems: 'flex-start',
+          padding: "20px 20px 60px",
+          maxWidth: siteSettings.currentlyReadingEnabled ? 1360 : 1100,
+          margin: "0 auto",
+          transition: 'max-width 0.35s ease',
+          position: "relative",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
         {/* Wood frame */}
         <div style={{
           padding: 18,
@@ -2607,7 +2630,18 @@ export default function App() {
         background: "radial-gradient(ellipse at center, transparent 55%, rgba(200,170,130,0.18) 80%, rgba(180,140,100,0.32) 100%)",
         borderRadius: 14,
       }} />
-      </div>
+      </div>{/* end bookshelf column */}
+
+    {siteSettings.currentlyReadingEnabled && (
+      <CurrentlyReadingPanel
+        books={currentlyReadingBooks}
+        onBookClick={(book) => {
+          setPulledBookId(book.id);
+          setSelectedBookId(book.id);
+        }}
+      />
+    )}
+  </div>{/* end bookshelf-row */}
     </div>
       )}
 
