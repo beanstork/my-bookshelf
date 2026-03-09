@@ -2096,21 +2096,6 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
           </label>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Currently Reading Panel</label>
-          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={currentlyReadingEnabled}
-              onChange={e => setCurrentlyReadingEnabled(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: "#D4A843", cursor: "pointer" }}
-            />
-            <span style={{ color: "#D4A843", fontSize: 13 }}>
-              Show currently reading panel beside the bookshelf
-            </span>
-          </label>
-        </div>
-
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24 }}>
           <button onClick={onClose} style={{
             padding: "10px 20px", borderRadius: 8, border: "1px solid #4A3728",
@@ -2136,7 +2121,7 @@ export default function App() {
   const [sortBy, setSortBy] = useState("dateRead");
   const [sortAsc, setSortAsc] = useState(false);
   const [filterShelf, setFilterShelf] = useState("read");
-  const [filterGenre, setFilterGenre] = useState("all");
+  const [filterGenres, setFilterGenres] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const coverColors = useCoverColors(syncedBooks);
   const [pulledBookId, setPulledBookId] = useState(null);
@@ -2215,11 +2200,29 @@ export default function App() {
     return Array.from(genres).sort();
   }, [books]);
 
+  const genreAvailability = useMemo(() => {
+    const result = {};
+    allGenres.forEach(g => {
+      if (filterGenres.includes(g)) {
+        result[g] = 'selected';
+      } else {
+        const testGenres = [...filterGenres, g];
+        const hasBooks = books.some(b => {
+          if (filterShelf === "reread") { if (!b.reread) return false; }
+          else if (filterShelf !== "all" && b.s !== filterShelf) return false;
+          return testGenres.every(genre => b.g.includes(genre));
+        });
+        result[g] = hasBooks ? 'available' : 'disabled';
+      }
+    });
+    return result;
+  }, [allGenres, filterGenres, books, filterShelf]);
+
   const filteredAndSorted = useMemo(() => {
     let filtered = books.filter(b => {
       if (filterShelf === "reread") { if (!b.reread) return false; }
       else if (filterShelf !== "all" && b.s !== filterShelf) return false;
-      if (filterGenre !== "all" && !b.g.includes(filterGenre)) return false;
+      if (filterGenres.length > 0 && !filterGenres.every(g => b.g.includes(g))) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return b.t.toLowerCase().includes(q) || b.a.toLowerCase().includes(q) || b.sn.toLowerCase().includes(q);
@@ -2316,7 +2319,7 @@ export default function App() {
     });
 
     return result;
-  }, [books, sortBy, sortAsc, filterShelf, filterGenre, searchQuery, effectiveColors]);
+  }, [books, sortBy, sortAsc, filterShelf, filterGenres, searchQuery, effectiveColors]);
 
   // Split books into shelves of ~12-16 books each
   const shelves = useMemo(() => {
@@ -2369,7 +2372,7 @@ export default function App() {
       {currentView === 'bookshelf' && (
     <div className="page-root" style={{
       minHeight: "100vh",
-      minWidth: 1140,
+      minWidth: 600,
       backgroundColor: "#F2E8D9",
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
@@ -2538,18 +2541,45 @@ export default function App() {
               }}
             >{sortAsc ? "↑" : "↓"}</button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Genre</span>
-            <select value={filterGenre} onChange={e => setFilterGenre(e.target.value)} style={{
-              padding: "7px 28px 7px 12px", borderRadius: 8, border: "1px solid rgba(160,100,70,0.35)",
-              background: "rgba(255,255,255,0.75)", color: "#3A2010", fontSize: 13,
-              fontFamily: "'DM Sans', sans-serif", cursor: "pointer", outline: "none",
-              boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
-            }}>
-              <option value="all">All Genres</option>
-              {allGenres.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </div>
+          {allGenres.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1, flexShrink: 0 }}>Genre</span>
+              {allGenres.map(g => {
+                const state = genreAvailability[g];
+                const isSelected = state === 'selected';
+                const isDisabled = state === 'disabled';
+                return (
+                  <button
+                    key={g}
+                    onClick={() => {
+                      if (isDisabled) return;
+                      setFilterGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
+                    }}
+                    style={{
+                      padding: "5px 12px", borderRadius: 20, fontSize: 12,
+                      fontFamily: "'DM Sans', sans-serif", cursor: isDisabled ? "default" : "pointer",
+                      border: `1px solid ${isSelected ? "#8B2840" : isDisabled ? "rgba(120,50,60,0.12)" : "rgba(120,50,60,0.3)"}`,
+                      background: isSelected ? "#8B2840" : "rgba(255,255,255,0.55)",
+                      color: isSelected ? "#FDF0F3" : isDisabled ? "rgba(90,50,40,0.3)" : "#7A3040",
+                      fontWeight: isSelected ? 600 : 400,
+                      transition: "all 0.15s",
+                    }}
+                  >{g}</button>
+                );
+              })}
+              {filterGenres.length > 0 && (
+                <button
+                  onClick={() => setFilterGenres([])}
+                  style={{
+                    padding: "5px 10px", borderRadius: 20, fontSize: 11,
+                    fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
+                    border: "1px solid rgba(120,50,60,0.25)",
+                    background: "transparent", color: "#A06070",
+                  }}
+                >✕ Clear</button>
+              )}
+            </div>
+          )}
           <div style={{ flex: 1 }} />
           <button onClick={() => setShowAddForm(true)} style={{
             padding: "8px 20px", borderRadius: 8,
@@ -2572,8 +2602,10 @@ export default function App() {
           display: 'flex',
           gap: 24,
           alignItems: 'flex-start',
-          padding: "20px 20px 60px",
-          maxWidth: siteSettings.currentlyReadingEnabled ? 1360 : 1100,
+          padding: "20px 40px 60px 20px",
+          maxWidth: siteSettings.currentlyReadingEnabled
+            ? 1360
+            : Math.min(1100, Math.max(500, filteredAndSorted.length * 42 + 200)),
           margin: "0 auto",
           transition: 'max-width 0.35s ease',
           position: "relative",
@@ -2634,6 +2666,41 @@ export default function App() {
         background: "radial-gradient(ellipse at center, transparent 55%, rgba(200,170,130,0.18) 80%, rgba(180,140,100,0.32) 100%)",
         borderRadius: 14,
       }} />
+      {/* Currently Reading toggle tab */}
+      <button
+        onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
+        title={siteSettings.currentlyReadingEnabled ? "Hide currently reading panel" : "Show currently reading panel"}
+        style={{
+          position: "absolute",
+          top: 80,
+          right: -14,
+          width: 28,
+          height: 52,
+          borderRadius: "0 8px 8px 0",
+          border: `1px solid ${siteSettings.currentlyReadingEnabled ? "#8B2840" : "rgba(160,100,70,0.5)"}`,
+          borderLeft: "none",
+          background: siteSettings.currentlyReadingEnabled
+            ? "linear-gradient(180deg, #8B2840, #6A1E30)"
+            : "linear-gradient(180deg, #C8A878, #B89060)",
+          color: siteSettings.currentlyReadingEnabled ? "#FDF0F3" : "#5C2010",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "3px 2px 8px rgba(80,50,20,0.35)",
+          zIndex: 10,
+          transition: "all 0.2s",
+          padding: 0,
+        }}
+      >
+        <svg width="13" height="16" viewBox="0 0 13 16" fill="none">
+          <path d="M2 1h9a1 1 0 0 1 1 1v12l-4.5-3L3 14V2a1 1 0 0 1 1-1z"
+            fill={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.9)" : "rgba(92,32,16,0.85)"}
+            stroke={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.5)" : "rgba(92,32,16,0.4)"}
+            strokeWidth="0.5"
+          />
+        </svg>
+      </button>
       </div>{/* end bookshelf column */}
 
     {siteSettings.currentlyReadingEnabled && (
