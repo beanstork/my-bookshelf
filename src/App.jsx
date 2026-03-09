@@ -2124,6 +2124,7 @@ export default function App() {
   const [filterGenres, setFilterGenres] = useState([]);
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
   const genreDropdownRef = useRef(null);
+  const [toggleHovered, setToggleHovered] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const coverColors = useCoverColors(syncedBooks);
   const [pulledBookId, setPulledBookId] = useState(null);
@@ -2570,19 +2571,19 @@ export default function App() {
               <button
                 onClick={() => setGenreDropdownOpen(v => !v)}
                 style={{
-                  padding: "7px 28px 7px 12px", borderRadius: 8,
+                  padding: "7px 12px", borderRadius: 8,
                   border: `1px solid ${filterGenres.length > 0 ? "#8B2840" : "rgba(160,100,70,0.35)"}`,
                   background: filterGenres.length > 0 ? "#8B2840" : "rgba(255,255,255,0.75)",
                   color: filterGenres.length > 0 ? "#FDF0F3" : "#3A2010",
                   fontSize: 13, fontFamily: "'DM Sans', sans-serif",
                   cursor: "pointer", outline: "none",
                   boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='${filterGenres.length > 0 ? "%23FDF0F3" : "%236B3520"}' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center",
+                  display: "flex", alignItems: "center", gap: 6,
                   minWidth: 120,
                 }}
               >
-                {filterGenres.length === 0 ? "All Genres" : `${filterGenres.length} selected`}
+                <span>{filterGenres.length === 0 ? "All Genres" : `${filterGenres.length} selected`}</span>
+                <span style={{ fontSize: 10, opacity: 0.7 }}>{genreDropdownOpen ? "▴" : "▾"}</span>
               </button>
               {genreDropdownOpen && (
                 <div style={{
@@ -2638,17 +2639,13 @@ export default function App() {
       <div
         className="bookshelf-row"
         style={{
-          display: 'flex',
-          gap: 0,
-          alignItems: 'flex-start',
           padding: "20px 20px 60px",
-          maxWidth: siteSettings.currentlyReadingEnabled ? 1360 : 1100,
+          maxWidth: 1100,
           margin: "0 auto",
-          transition: 'max-width 0.35s ease',
           position: "relative",
         }}
       >
-        <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
         {/* Wood frame */}
         <div style={{
           padding: 18,
@@ -2703,60 +2700,84 @@ export default function App() {
         background: "radial-gradient(ellipse at center, transparent 55%, rgba(200,170,130,0.18) 80%, rgba(180,140,100,0.32) 100%)",
         borderRadius: 14,
       }} />
-      </div>{/* end bookshelf column */}
 
-      {/* Toggle tab + sliding CR panel */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', flexShrink: 0 }}>
-        {/* Bookmark toggle — always visible */}
-        <button
-          onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
-          title={siteSettings.currentlyReadingEnabled ? "Hide currently reading panel" : "Show currently reading panel"}
-          style={{
-            marginTop: 22,
-            width: 26,
-            height: 48,
-            borderRadius: "0 7px 7px 0",
-            border: `1px solid ${siteSettings.currentlyReadingEnabled ? "#8B2840" : "rgba(160,100,70,0.5)"}`,
-            borderLeft: "none",
-            background: siteSettings.currentlyReadingEnabled
-              ? "linear-gradient(180deg, #8B2840, #6A1E30)"
-              : "linear-gradient(180deg, #C8A878, #B89060)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "3px 2px 8px rgba(80,50,20,0.35)",
-            transition: "all 0.2s",
-            padding: 0,
-            flexShrink: 0,
-          }}
-        >
-          <svg width="11" height="14" viewBox="0 0 13 16" fill="none">
-            <path d="M2 1h9a1 1 0 0 1 1 1v12l-4.5-3L3 14V2a1 1 0 0 1 1-1z"
-              fill={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.9)" : "rgba(92,32,16,0.85)"}
-              stroke={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.5)" : "rgba(92,32,16,0.4)"}
-              strokeWidth="0.5"
-            />
-          </svg>
-        </button>
-        {/* Sliding panel */}
-        <div style={{
-          width: siteSettings.currentlyReadingEnabled ? 190 : 0,
-          overflow: 'hidden',
-          transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
-          flexShrink: 0,
-        }}>
-          <div style={{ width: 190, paddingLeft: 16, paddingTop: 4 }}>
-            <CurrentlyReadingPanel
-              books={currentlyReadingBooks}
-              onBookClick={(book) => {
-                setPulledBookId(book.id);
-                setSelectedBookId(book.id);
-              }}
-            />
+      {/* Bookmark toggle — absolutely positioned at right edge of bookshelf */}
+      <button
+        onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
+        onMouseEnter={() => setToggleHovered(true)}
+        onMouseLeave={() => setToggleHovered(false)}
+        style={{
+          position: "absolute",
+          top: 22,
+          right: toggleHovered ? -18 : -14,
+          width: toggleHovered ? 32 : 28,
+          height: 54,
+          borderRadius: "0 8px 8px 0",
+          border: `1px solid ${siteSettings.currentlyReadingEnabled ? "#6A1E30" : "rgba(140,90,50,0.6)"}`,
+          borderLeft: "none",
+          background: siteSettings.currentlyReadingEnabled
+            ? (toggleHovered ? "linear-gradient(180deg, #A03050, #7A1E2E)" : "linear-gradient(180deg, #8B2840, #6A1E30)")
+            : (toggleHovered ? "linear-gradient(180deg, #D4B888, #C4A070)" : "linear-gradient(180deg, #C8A878, #B89060)"),
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: toggleHovered ? "4px 3px 12px rgba(80,50,20,0.45)" : "3px 2px 8px rgba(80,50,20,0.3)",
+          transition: "all 0.15s ease",
+          padding: 0,
+          zIndex: 20,
+        }}
+      >
+        <svg width="12" height="15" viewBox="0 0 13 16" fill="none">
+          <path d="M2 1h9a1 1 0 0 1 1 1v12l-4.5-3L3 14V2a1 1 0 0 1 1-1z"
+            fill={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.9)" : "rgba(92,32,16,0.85)"}
+            stroke={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.5)" : "rgba(92,32,16,0.4)"}
+            strokeWidth="0.5"
+          />
+        </svg>
+        {/* Custom quick tooltip */}
+        {toggleHovered && (
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "calc(100% + 8px)",
+            transform: "translateY(-50%)",
+            background: "rgba(30,15,5,0.88)",
+            color: "#F9EDE8",
+            fontSize: 11,
+            fontFamily: "'DM Sans', sans-serif",
+            padding: "5px 9px",
+            borderRadius: 6,
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          }}>
+            {siteSettings.currentlyReadingEnabled ? "Hide currently reading" : "Show currently reading"}
           </div>
+        )}
+      </button>
+
+      {/* Sliding CR panel — absolutely positioned, does not affect bookshelf layout */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: "calc(100% + 14px)",
+        width: siteSettings.currentlyReadingEnabled ? 190 : 0,
+        overflow: 'hidden',
+        transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
+      }}>
+        <div style={{ width: 190, paddingTop: 4 }}>
+          <CurrentlyReadingPanel
+            books={currentlyReadingBooks}
+            onBookClick={(book) => {
+              setPulledBookId(book.id);
+              setSelectedBookId(book.id);
+            }}
+          />
         </div>
       </div>
+
+      </div>{/* end bookshelf column */}
   </div>{/* end bookshelf-row */}
     </div>
       )}
