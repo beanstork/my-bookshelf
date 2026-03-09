@@ -100,6 +100,11 @@ function StarRating({ rating, size = 16 }) {
 
 function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }) {
   const [tipPos, setTipPos] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [returnAnim, setReturnAnim] = useState(false);
+  const prevIsPulledRef = useRef(false);
+
   const color = coverColor || getBookColor(book.id);
   const width = getBookWidth(book.p);
   const seriesHash = book.sn ? book.sn.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : null;
@@ -108,7 +113,21 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
     : getBookHeight(book.id, book.p);
   const r = seededRandom(parseInt(book.id) + 7);
   const darkFactor = 0.7 + r * 0.3;
-  useEffect(() => { if (isPulled) setTipPos(null); }, [isPulled]);
+
+  useEffect(() => { if (isPulled) { setTipPos(null); setIsHovered(false); } }, [isPulled]);
+
+  // After initial slide-up animation finishes, mark as mounted so it doesn't replay
+  useEffect(() => {
+    const t = setTimeout(() => setHasMounted(true), 400);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Detect when book is returned to shelf (isPulled: true → false) to play slide-down
+  useEffect(() => {
+    if (prevIsPulledRef.current && !isPulled) setReturnAnim(true);
+    if (isPulled) setReturnAnim(false);
+    prevIsPulledRef.current = isPulled;
+  }, [isPulled]);
   
   // Create a slightly darker shade for the edge
   const darken = (hex, f) => {
@@ -180,28 +199,35 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
           ? "opacity 0.18s ease"
           : "transform 0.13s ease, box-shadow 0.13s ease",
         opacity: isPulled ? 0 : undefined,
+        transform: !isPulled && isHovered ? "translateY(-9px)" : undefined,
         boxShadow: isPulled
           ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 12px 24px rgba(0,0,0,0.5)"
+          : isHovered
+          ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 3px 12px 24px rgba(0,0,0,0.5)"
           : isCurrentlyReading
           ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2), 0 0 0 1.5px rgba(212,168,67,0.7)"
           : "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)",
         overflow: "hidden",
-        animation: isPulled ? "none" : `slideUp 0.15s ease ${index * 0.005}s both`,
+        animation: isPulled
+          ? "none"
+          : returnAnim
+            ? "slideDown 0.45s cubic-bezier(0.2,0,0.3,1) both"
+            : hasMounted
+              ? "none"
+              : `slideUp 0.15s ease ${index * 0.005}s both`,
       }}
       onMouseEnter={e => {
         if (isPulled) return;
-        e.currentTarget.style.transform = "translateY(-5px)";
-        e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 6px 16px rgba(0,0,0,0.35)";
+        setIsHovered(true);
         setTipPos({ x: e.clientX, y: e.clientY });
       }}
       onMouseMove={e => { if (!isPulled) setTipPos({ x: e.clientX, y: e.clientY }); }}
-      onMouseLeave={e => {
-        if (isPulled) return;
-        e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = isCurrentlyReading
-          ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2), 0 0 0 1.5px rgba(212,168,67,0.7)"
-          : "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)";
+      onMouseLeave={() => {
+        setIsHovered(false);
         setTipPos(null);
+      }}
+      onAnimationEnd={() => {
+        if (returnAnim) { setReturnAnim(false); setHasMounted(true); }
       }}
     >
       {decoration}
@@ -2402,7 +2428,7 @@ export default function App() {
   return (
     <>
       {/* Nav — always visible, outside the fade wrapper */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(242,232,217,0.92)', backdropFilter: 'blur(6px)', borderBottom: '1px solid rgba(180,130,80,0.15)' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(242,232,217,0.6)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(180,130,80,0.15)' }}>
         <NavPanel currentView={currentView} onNavigate={handleNavigate} />
       </div>
       <div style={{ opacity: contentVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}>
@@ -2418,6 +2444,7 @@ export default function App() {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
         * { scrollbar-width: thin; scrollbar-color: #C4A882 #F2E8D9; }
         *::-webkit-scrollbar { width: 6px; height: 6px; }
         *::-webkit-scrollbar-track { background: #F2E8D9; }
@@ -2657,7 +2684,7 @@ export default function App() {
           onClick={() => setShowAddForm(true)}
           title="Add a book"
           style={{
-            position: "absolute", top: -38, left: 28, zIndex: 20,
+            position: "absolute", top: -31, left: 28, zIndex: 20,
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 6, width: 156, height: 30,
             background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
@@ -2691,6 +2718,7 @@ export default function App() {
           borderRadius: 8, padding: "24px 12px 12px",
           border: "1px solid #8A7050",
           boxShadow: "inset 0 2px 20px rgba(0,0,0,0.35), inset 0 -2px 10px rgba(0,0,0,0.2)",
+          overflow: "hidden",
         }}>
           {filteredAndSorted.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#8B7355", fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontStyle: "italic" }}>
