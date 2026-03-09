@@ -1762,7 +1762,7 @@ function CurrentlyReadingPanel({ books, onBookClick }) {
   return (
     <div className="cr-panel" style={{
       width: 180, flexShrink: 0,
-      paddingTop: 4,
+      paddingTop: 4, overflow: 'visible',
     }}>
       <h3 style={{
         fontFamily: "'Playfair Display', Georgia, serif",
@@ -2583,7 +2583,6 @@ export default function App() {
                 }}
               >
                 <span>{filterGenres.length === 0 ? "All Genres" : `${filterGenres.length} selected`}</span>
-                <span style={{ fontSize: 10, opacity: 0.7 }}>{genreDropdownOpen ? "▴" : "▾"}</span>
               </button>
               {genreDropdownOpen && (
                 <div style={{
@@ -2762,11 +2761,11 @@ export default function App() {
         position: "absolute",
         top: 0,
         left: "calc(100% + 14px)",
-        width: siteSettings.currentlyReadingEnabled ? 190 : 0,
-        overflow: 'hidden',
+        width: siteSettings.currentlyReadingEnabled ? 210 : 0,
+        overflow: siteSettings.currentlyReadingEnabled ? 'visible' : 'hidden',
         transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
       }}>
-        <div style={{ width: 190, paddingTop: 4 }}>
+        <div style={{ width: 210, paddingTop: 4, paddingLeft: 16 }}>
           <CurrentlyReadingPanel
             books={currentlyReadingBooks}
             onBookClick={(book) => {
