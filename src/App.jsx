@@ -2125,6 +2125,18 @@ export default function App() {
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
   const genreDropdownRef = useRef(null);
   const [toggleHovered, setToggleHovered] = useState(false);
+  const [pageTransitioning, setPageTransitioning] = useState(false);
+  const [crPanelFullyOpen, setCrPanelFullyOpen] = useState(!!siteSettings.currentlyReadingEnabled);
+
+  const handleNavigate = useCallback((view) => {
+    if (view === currentView) return;
+    setPageTransitioning(true);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentView(view);
+      setPageTransitioning(false);
+    }, 180);
+  }, [currentView]);
   const [searchQuery, setSearchQuery] = useState("");
   const coverColors = useCoverColors(syncedBooks);
   const [pulledBookId, setPulledBookId] = useState(null);
@@ -2350,6 +2362,10 @@ export default function App() {
     [books]
   );
 
+  useEffect(() => {
+    if (!siteSettings.currentlyReadingEnabled) setCrPanelFullyOpen(false);
+  }, [siteSettings.currentlyReadingEnabled]);
+
   const handleEditBook = useCallback((id, changes) => {
     editBook(id, changes, manualBookIds.has(id));
   }, [editBook, manualBookIds]);
@@ -2382,7 +2398,7 @@ export default function App() {
   return (
     <>
       {currentView === 'bookshelf' && (
-    <div className="page-root" style={{
+    <div className={`page-root ${pageTransitioning ? 'page-exit' : 'page-enter'}`} style={{
       minHeight: "100vh",
       backgroundColor: "#F2E8D9",
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
@@ -2478,7 +2494,7 @@ export default function App() {
       </div>
 
       {/* Nav strip — between stats and search */}
-      <NavPanel currentView={currentView} onNavigate={setCurrentView} />
+      <NavPanel currentView={currentView} onNavigate={handleNavigate} />
 
       {/* Controls */}
       <div style={{ paddingBottom: 16 }}>
@@ -2640,6 +2656,26 @@ export default function App() {
           position: "relative",
         }}>
         {siteSettings.garlandEnabled !== false && <SeasonalGarland />}
+        {/* Flat book — Add Book button resting on top surface of wood frame */}
+        <button
+          onClick={() => setShowAddForm(true)}
+          title="Add a book"
+          style={{
+            position: "absolute", top: 4, left: 22, zIndex: 10,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 6, width: 156, height: 30,
+            background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
+            border: "1px solid rgba(140,60,80,0.4)",
+            borderLeft: "10px solid #8B4558",
+            borderRadius: "3px 4px 4px 3px",
+            color: "#FDF0F3", fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12, fontWeight: 600, cursor: "pointer",
+            boxShadow: "1px 5px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,210,220,0.2)",
+            letterSpacing: "0.3px",
+          }}
+        >
+          + Add Book
+        </button>
         {/* Back panel texture */}
         <div style={{
           backgroundColor: "#7A6048",
@@ -2650,28 +2686,6 @@ export default function App() {
           border: "1px solid #8A7050",
           boxShadow: "inset 0 2px 20px rgba(0,0,0,0.35), inset 0 -2px 10px rgba(0,0,0,0.2)",
         }}>
-          {/* Flat book — Add Book button resting on top of the bookcase */}
-          <div style={{ display: "flex", justifyContent: "flex-start", padding: "0 12px 12px" }}>
-            <button
-              onClick={() => setShowAddForm(true)}
-              title="Add a book"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 6, width: 156, height: 30,
-                background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
-                border: "1px solid rgba(140,60,80,0.4)",
-                borderLeft: "10px solid #8B4558",
-                borderRadius: "3px 4px 4px 3px",
-                color: "#FDF0F3", fontFamily: "'DM Sans', sans-serif",
-                fontSize: 12, fontWeight: 600, cursor: "pointer",
-                boxShadow: "1px 5px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,210,220,0.2)",
-                letterSpacing: "0.3px",
-              }}
-            >
-              + Add Book
-            </button>
-          </div>
-
           {filteredAndSorted.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#8B7355", fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontStyle: "italic" }}>
               No books found. Try adjusting your filters.
@@ -2764,14 +2778,17 @@ export default function App() {
       </button>
 
       {/* Sliding CR panel — absolutely positioned, does not affect bookshelf layout */}
-      <div style={{
-        position: "absolute",
-        top: 0,
-        left: "calc(100% + 14px)",
-        width: siteSettings.currentlyReadingEnabled ? 210 : 0,
-        overflow: siteSettings.currentlyReadingEnabled ? 'visible' : 'hidden',
-        transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
-      }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: "calc(100% + 14px)",
+          width: siteSettings.currentlyReadingEnabled ? 210 : 0,
+          overflow: crPanelFullyOpen ? 'visible' : 'hidden',
+          transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
+        }}
+        onTransitionEnd={() => { if (siteSettings.currentlyReadingEnabled) setCrPanelFullyOpen(true); }}
+      >
         <div style={{ width: 210, paddingTop: 4, paddingLeft: 16 }}>
           <CurrentlyReadingPanel
             books={currentlyReadingBooks}
@@ -2789,8 +2806,8 @@ export default function App() {
       )}
 
       {['timeline','genres','authors','goals'].includes(currentView) && (
-        <div className="page-root">
-          <NavPanel currentView={currentView} onNavigate={setCurrentView} />
+        <div className={`page-root ${pageTransitioning ? 'page-exit' : 'page-enter'}`}>
+          <NavPanel currentView={currentView} onNavigate={handleNavigate} />
           {currentView === 'timeline' && <StatsTimeline books={books} onBack={() => setCurrentView('bookshelf')} />}
           {currentView === 'genres' && <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
           {currentView === 'authors' && <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
