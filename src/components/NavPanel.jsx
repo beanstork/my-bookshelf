@@ -61,81 +61,80 @@ export default function NavPanel({ currentView, onNavigate }) {
   return (
     <>
       <style>{`
-        .nav-panel {
-          position: fixed;
-          left: 16px;
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 200;
+        .nav-sidebar {
+          width: 72px;
+          min-height: 100vh;
+          background: linear-gradient(180deg, #C4A472 0%, #AD8848 40%, #B8924E 70%, #C4A472 100%);
+          border-right: 2px solid #8A6830;
+          box-shadow: 3px 0 18px rgba(60,35,10,0.22);
           display: flex;
           flex-direction: column;
-          gap: 4px;
-          background: rgba(255,251,245,0.6);
-          backdrop-filter: blur(10px);
-          border-radius: 18px;
-          padding: 10px 6px;
-          box-shadow: 0 4px 24px rgba(80,40,20,0.18), 0 1px 4px rgba(80,40,20,0.08);
-          border: 1px solid rgba(200,160,120,0.35);
+          align-items: stretch;
+          padding: 28px 0 20px;
+          gap: 2px;
+          position: sticky;
+          top: 0;
+          height: 100vh;
+          flex-shrink: 0;
+          z-index: 100;
+          overflow-y: auto;
         }
-        .nav-btn {
+        .nav-tab {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 3px;
-          padding: 9px 10px;
-          border-radius: 12px;
+          gap: 5px;
+          padding: 12px 6px;
           border: none;
+          border-left: 3px solid transparent;
           cursor: pointer;
-          transition: all 0.18s;
-          min-width: 54px;
           font-family: 'DM Sans', sans-serif;
+          transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+          background: transparent;
+          color: rgba(40,18,4,0.6);
+          position: relative;
+        }
+        .nav-tab:hover:not(.nav-tab-active) {
+          background: rgba(255,245,225,0.18);
+          color: rgba(40,18,4,0.88);
+          border-left-color: rgba(139,40,64,0.35);
+        }
+        .nav-tab-active {
+          background: #F2E8D9;
+          color: #8B2840;
+          border-left: 3px solid #8B2840;
+          border-radius: 8px 0 0 8px;
+          margin-right: -2px;
+          box-shadow: inset 0 1px 0 rgba(255,220,180,0.4), 2px 0 0 #F2E8D9;
+        }
+        .nav-tab-active:hover {
+          background: #F2E8D9;
         }
         .nav-label {
           font-size: 9px;
           font-weight: 600;
-          letter-spacing: 0.6px;
+          letter-spacing: 0.5px;
           text-transform: uppercase;
           line-height: 1;
         }
-        @media (max-width: 768px) {
-          .nav-panel {
-            left: 0;
-            right: 0;
-            top: 0;
-            transform: none;
-            flex-direction: row;
-            justify-content: center;
-            border-radius: 0 0 16px 16px;
-            padding: 6px 8px;
-            gap: 2px;
-          }
-          .nav-btn {
-            padding: 7px 10px;
-            min-width: 48px;
-          }
+        .nav-divider {
+          height: 1px;
+          background: rgba(80,45,10,0.2);
+          margin: 8px 10px;
         }
       `}</style>
-      <div className="nav-panel">
-        {NAV_ITEMS.map(({ key, Icon, label }) => {
-          const active = currentView === key;
-          return (
-            <button
-              key={key}
-              className="nav-btn"
-              onClick={() => onNavigate(key)}
-              title={label}
-              style={{
-                background: active ? '#8B2840' : 'transparent',
-                color: active ? '#FDF0F3' : '#6B3520',
-              }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(139,40,64,0.10)'; }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
-            >
-              <Icon />
-              <span className="nav-label">{label}</span>
-            </button>
-          );
-        })}
+      <div className="nav-sidebar">
+        {NAV_ITEMS.map(({ key, Icon, label }, i) => (
+          <button
+            key={key}
+            className={`nav-tab${currentView === key ? ' nav-tab-active' : ''}`}
+            onClick={() => onNavigate(key)}
+            title={label}
+          >
+            <Icon />
+            <span className="nav-label">{label}</span>
+          </button>
+        ))}
       </div>
     </>
   );
