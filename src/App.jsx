@@ -2135,17 +2135,19 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [propPickerShelf, setPropPickerShelf] = useState(null);
   const [toggleHovered, setToggleHovered] = useState(false);
-  const [pageTransitioning, setPageTransitioning] = useState(false);
   const [crPanelFullyOpen, setCrPanelFullyOpen] = useState(!!siteSettings.currentlyReadingEnabled);
+  const [displayedView, setDisplayedView] = useState('bookshelf');
+  const [contentVisible, setContentVisible] = useState(true);
 
   const handleNavigate = useCallback((view) => {
     if (view === currentView) return;
-    setPageTransitioning(true);
+    setCurrentView(view);
+    setContentVisible(false);
     setTimeout(() => {
+      setDisplayedView(view);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setCurrentView(view);
-      setPageTransitioning(false);
-    }, 180);
+      setTimeout(() => setContentVisible(true), 40);
+    }, 350);
   }, [currentView]);
 
   const updateSiteSettings = (changes) => {
@@ -2397,8 +2399,9 @@ export default function App() {
 
   return (
     <>
-      {currentView === 'bookshelf' && (
-    <div className={`page-root ${pageTransitioning ? 'page-exit' : 'page-enter'}`} style={{
+      <div style={{ opacity: contentVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}>
+      {displayedView === 'bookshelf' && (
+    <div style={{
       minHeight: "100vh",
       backgroundColor: "#F2E8D9",
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
@@ -2646,22 +2649,12 @@ export default function App() {
         }}
       >
         <div style={{ position: 'relative' }}>
-        {/* Wood frame */}
-        <div style={{
-          padding: 18,
-          background: "linear-gradient(135deg, #C8A878 0%, #B89060 30%, #A87A48 60%, #B89060 80%, #C4A070 100%)",
-          borderRadius: 14,
-          boxShadow: "0 8px 32px rgba(80,50,20,0.45), inset 0 2px 4px rgba(255,220,170,0.2), inset 0 -2px 4px rgba(0,0,0,0.25)",
-          border: "1px solid #C0986A",
-          position: "relative",
-        }}>
-        {siteSettings.garlandEnabled !== false && <SeasonalGarland />}
-        {/* Flat book — Add Book button resting on top surface of wood frame */}
+        {/* Flat book — Add Book button resting on top of wood frame border */}
         <button
           onClick={() => setShowAddForm(true)}
           title="Add a book"
           style={{
-            position: "absolute", top: 4, left: 22, zIndex: 10,
+            position: "absolute", top: -18, left: 28, zIndex: 20,
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 6, width: 156, height: 30,
             background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
@@ -2676,6 +2669,16 @@ export default function App() {
         >
           + Add Book
         </button>
+        {/* Wood frame */}
+        <div style={{
+          padding: 18,
+          background: "linear-gradient(135deg, #C8A878 0%, #B89060 30%, #A87A48 60%, #B89060 80%, #C4A070 100%)",
+          borderRadius: 14,
+          boxShadow: "0 8px 32px rgba(80,50,20,0.45), inset 0 2px 4px rgba(255,220,170,0.2), inset 0 -2px 4px rgba(0,0,0,0.25)",
+          border: "1px solid #C0986A",
+          position: "relative",
+        }}>
+        {siteSettings.garlandEnabled !== false && <SeasonalGarland />}
         {/* Back panel texture */}
         <div style={{
           backgroundColor: "#7A6048",
@@ -2785,7 +2788,7 @@ export default function App() {
           left: "calc(100% + 14px)",
           width: siteSettings.currentlyReadingEnabled ? 210 : 0,
           overflow: crPanelFullyOpen ? 'visible' : 'hidden',
-          transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
+          transition: 'width 0.65s cubic-bezier(0.4,0,0.2,1)',
         }}
         onTransitionEnd={() => { if (siteSettings.currentlyReadingEnabled) setCrPanelFullyOpen(true); }}
       >
@@ -2805,15 +2808,16 @@ export default function App() {
     </div>
       )}
 
-      {['timeline','genres','authors','goals'].includes(currentView) && (
-        <div className={`page-root ${pageTransitioning ? 'page-exit' : 'page-enter'}`}>
+      {['timeline','genres','authors','goals'].includes(displayedView) && (
+        <div>
           <NavPanel currentView={currentView} onNavigate={handleNavigate} />
-          {currentView === 'timeline' && <StatsTimeline books={books} onBack={() => setCurrentView('bookshelf')} />}
-          {currentView === 'genres' && <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
-          {currentView === 'authors' && <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
-          {currentView === 'goals' && <StatsGoals books={books} onBack={() => setCurrentView('bookshelf')} />}
+          {displayedView === 'timeline' && <StatsTimeline books={books} onBack={() => handleNavigate('bookshelf')} />}
+          {displayedView === 'genres' && <StatsGenres books={books} onBack={() => handleNavigate('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
+          {displayedView === 'authors' && <StatsAuthors books={books} onBack={() => handleNavigate('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
+          {displayedView === 'goals' && <StatsGoals books={books} onBack={() => handleNavigate('bookshelf')} />}
         </div>
       )}
+      </div>{/* end opacity transition wrapper */}
 
       {/* Modals stay outside the view conditional */}
       {selectedBook && (

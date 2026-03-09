@@ -49,13 +49,13 @@ function IconGoals() {
   );
 }
 
-// Shelf is last (far right)
+// Shelf is first (far left)
 const NAV_ITEMS = [
+  { key: 'bookshelf', Icon: IconShelf, label: 'Shelf' },
   { key: 'timeline', Icon: IconTimeline, label: 'Over Time' },
   { key: 'genres', Icon: IconGenres, label: 'Genres' },
   { key: 'authors', Icon: IconAuthors, label: 'Authors' },
   { key: 'goals', Icon: IconGoals, label: 'Goals' },
-  { key: 'bookshelf', Icon: IconShelf, label: 'Shelf' },
 ];
 
 export default function NavPanel({ currentView, onNavigate }) {
