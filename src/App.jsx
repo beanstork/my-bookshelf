@@ -1661,7 +1661,7 @@ function StatsBar({ books }) {
 
   return (
     <div style={{
-      display: "flex", gap: 10, justifyContent: "center", flexWrap: "nowrap",
+      display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
       maxWidth: 1100, margin: "8px auto 0", padding: "0 20px",
     }}>
       {stats.map((s) => (
@@ -2375,20 +2375,17 @@ export default function App() {
     background: active ? "#8B2840" : "rgba(255,255,255,0.55)",
     color: active ? "#FDF0F3" : "#7A3040",
     fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
-    transition: "all 0.2s", flex: 1, textAlign: "center",
+    transition: "all 0.2s", textAlign: "center",
     fontWeight: active ? 600 : 400,
   });
 
   return (
     <>
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'flex-start' }}>
-        <NavPanel currentView={currentView} onNavigate={setCurrentView} />
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <NavPanel currentView={currentView} onNavigate={setCurrentView} />
 
       {currentView === 'bookshelf' && (
     <div className="page-root" style={{
       minHeight: "100vh",
-      minWidth: 900,
       backgroundColor: "#F2E8D9",
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
@@ -2509,7 +2506,7 @@ export default function App() {
         </div>
 
         {/* Shelf filter */}
-        <div style={{ display: "flex", marginBottom: 12 }}>
+        <div style={{ display: "flex", marginBottom: 12, flexWrap: "wrap", gap: 4 }}>
           {[
             { key: "all", label: "All" },
             { key: "read", label: "Read" },
@@ -2803,9 +2800,6 @@ export default function App() {
           <StatsGoals books={books} onBack={() => setCurrentView('bookshelf')} />
         </div>
       )}
-
-        </div>{/* end content column */}
-      </div>{/* end flex wrapper */}
 
       {/* Modals stay outside the view conditional */}
       {selectedBook && (
