@@ -1662,7 +1662,7 @@ function StatsBar({ books }) {
   return (
     <div style={{
       display: "flex", gap: 10, justifyContent: "center", flexWrap: "nowrap",
-      maxWidth: 900, margin: "8px auto 0", padding: "0 20px",
+      maxWidth: 1100, margin: "8px auto 0", padding: "0 20px",
     }}>
       {stats.map((s) => (
         <div key={s.label} style={{
@@ -2369,6 +2369,7 @@ export default function App() {
       {currentView === 'bookshelf' && (
     <div className="page-root" style={{
       minHeight: "100vh",
+      minWidth: 1140,
       backgroundColor: "#F2E8D9",
       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Cline x1='0' y1='10' x2='200' y2='8' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='22' x2='200' y2='24' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='35' x2='200' y2='33' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='0' y1='48' x2='200' y2='50' stroke='rgba(140,100,55,0.05)' stroke-width='0.5'/%3E%3Cline x1='0' y1='62' x2='200' y2='60' stroke='rgba(160,120,70,0.07)' stroke-width='0.7'/%3E%3Cline x1='0' y1='75' x2='200' y2='77' stroke='rgba(140,100,55,0.04)' stroke-width='0.4'/%3E%3Cline x1='0' y1='88' x2='200' y2='86' stroke='rgba(160,120,70,0.06)' stroke-width='0.6'/%3E%3Cline x1='43' y1='0' x2='45' y2='100' stroke='rgba(160,120,70,0.03)' stroke-width='0.4'/%3E%3Cline x1='120' y1='0' x2='122' y2='100' stroke='rgba(140,100,55,0.03)' stroke-width='0.3'/%3E%3Cline x1='173' y1='0' x2='175' y2='100' stroke='rgba(160,120,70,0.025)' stroke-width='0.3'/%3E%3C/svg%3E")`,
       backgroundRepeat: "repeat",
@@ -2392,10 +2393,6 @@ export default function App() {
 }
         @media (max-width: 768px) {
   .page-root { padding-top: 64px; }
-}
-        @media (max-width: 768px) {
-  .stats-bar-wrap { padding: 0 8px 14px; box-sizing: border-box; width: 100%; }
-  .controls-wrap { padding: 10px 10px 6px; box-sizing: border-box; width: 100%; }
 }
       `}</style>
 
@@ -2474,7 +2471,7 @@ export default function App() {
       <div style={{ display: "none" }} />{/* placeholder to preserve structure */}
 
       {/* Controls */}
-      <div className="controls-wrap" style={{ padding: "12px 20px 8px", maxWidth: 900, margin: "0 auto" }}>
+      <div className="controls-wrap" style={{ padding: "12px 20px 8px", maxWidth: 1100, margin: "0 auto" }}>
         {/* Search */}
         <div style={{ position: "relative", marginBottom: 16 }}>
           <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8B5E3C", display: "flex" }}>
