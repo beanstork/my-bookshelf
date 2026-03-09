@@ -178,7 +178,7 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
         boxSizing: "border-box",
         transition: isPulled
           ? "opacity 0.18s ease"
-          : "transform 0.2s ease, box-shadow 0.2s ease",
+          : "transform 0.13s ease, box-shadow 0.13s ease",
         opacity: isPulled ? 0 : undefined,
         boxShadow: isPulled
           ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 12px 24px rgba(0,0,0,0.5)"
@@ -190,15 +190,17 @@ function BookSpine({ book, onClick, index, coverColor = null, isPulled = false }
       }}
       onMouseEnter={e => {
         if (isPulled) return;
-        e.currentTarget.style.transform = "translateY(-8px)";
-        e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 4px 12px rgba(0,0,0,0.4)";
+        e.currentTarget.style.transform = "translateY(-5px)";
+        e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 6px 16px rgba(0,0,0,0.35)";
         setTipPos({ x: e.clientX, y: e.clientY });
       }}
       onMouseMove={e => { if (!isPulled) setTipPos({ x: e.clientX, y: e.clientY }); }}
       onMouseLeave={e => {
         if (isPulled) return;
         e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)";
+        e.currentTarget.style.boxShadow = isCurrentlyReading
+          ? "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2), 0 0 0 1.5px rgba(212,168,67,0.7)"
+          : "inset -2px 0 4px rgba(0,0,0,0.3), inset 2px 0 4px rgba(0,0,0,0.1), 2px 0 4px rgba(0,0,0,0.2)";
         setTipPos(null);
       }}
     >
@@ -2399,6 +2401,10 @@ export default function App() {
 
   return (
     <>
+      {/* Nav — always visible, outside the fade wrapper */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(242,232,217,0.92)', backdropFilter: 'blur(6px)', borderBottom: '1px solid rgba(180,130,80,0.15)' }}>
+        <NavPanel currentView={currentView} onNavigate={handleNavigate} />
+      </div>
       <div style={{ opacity: contentVisible ? 1 : 0, transition: 'opacity 0.35s ease' }}>
       {displayedView === 'bookshelf' && (
     <div style={{
@@ -2495,9 +2501,6 @@ export default function App() {
           <StatsBar books={books} />
         </div>
       </div>
-
-      {/* Nav strip — between stats and search */}
-      <NavPanel currentView={currentView} onNavigate={handleNavigate} />
 
       {/* Controls */}
       <div style={{ paddingBottom: 16 }}>
@@ -2654,7 +2657,7 @@ export default function App() {
           onClick={() => setShowAddForm(true)}
           title="Add a book"
           style={{
-            position: "absolute", top: -18, left: 28, zIndex: 20,
+            position: "absolute", top: -38, left: 28, zIndex: 20,
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 6, width: 156, height: 30,
             background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
@@ -2810,7 +2813,6 @@ export default function App() {
 
       {['timeline','genres','authors','goals'].includes(displayedView) && (
         <div>
-          <NavPanel currentView={currentView} onNavigate={handleNavigate} />
           {displayedView === 'timeline' && <StatsTimeline books={books} onBack={() => handleNavigate('bookshelf')} />}
           {displayedView === 'genres' && <StatsGenres books={books} onBack={() => handleNavigate('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
           {displayedView === 'authors' && <StatsAuthors books={books} onBack={() => handleNavigate('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}

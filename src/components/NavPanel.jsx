@@ -62,17 +62,10 @@ export default function NavPanel({ currentView, onNavigate }) {
   return (
     <>
       <style>{`
-        @keyframes pageEnter {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .page-enter { animation: pageEnter 0.3s ease forwards; }
-        .page-exit  { opacity: 0; transform: translateY(-6px); transition: opacity 0.18s ease, transform 0.18s ease; pointer-events: none; }
-
         .nav-strip-wrap {
           display: flex;
           justify-content: center;
-          padding: 14px 20px 12px;
+          padding: 10px 20px 10px;
         }
         .nav-strip-inner {
           display: flex;
