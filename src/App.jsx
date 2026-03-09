@@ -2124,6 +2124,16 @@ export default function App() {
   const [filterGenres, setFilterGenres] = useState([]);
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
   const genreDropdownRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const coverColors = useCoverColors(syncedBooks);
+  const [pulledBookId, setPulledBookId] = useState(null);
+  const pullTimeoutRef = useRef(null);
+  const [currentView, setCurrentView] = useState('bookshelf');
+  const [siteSettings, setSiteSettings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}'); } catch { return {}; }
+  });
+  const [showSettings, setShowSettings] = useState(false);
+  const [propPickerShelf, setPropPickerShelf] = useState(null);
   const [toggleHovered, setToggleHovered] = useState(false);
   const [pageTransitioning, setPageTransitioning] = useState(false);
   const [crPanelFullyOpen, setCrPanelFullyOpen] = useState(!!siteSettings.currentlyReadingEnabled);
@@ -2137,16 +2147,6 @@ export default function App() {
       setPageTransitioning(false);
     }, 180);
   }, [currentView]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const coverColors = useCoverColors(syncedBooks);
-  const [pulledBookId, setPulledBookId] = useState(null);
-  const pullTimeoutRef = useRef(null);
-  const [currentView, setCurrentView] = useState('bookshelf');
-  const [siteSettings, setSiteSettings] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}'); } catch { return {}; }
-  });
-  const [showSettings, setShowSettings] = useState(false);
-  const [propPickerShelf, setPropPickerShelf] = useState(null);
 
   const updateSiteSettings = (changes) => {
     setSiteSettings(prev => {
