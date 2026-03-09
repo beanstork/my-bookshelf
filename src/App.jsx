@@ -1158,7 +1158,20 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
         maxWidth: 480, width: "100%", maxHeight: "85vh", overflow: "auto",
         boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
         animation: "scaleIn 0.3s ease",
+        position: "relative",
       }}>
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute", top: 16, right: 16,
+            background: "none", border: "none", cursor: "pointer",
+            color: "#6B5040", fontSize: 22, lineHeight: 1, padding: 4,
+            transition: "color 0.15s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = "#BFA88A"}
+          onMouseLeave={e => e.currentTarget.style.color = "#6B5040"}
+          title="Close"
+        >×</button>
         <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#F5ECD7", fontSize: 22, margin: "0 0 24px" }}>
           Add a Book
         </h2>
@@ -2163,6 +2176,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [propPickerShelf, setPropPickerShelf] = useState(null);
   const [toggleHovered, setToggleHovered] = useState(false);
+  const [addBookHovered, setAddBookHovered] = useState(false);
   const [crPanelFullyOpen, setCrPanelFullyOpen] = useState(!!siteSettings.currentlyReadingEnabled);
   const [displayedView, setDisplayedView] = useState('bookshelf');
   const [contentVisible, setContentVisible] = useState(true);
@@ -2683,18 +2697,22 @@ export default function App() {
         <button
           onClick={() => setShowAddForm(true)}
           title="Add a book"
+          onMouseEnter={() => setAddBookHovered(true)}
+          onMouseLeave={() => setAddBookHovered(false)}
           style={{
-            position: "absolute", top: -31, left: 28, zIndex: 20,
+            position: "absolute", top: addBookHovered ? -34 : -30, left: 28, zIndex: 20,
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 6, width: 156, height: 30,
-            background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
-            border: "1px solid rgba(140,60,80,0.4)",
-            borderLeft: "10px solid #8B4558",
-            borderRadius: "3px 4px 4px 3px",
+            background: "linear-gradient(180deg, #D08898 0%, #B86878 100%)",
+            border: "1px solid rgba(140,60,80,0.35)",
+            borderRadius: "6px 6px 6px 6px",
             color: "#FDF0F3", fontFamily: "'DM Sans', sans-serif",
             fontSize: 12, fontWeight: 600, cursor: "pointer",
-            boxShadow: "1px 5px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,210,220,0.2)",
+            boxShadow: addBookHovered
+              ? "0 8px 20px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,210,220,0.25)"
+              : "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,210,220,0.2)",
             letterSpacing: "0.3px",
+            transition: "top 0.2s ease, box-shadow 0.2s ease",
           }}
         >
           + Add Book
