@@ -2375,14 +2375,12 @@ export default function App() {
     background: active ? "#8B2840" : "rgba(255,255,255,0.55)",
     color: active ? "#FDF0F3" : "#7A3040",
     fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
-    transition: "all 0.2s", textAlign: "center",
+    transition: "all 0.2s", flex: 1, textAlign: "center",
     fontWeight: active ? 600 : 400,
   });
 
   return (
     <>
-      <NavPanel currentView={currentView} onNavigate={setCurrentView} />
-
       {currentView === 'bookshelf' && (
     <div className="page-root" style={{
       minHeight: "100vh",
@@ -2479,10 +2477,11 @@ export default function App() {
         </div>
       </div>
 
+      {/* Nav strip — between stats and search */}
+      <NavPanel currentView={currentView} onNavigate={setCurrentView} />
+
       {/* Controls */}
       <div style={{ paddingBottom: 16 }}>
-      <div style={{ display: "none" }} />{/* placeholder to preserve structure */}
-
       {/* Controls */}
       <div className="controls-wrap" style={{ padding: "12px 20px 8px", maxWidth: 1100, margin: "0 auto" }}>
         {/* Search */}
@@ -2506,7 +2505,7 @@ export default function App() {
         </div>
 
         {/* Shelf filter */}
-        <div style={{ display: "flex", marginBottom: 12, flexWrap: "wrap", gap: 4 }}>
+        <div style={{ display: "flex", marginBottom: 12, flexWrap: "wrap" }}>
           {[
             { key: "all", label: "All" },
             { key: "read", label: "Read" },
@@ -2523,16 +2522,6 @@ export default function App() {
 
         {/* Sort & genre filter */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <button onClick={() => setShowAddForm(true)} style={{
-            padding: "8px 20px", borderRadius: 8,
-            background: "#C0768A",
-            border: "1px solid rgba(160,80,100,0.3)",
-            color: "#FDF0F3", fontFamily: "'DM Sans', sans-serif",
-            fontSize: 13, fontWeight: 600, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(160,80,100,0.2)",
-          }}>
-            + Add Book
-          </button>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#6B3520", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Sort</span>
             <select value={sortBy} onChange={e => { setSortBy(e.target.value); setSortAsc(false); }} style={{
@@ -2661,6 +2650,28 @@ export default function App() {
           border: "1px solid #8A7050",
           boxShadow: "inset 0 2px 20px rgba(0,0,0,0.35), inset 0 -2px 10px rgba(0,0,0,0.2)",
         }}>
+          {/* Flat book — Add Book button resting on top of the bookcase */}
+          <div style={{ display: "flex", justifyContent: "flex-start", padding: "0 12px 12px" }}>
+            <button
+              onClick={() => setShowAddForm(true)}
+              title="Add a book"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 6, width: 156, height: 30,
+                background: "linear-gradient(180deg, #CC8096 0%, #B86878 100%)",
+                border: "1px solid rgba(140,60,80,0.4)",
+                borderLeft: "10px solid #8B4558",
+                borderRadius: "3px 4px 4px 3px",
+                color: "#FDF0F3", fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                boxShadow: "1px 5px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,210,220,0.2)",
+                letterSpacing: "0.3px",
+              }}
+            >
+              + Add Book
+            </button>
+          </div>
+
           {filteredAndSorted.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#8B7355", fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontStyle: "italic" }}>
               No books found. Try adjusting your filters.
@@ -2777,27 +2788,13 @@ export default function App() {
     </div>
       )}
 
-      {currentView === 'timeline' && (
+      {['timeline','genres','authors','goals'].includes(currentView) && (
         <div className="page-root">
-          <StatsTimeline books={books} onBack={() => setCurrentView('bookshelf')} />
-        </div>
-      )}
-
-      {currentView === 'genres' && (
-        <div className="page-root">
-          <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
-        </div>
-      )}
-
-      {currentView === 'authors' && (
-        <div className="page-root">
-          <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />
-        </div>
-      )}
-
-      {currentView === 'goals' && (
-        <div className="page-root">
-          <StatsGoals books={books} onBack={() => setCurrentView('bookshelf')} />
+          <NavPanel currentView={currentView} onNavigate={setCurrentView} />
+          {currentView === 'timeline' && <StatsTimeline books={books} onBack={() => setCurrentView('bookshelf')} />}
+          {currentView === 'genres' && <StatsGenres books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
+          {currentView === 'authors' && <StatsAuthors books={books} onBack={() => setCurrentView('bookshelf')} onBookClick={id => setSelectedBookId(id)} />}
+          {currentView === 'goals' && <StatsGoals books={books} onBack={() => setCurrentView('bookshelf')} />}
         </div>
       )}
 
