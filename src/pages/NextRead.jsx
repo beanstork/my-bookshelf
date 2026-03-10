@@ -55,8 +55,9 @@ export default function NextRead({ books }) {
         if (!genres.some(g => selectedGenres.has(g))) return false;
       }
 
-      if (selectedLength === 'short' && (b.p <= 0 || b.p >= 300)) return false;
-      if (selectedLength === 'long' && (b.p <= 0 || b.p < 500)) return false;
+      if (selectedLength === 'short'  && (b.p <= 0 || b.p >= 300)) return false;
+      if (selectedLength === 'medium' && (b.p <= 0 || b.p < 300 || b.p > 500)) return false;
+      if (selectedLength === 'long'   && (b.p <= 0 || b.p < 500)) return false;
 
       if (selectedMoods.size > 0) {
         if (!hasGenres) return false;
@@ -188,9 +189,10 @@ export default function NextRead({ books }) {
           <span style={sectionLabelStyle}>Length</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {[
-              { key: 'short', label: 'Short  (< 300p)' },
-              { key: 'any',   label: 'Any length' },
-              { key: 'long',  label: 'Long  (> 500p)' },
+              { key: 'short',  label: 'Short (< 300p)'   },
+              { key: 'medium', label: 'Medium (300–500p)' },
+              { key: 'long',   label: 'Long (> 500p)'     },
+              { key: 'any',    label: 'Any'               },
             ].map(({ key, label }) => (
               <button
                 key={key}
