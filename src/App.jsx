@@ -528,7 +528,7 @@ function QuoteManagerModal({ quotes, readBooks, onSave, onClose }) {
             onChange={e => setAddBook(e.target.value)}
             style={{ ...inputStyle, marginBottom: 8 }}
           >
-            <option value="">— Select a book from your shelf —</option>
+            <option value="">— Select a book from your Read shelf —</option>
             {readBooksSorted.map(b => (
               <option key={b.t} value={b.t}>{b.t}</option>
             ))}
