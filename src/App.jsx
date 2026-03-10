@@ -409,7 +409,7 @@ function RotatingQuote({ books }) {
         onMouseLeave={e => e.currentTarget.style.opacity = 0.55}
         aria-label="Previous quote"
       >‹</button>
-      <div style={{ transition: "opacity 0.5s ease-in-out", opacity: visible ? 1 : 0, textAlign: "center", maxWidth: 520, minHeight: 85 }}>
+      <div style={{ transition: "opacity 0.5s ease-in-out", opacity: visible ? 1 : 0, textAlign: "center" }}>
         <div style={{
           background: "rgba(255,248,244,0.28)",
           borderRadius: 14,
@@ -419,7 +419,7 @@ function RotatingQuote({ books }) {
           <p style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
-            lineHeight: 1.5,
+            lineHeight: 1.5, whiteSpace: 'nowrap',
           }}>
             &ldquo;{quote.text}&rdquo;
           </p>
