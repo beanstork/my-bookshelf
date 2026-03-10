@@ -2388,6 +2388,7 @@ export default function App() {
     }
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [showQuoteManager, setShowQuoteManager] = useState(false);
   const [propPickerShelf, setPropPickerShelf] = useState(null);
   const [toggleHovered, setToggleHovered] = useState(false);
   const [addBookHovered, setAddBookHovered] = useState(false);
@@ -2738,7 +2739,11 @@ export default function App() {
           }}>
             {siteSettings.name || "My Bookshelf"}
           </h1>
-          <RotatingQuote books={books} />
+          <RotatingQuote
+            books={books}
+            quotes={siteSettings.customQuotes || BOOK_QUOTES}
+            onManage={() => setShowQuoteManager(true)}
+          />
         </div>
 
         {syncLoading && (
@@ -3113,6 +3118,14 @@ export default function App() {
           onSelect={(override) => handlePropSelect(propPickerShelf, override)}
           onClear={() => handlePropClear(propPickerShelf)}
           onClose={() => setPropPickerShelf(null)}
+        />
+      )}
+      {showQuoteManager && (
+        <QuoteManagerModal
+          quotes={siteSettings.customQuotes || BOOK_QUOTES}
+          readBooks={(books || []).filter(b => b.s === 'read')}
+          onSave={(newQuotes) => updateSiteSettings({ customQuotes: newQuotes })}
+          onClose={() => setShowQuoteManager(false)}
         />
       )}
     </>
