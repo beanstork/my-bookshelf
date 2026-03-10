@@ -114,7 +114,8 @@ export default function NavPanel({ currentView, onNavigate }) {
           justify-content: center;
           gap: 4px;
           padding: 8px 16px;
-          min-width: 72px;
+          width: 90px;
+          box-sizing: border-box;
           border-radius: 22px;
           border: 1px solid transparent;
           background: transparent;
