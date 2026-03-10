@@ -369,6 +369,195 @@ const HEADER_ICONS = {
   ),
 };
 
+function QuoteManagerModal({ quotes, readBooks, onSave, onClose }) {
+  const [localQuotes, setLocalQuotes] = useState(quotes.map((q, i) => ({ ...q, _id: i })));
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [editBook, setEditBook] = useState('');
+  const [editBy, setEditBy] = useState('');
+  const [addBook, setAddBook] = useState('');
+  const [addText, setAddText] = useState('');
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  const readBooksSorted = [...readBooks].sort((a, b) => a.t.localeCompare(b.t));
+
+  const startEdit = (q) => {
+    setEditingId(q._id);
+    setEditText(q.text);
+    setEditBook(q.book);
+    setEditBy(q.by);
+  };
+
+  const saveEdit = () => {
+    if (!editText.trim()) return;
+    setLocalQuotes(prev => prev.map(q =>
+      q._id === editingId ? { ...q, text: editText.trim(), book: editBook.trim(), by: editBy.trim() } : q
+    ));
+    setEditingId(null);
+  };
+
+  const deleteQuote = (id) => {
+    setLocalQuotes(prev => prev.filter(q => q._id !== id));
+  };
+
+  const addQuote = () => {
+    if (!addText.trim() || !addBook) return;
+    const book = readBooks.find(b => b.t === addBook);
+    const by = book ? book.a : '';
+    setLocalQuotes(prev => [...prev, {
+      text: addText.trim(),
+      book: addBook,
+      by,
+      _id: Date.now(),
+    }]);
+    setAddText('');
+    setAddBook('');
+  };
+
+  const handleSave = () => {
+    onSave(localQuotes.map(({ _id, ...q }) => q));
+    onClose();
+  };
+
+  const overlayStyle = {
+    position: "fixed", inset: 0, background: "rgba(20,10,5,0.75)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 1000, padding: 20,
+  };
+  const modalStyle = {
+    background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16,
+    padding: 28, width: "100%", maxWidth: 560,
+    fontFamily: "'DM Sans', sans-serif", display: "flex", flexDirection: "column",
+    maxHeight: "85vh",
+  };
+  const labelStyle = {
+    color: "#D4A843", fontSize: 11, textTransform: "uppercase",
+    letterSpacing: 1.5, display: "block", marginBottom: 6,
+  };
+  const inputStyle = {
+    width: "100%", padding: "8px 12px", borderRadius: 8,
+    border: "1px solid #4A3728", background: "#2C1D12",
+    color: "#E8D5B7", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+    outline: "none", boxSizing: "border-box",
+  };
+  const btnStyle = (primary) => ({
+    padding: "8px 18px", borderRadius: 8, border: primary ? "none" : "1px solid #4A3728", cursor: "pointer",
+    fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600,
+    background: primary ? "#8B2840" : "#2C1D12",
+    color: primary ? "#F5ECD7" : "#A08060",
+  });
+
+  return (
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={modalStyle} onClick={e => e.stopPropagation()}>
+        <h2 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 20px", fontSize: 20 }}>
+          Manage Quotes
+        </h2>
+
+        <div style={{ overflowY: "auto", flex: 1, marginBottom: 20, paddingRight: 4 }}>
+          {localQuotes.length === 0 && (
+            <p style={{ color: "#A08060", fontSize: 13, textAlign: "center", marginTop: 20 }}>No quotes yet.</p>
+          )}
+          {localQuotes.map(q => (
+            <div key={q._id} style={{ borderBottom: "1px solid #2C1D12", padding: "10px 0" }}>
+              {editingId === q._id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <textarea
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    rows={2}
+                    style={{ ...inputStyle, resize: "vertical" }}
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      value={editBook}
+                      onChange={e => setEditBook(e.target.value)}
+                      placeholder="Book title"
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                    <input
+                      value={editBy}
+                      onChange={e => setEditBy(e.target.value)}
+                      placeholder="Author"
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button style={btnStyle(true)} onClick={saveEdit}>Save</button>
+                    <button style={btnStyle(false)} onClick={() => setEditingId(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      color: "#E8D5B7", fontSize: 15, margin: "0 0 4px", fontStyle: "italic",
+                    }}>
+                      &ldquo;{q.text}&rdquo;
+                    </p>
+                    <p style={{ color: "#8B6040", fontSize: 11, margin: 0, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                      {q.book} &middot; {q.by}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => startEdit(q)}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#8B6040", fontSize: 16, padding: "0 4px", flexShrink: 0 }}
+                    title="Edit"
+                  >✎</button>
+                  <button
+                    onClick={() => deleteQuote(q._id)}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#8B3040", fontSize: 16, padding: "0 4px", flexShrink: 0 }}
+                    title="Delete"
+                  >✕</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ borderTop: "1px solid #4A3728", paddingTop: 16, marginBottom: 16 }}>
+          <label style={labelStyle}>Add a Quote</label>
+          <select
+            value={addBook}
+            onChange={e => setAddBook(e.target.value)}
+            style={{ ...inputStyle, marginBottom: 8 }}
+          >
+            <option value="">— Select a book from your shelf —</option>
+            {readBooksSorted.map(b => (
+              <option key={b.t} value={b.t}>{b.t}</option>
+            ))}
+          </select>
+          <textarea
+            value={addText}
+            onChange={e => setAddText(e.target.value)}
+            placeholder="Type the quote here…"
+            rows={3}
+            style={{ ...inputStyle, resize: "vertical", marginBottom: 8 }}
+          />
+          <button
+            style={{ ...btnStyle(true), opacity: (!addBook || !addText.trim()) ? 0.4 : 1 }}
+            disabled={!addBook || !addText.trim()}
+            onClick={addQuote}
+          >
+            Add Quote
+          </button>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          <button style={btnStyle(false)} onClick={onClose}>Cancel</button>
+          <button style={btnStyle(true)} onClick={handleSave}>Save All Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RotatingQuote({ books, quotes = [], onManage }) {
   const readTitles = new Set((books || []).filter(b => b.s === 'read').map(b => b.t));
   const pool = readTitles.size > 0
