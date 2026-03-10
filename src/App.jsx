@@ -2739,6 +2739,7 @@ export default function App() {
             {siteSettings.name || "My Bookshelf"}
           </h1>
           <RotatingQuote
+            key={(siteSettings.customQuotes || BOOK_QUOTES).length}
             books={books}
             quotes={siteSettings.customQuotes || BOOK_QUOTES}
             onManage={() => setShowQuoteManager(true)}
