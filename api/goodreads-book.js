@@ -48,6 +48,24 @@ export default async function handler(req, res) {
       || html.match(/<meta\s+content="([^"]+)"\s+property="og:image"/i);
     const cover = (ogMatch?.[1] && !ogMatch[1].includes('nocover')) ? ogMatch[1] : '';
 
+    // Extract genres: try JSON-LD genre field first, then og:book:tag meta tags
+    const genreSet = new Set();
+    if (ldData?.genre) {
+      const raw = Array.isArray(ldData.genre) ? ldData.genre : [ldData.genre];
+      raw.forEach(g => { if (g && typeof g === 'string') genreSet.add(g.trim()); });
+    }
+    if (genreSet.size === 0) {
+      const tagMatches = html.matchAll(/<meta[^>]+property="og:book:tag"[^>]+content="([^"]+)"/gi);
+      for (const m of tagMatches) {
+        if (m[1]) genreSet.add(m[1].trim());
+      }
+      const tagMatches2 = html.matchAll(/<meta[^>]+content="([^"]+)"[^>]+property="og:book:tag"/gi);
+      for (const m of tagMatches2) {
+        if (m[1]) genreSet.add(m[1].trim());
+      }
+    }
+    const genres = Array.from(genreSet).slice(0, 3);
+
     return res.status(200).json({
       title: title.trim(),
       author: rawAuthor.trim(),
@@ -55,6 +73,7 @@ export default async function handler(req, res) {
       year,
       isbn,
       cover,
+      genres,
     });
   } catch {
     return res.status(500).json({ error: 'fetch failed' });
