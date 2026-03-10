@@ -369,14 +369,14 @@ const HEADER_ICONS = {
   ),
 };
 
-function RotatingQuote({ books }) {
+function RotatingQuote({ books, quotes = [], onManage }) {
   const readTitles = new Set((books || []).filter(b => b.s === 'read').map(b => b.t));
   const pool = readTitles.size > 0
-    ? BOOK_QUOTES.filter(q => readTitles.has(q.book))
-    : BOOK_QUOTES;
-  const activePool = pool.length > 0 ? pool : BOOK_QUOTES;
+    ? quotes.filter(q => readTitles.has(q.book))
+    : quotes;
+  const activePool = pool.length > 0 ? pool : quotes;
 
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * activePool.length));
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * Math.max(activePool.length, 1)));
   const [visible, setVisible] = useState(true);
 
   const navigate = useCallback((dir) => {
@@ -391,6 +391,8 @@ function RotatingQuote({ books }) {
     const timer = setInterval(() => navigate(1), 20000);
     return () => clearInterval(timer);
   }, [navigate]);
+
+  if (activePool.length === 0) return null;
 
   const quote = activePool[idx % activePool.length];
 
@@ -439,6 +441,20 @@ function RotatingQuote({ books }) {
         onMouseLeave={e => e.currentTarget.style.opacity = 0.55}
         aria-label="Next quote"
       >›</button>
+      {onManage && (
+        <button
+          onClick={onManage}
+          title="Manage quotes"
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: "#8B3040", opacity: 0.45, fontSize: 14, padding: "0 0 0 6px",
+            lineHeight: 1, transition: "opacity 0.15s", flexShrink: 0,
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = 1}
+          onMouseLeave={e => e.currentTarget.style.opacity = 0.45}
+          aria-label="Manage quotes"
+        >✎</button>
+      )}
     </div>
   );
 }
