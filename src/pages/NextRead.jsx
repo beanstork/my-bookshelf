@@ -56,7 +56,7 @@ export default function NextRead({ books }) {
       }
 
       if (selectedLength === 'short' && (b.p <= 0 || b.p >= 300)) return false;
-      if (selectedLength === 'long' && (b.p <= 0 || b.p <= 500)) return false;
+      if (selectedLength === 'long' && (b.p <= 0 || b.p < 500)) return false;
 
       if (selectedMoods.size > 0) {
         if (!hasGenres) return false;
