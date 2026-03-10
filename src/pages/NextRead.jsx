@@ -17,7 +17,7 @@ export default function NextRead({ books }) {
 
   const availableGenres = useMemo(() => {
     const set = new Set();
-    toReadBooks.forEach(b => (b.g || []).forEach(g => set.add(g)));
+    toReadBooks.forEach(b => (b.g || []).forEach(g => set.add(g.toLowerCase())));
     return Array.from(set).sort();
   }, [toReadBooks]);
 
