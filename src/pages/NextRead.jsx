@@ -12,7 +12,7 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export default function NextRead({ books }) {
+export default function NextRead({ books, onUpdateBook }) {
   const toReadBooks = useMemo(() => (books || []).filter(b => b.s === 'to-read'), [books]);
 
   const availableGenres = useMemo(() => {
@@ -33,6 +33,8 @@ export default function NextRead({ books }) {
   const [pickedBook, setPickedBook] = useState(null);
   const [seenIds, setSeenIds] = useState(new Set());
   const [celebrated, setCelebrated] = useState(false);
+  const [fetchingGenres, setFetchingGenres] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState(null); // null | { done, total } | 'complete'
 
   const toggleGenre = (g) => setSelectedGenres(prev => {
     const next = new Set(prev);
@@ -68,6 +70,28 @@ export default function NextRead({ books }) {
       return true;
     });
   }, [toReadBooks, selectedGenres, selectedLength, selectedMoods]);
+
+  const fetchGenresForAll = async () => {
+    const needsGenres = toReadBooks.filter(b => !b.manual && (b.g || []).length === 0);
+    if (!needsGenres.length || !onUpdateBook) return;
+    setFetchingGenres(true);
+    setFetchProgress({ done: 0, total: needsGenres.length });
+    for (let i = 0; i < needsGenres.length; i++) {
+      const b = needsGenres[i];
+      try {
+        const res = await fetch(`/api/goodreads-book?id=${encodeURIComponent(b.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.genres?.length) {
+            onUpdateBook(b.id, { g: data.genres });
+          }
+        }
+      } catch {}
+      setFetchProgress({ done: i + 1, total: needsGenres.length });
+    }
+    setFetchingGenres(false);
+    setFetchProgress('complete');
+  };
 
   const pick = () => {
     let pool = eligible.filter(b => !seenIds.has(b.id));
@@ -167,6 +191,41 @@ export default function NextRead({ books }) {
       <div style={innerStyle}>
         <h1 style={headingStyle}>Next Read</h1>
         <p style={subheadingStyle}>Tell me what you're in the mood for and I'll pick a book from your shelf.</p>
+
+        {/* Genre backfill banner */}
+        {(() => {
+          const needsGenres = toReadBooks.filter(b => !b.manual && (b.g || []).length === 0);
+          if (fetchProgress === 'complete') {
+            return (
+              <div style={{ marginBottom: 20, padding: '10px 16px', borderRadius: 10, background: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.25)', fontSize: 13, color: '#6B4A10' }}>
+                ✓ Genres fetched successfully.
+              </div>
+            );
+          }
+          if (fetchingGenres && fetchProgress) {
+            return (
+              <div style={{ marginBottom: 20, padding: '10px 16px', borderRadius: 10, background: 'rgba(255,250,245,0.6)', border: '1px solid rgba(180,130,80,0.2)', fontSize: 13, color: '#6B3520' }}>
+                Fetching genres… ({fetchProgress.done}/{fetchProgress.total})
+              </div>
+            );
+          }
+          if (needsGenres.length > 0 && onUpdateBook) {
+            return (
+              <div style={{ marginBottom: 20, padding: '10px 16px', borderRadius: 10, background: 'rgba(255,250,245,0.6)', border: '1px solid rgba(180,130,80,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ fontSize: 13, color: '#6B3520' }}>
+                  {needsGenres.length} To Read book{needsGenres.length !== 1 ? 's have' : ' has'} no genres yet.
+                </span>
+                <button
+                  onClick={fetchGenresForAll}
+                  style={{ padding: '6px 16px', borderRadius: 16, border: 'none', background: '#8B2840', color: '#FDF0F3', fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Fetch genres
+                </button>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {availableGenres.length > 0 && (
           <div style={{ marginBottom: 28 }}>

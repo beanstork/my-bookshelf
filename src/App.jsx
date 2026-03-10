@@ -3085,7 +3085,7 @@ export default function App() {
           {displayedView === 'goals' && <StatsGoals books={books} onBack={() => handleNavigate('bookshelf')} />}
         </div>
       )}
-      {displayedView === 'next-read' && <NextRead books={books} />}
+      {displayedView === 'next-read' && <NextRead books={books} onUpdateBook={handleEditBook} />}
       </div>{/* end opacity transition wrapper */}
 
       {/* Modals stay outside the view conditional */}
