@@ -2171,7 +2171,16 @@ export default function App() {
   const pullTimeoutRef = useRef(null);
   const [currentView, setCurrentView] = useState('bookshelf');
   const [siteSettings, setSiteSettings] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}'); } catch { return {}; }
+    try {
+      const stored = JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}');
+      if (!stored.customQuotes) {
+        stored.customQuotes = BOOK_QUOTES;
+        localStorage.setItem('bookshelf_settings_v1', JSON.stringify(stored));
+      }
+      return stored;
+    } catch {
+      return { customQuotes: BOOK_QUOTES };
+    }
   });
   const [showSettings, setShowSettings] = useState(false);
   const [propPickerShelf, setPropPickerShelf] = useState(null);
