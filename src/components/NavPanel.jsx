@@ -111,8 +111,10 @@ export default function NavPanel({ currentView, onNavigate }) {
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           gap: 4px;
           padding: 8px 16px;
+          min-width: 72px;
           border-radius: 22px;
           border: 1px solid transparent;
           background: transparent;
