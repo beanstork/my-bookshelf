@@ -1329,7 +1329,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
       y: grMeta?.year || '',
       dr: dateRead ? dateRead.replace(/-/g, '/') : '',
       da: new Date().toISOString().slice(0, 10).replace(/-/g, '/'),
-      s: shelf, g: genre ? [genre] : [], sn: '', si: 0,
+      s: shelf, g: (grMeta?.genres?.length ? grMeta.genres : (genre ? [genre] : [])), sn: '', si: 0,
       au: isAudiobook, fav: false,
       isbn: grMeta?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : 'Paperback',
       rev: notes,
