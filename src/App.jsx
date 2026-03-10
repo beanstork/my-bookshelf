@@ -2380,7 +2380,6 @@ export default function App() {
       const stored = JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}');
       if (!stored.customQuotes) {
         stored.customQuotes = BOOK_QUOTES;
-        localStorage.setItem('bookshelf_settings_v1', JSON.stringify(stored));
       }
       return stored;
     } catch {
