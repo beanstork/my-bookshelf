@@ -1329,7 +1329,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
       y: grMeta?.year || '',
       dr: dateRead ? dateRead.replace(/-/g, '/') : '',
       da: new Date().toISOString().slice(0, 10).replace(/-/g, '/'),
-      s: shelf, g: (grMeta?.genres?.length ? grMeta.genres : (genre ? [genre] : [])), sn: '', si: 0,
+      s: shelf, g: genre ? [genre] : [], sn: '', si: 0,
       au: isAudiobook, fav: false,
       isbn: grMeta?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : 'Paperback',
       rev: notes,
@@ -2629,6 +2629,15 @@ export default function App() {
     editBook(id, changes, manualBookIds.has(id));
   }, [editBook, manualBookIds]);
 
+  // One-time migration: clear genres from all to-read books
+  useEffect(() => {
+    if (localStorage.getItem('bookshelf_genres_cleared_v1')) return;
+    localStorage.setItem('bookshelf_genres_cleared_v1', '1');
+    localStorage.removeItem('bookshelf_genres_backfill_v1');
+    books.filter(b => b.s === 'to-read' && (b.g || []).length > 0)
+      .forEach(b => handleEditBook(b.id, { g: [] }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleDeleteBook = useCallback((id) => {
     deleteBook(id);
     setSelectedBookId(null);
@@ -3085,7 +3094,7 @@ export default function App() {
           {displayedView === 'goals' && <StatsGoals books={books} onBack={() => handleNavigate('bookshelf')} />}
         </div>
       )}
-      {displayedView === 'next-read' && <NextRead books={books} onUpdateBook={handleEditBook} />}
+      {displayedView === 'next-read' && <NextRead books={books} />}
       </div>{/* end opacity transition wrapper */}
 
       {/* Modals stay outside the view conditional */}

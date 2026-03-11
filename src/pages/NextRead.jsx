@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 
 const MOOD_MAP = {
   Comforting:        ['contemporary', 'romance', 'humor', 'fiction', 'feel-good'],
@@ -12,7 +12,7 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export default function NextRead({ books, onUpdateBook }) {
+export default function NextRead({ books }) {
   const toReadBooks = useMemo(() => (books || []).filter(b => b.s === 'to-read'), [books]);
 
   const availableGenres = useMemo(() => {
@@ -33,8 +33,6 @@ export default function NextRead({ books, onUpdateBook }) {
   const [pickedBook, setPickedBook] = useState(null);
   const [seenIds, setSeenIds] = useState(new Set());
   const [celebrated, setCelebrated] = useState(false);
-
-  const backfillRan = useRef(false);
 
   const toggleGenre = (g) => setSelectedGenres(prev => {
     const next = new Set(prev);
@@ -70,27 +68,6 @@ export default function NextRead({ books, onUpdateBook }) {
       return true;
     });
   }, [toReadBooks, selectedGenres, selectedLength, selectedMoods]);
-
-  useEffect(() => {
-    if (backfillRan.current) return;
-    if (localStorage.getItem('bookshelf_genres_backfill_v1')) { backfillRan.current = true; return; }
-    if (!onUpdateBook || !books?.length) return;
-    backfillRan.current = true;
-    localStorage.setItem('bookshelf_genres_backfill_v1', '1');
-    const needsGenres = books.filter(b => b.s === 'to-read' && !b.manual && !(b.g || []).length);
-    if (!needsGenres.length) return;
-    (async () => {
-      for (const b of needsGenres) {
-        try {
-          const res = await fetch(`/api/goodreads-book?id=${encodeURIComponent(b.id)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.genres?.length) onUpdateBook(b.id, { g: data.genres });
-          }
-        } catch {}
-      }
-    })();
-  }, [books, onUpdateBook]);
 
   const pick = () => {
     let pool = eligible.filter(b => !seenIds.has(b.id));
