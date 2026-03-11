@@ -48,57 +48,6 @@ export default async function handler(req, res) {
       || html.match(/<meta\s+content="([^"]+)"\s+property="og:image"/i);
     const cover = (ogMatch?.[1] && !ogMatch[1].includes('nocover')) ? ogMatch[1] : '';
 
-    // Extract genres: try __NEXT_DATA__ first (Goodreads is Next.js), then JSON-LD, then og:book:tag
-    const genreSet = new Set();
-
-    // Method 1: __NEXT_DATA__ embedded JSON (most reliable on modern Goodreads)
-    const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/i);
-    if (nextDataMatch?.[1]) {
-      try {
-        const nextData = JSON.parse(nextDataMatch[1]);
-        // Genres are typically at props.pageProps.apolloState or props.pageProps.book.bookGenres
-        const pageProps = nextData?.props?.pageProps;
-        if (pageProps?.book?.bookGenres) {
-          for (const bg of pageProps.book.bookGenres) {
-            const name = bg?.genre?.name;
-            if (name) genreSet.add(name.trim());
-          }
-        }
-        // Also try apolloState which has a different shape
-        if (genreSet.size === 0 && pageProps?.apolloState) {
-          const state = pageProps.apolloState;
-          for (const key of Object.keys(state)) {
-            if (key.startsWith('Book:') && state[key]?.bookGenres) {
-              for (const bg of state[key].bookGenres) {
-                const name = bg?.genre?.name || state[bg?.genre?.__ref]?.name;
-                if (name) genreSet.add(name.trim());
-              }
-            }
-          }
-        }
-      } catch {}
-    }
-
-    // Method 2: JSON-LD genre field
-    if (genreSet.size === 0 && ldData?.genre) {
-      const raw = Array.isArray(ldData.genre) ? ldData.genre : [ldData.genre];
-      raw.forEach(g => { if (g && typeof g === 'string') genreSet.add(g.trim()); });
-    }
-
-    // Method 3: og:book:tag meta tags
-    if (genreSet.size === 0) {
-      const tagMatches = html.matchAll(/<meta[^>]+property="og:book:tag"[^>]+content="([^"]+)"/gi);
-      for (const m of tagMatches) {
-        if (m[1]) genreSet.add(m[1].trim());
-      }
-      const tagMatches2 = html.matchAll(/<meta[^>]+content="([^"]+)"[^>]+property="og:book:tag"/gi);
-      for (const m of tagMatches2) {
-        if (m[1]) genreSet.add(m[1].trim());
-      }
-    }
-
-    const genres = Array.from(genreSet).slice(0, 3);
-
     return res.status(200).json({
       title: title.trim(),
       author: rawAuthor.trim(),
@@ -106,7 +55,6 @@ export default async function handler(req, res) {
       year,
       isbn,
       cover,
-      genres,
     });
   } catch {
     return res.status(500).json({ error: 'fetch failed' });
