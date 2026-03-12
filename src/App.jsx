@@ -1766,7 +1766,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
   return (
     <div style={{ marginBottom: 8 }}>
       {/* Books row */}
-      <div style={{
+      <div className="shelf-books-row" style={{
         display: "flex", alignItems: "flex-end", justifyContent: "flex-start", gap: 3,
         padding: "0 12px", minHeight: 220,
         flexWrap: "nowrap", overflowX: "auto",
@@ -2395,6 +2395,7 @@ export default function App() {
   const [crPanelFullyOpen, setCrPanelFullyOpen] = useState(!!siteSettings.currentlyReadingEnabled);
   const [displayedView, setDisplayedView] = useState('bookshelf');
   const [contentVisible, setContentVisible] = useState(true);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const handleNavigate = useCallback((view) => {
     if (view === currentView) return;
@@ -2606,15 +2607,15 @@ export default function App() {
     return result;
   }, [books, sortBy, sortAsc, filterShelf, filterGenres, searchQuery, effectiveColors]);
 
-  // Split books into shelves of ~12-16 books each
+  // Split books into shelves — fewer per shelf on mobile so books don't overflow
   const shelves = useMemo(() => {
     const result = [];
-    const booksPerShelf = 20;
+    const booksPerShelf = isMobile ? 8 : 20;
     for (let i = 0; i < filteredAndSorted.length; i += booksPerShelf) {
       result.push(filteredAndSorted.slice(i, i + booksPerShelf));
     }
     return result;
-  }, [filteredAndSorted]);
+  }, [filteredAndSorted, isMobile]);
 
   const currentlyReadingBooks = useMemo(
     () => books.filter(b => b.s === 'currently-reading'),
@@ -2692,11 +2693,12 @@ export default function App() {
         select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B3520' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
         @media (max-width: 768px) {
   .bookshelf-row { flex-direction: column !important; padding: 12px 8px 40px !important; }
-  .cr-outer { position: static !important; width: 100% !important; left: auto !important; top: auto !important; overflow: visible !important; margin-top: 20px; }
-  .cr-outer > div { width: 100% !important; padding-left: 0 !important; }
-  .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; padding: 8px 0 14px !important; }
+  .bookmark-toggle-btn { display: none !important; }
+  .cr-fab { display: flex !important; align-items: center; justify-content: center; width: 100%; margin: 12px 0 0; padding: 10px 16px; background: linear-gradient(180deg, #8B2840, #6A1E30); color: #FDF0F3; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px; box-shadow: 0 3px 10px rgba(80,20,30,0.35); }
+  .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; padding: 8px 4px 14px !important; }
   .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin: 0 4px 0 0 !important; align-self: center; white-space: nowrap; }
   .cr-card { flex-shrink: 0 !important; width: 100px !important; margin-bottom: 0 !important; }
+  .shelf-books-row { overflow-x: hidden !important; }
   .controls-wrap { padding: 10px 8px 6px !important; }
 }
       `}</style>
@@ -3008,6 +3010,7 @@ export default function App() {
 
       {/* Bookmark toggle — absolutely positioned at right edge of bookshelf */}
       <button
+        className="bookmark-toggle-btn"
         onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
         onMouseEnter={() => setToggleHovered(true)}
         onMouseLeave={() => setToggleHovered(false)}
@@ -3062,10 +3065,31 @@ export default function App() {
         )}
       </button>
 
-      {/* Sliding CR panel — absolutely positioned, does not affect bookshelf layout */}
+      {/* Mobile-only Currently Reading toggle button */}
+      <button
+        className="cr-fab"
+        onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
+        style={{ display: 'none' }}
+      >
+        <svg width="14" height="16" viewBox="0 0 13 16" fill="none" style={{ marginRight: 6 }}>
+          <path d="M2 1h9a1 1 0 0 1 1 1v12l-4.5-3L3 14V2a1 1 0 0 1 1-1z"
+            fill={siteSettings.currentlyReadingEnabled ? "rgba(255,255,255,0.9)" : "rgba(92,32,16,0.85)"}
+            strokeWidth="0.5"
+          />
+        </svg>
+        {siteSettings.currentlyReadingEnabled ? 'Hide Currently Reading' : 'Currently Reading'}
+      </button>
+
+      {/* Sliding CR panel — absolutely positioned on desktop, static below bookshelf on mobile */}
       <div
         className="cr-outer"
-        style={{
+        style={isMobile ? {
+          position: "static",
+          width: siteSettings.currentlyReadingEnabled ? '100%' : 0,
+          overflow: 'hidden',
+          transition: 'width 0.65s cubic-bezier(0.4,0,0.2,1)',
+          marginTop: 16,
+        } : {
           position: "absolute",
           top: 0,
           left: "calc(100% + 14px)",
@@ -3075,7 +3099,7 @@ export default function App() {
         }}
         onTransitionEnd={() => { if (siteSettings.currentlyReadingEnabled) setCrPanelFullyOpen(true); }}
       >
-        <div style={{ width: 210, paddingTop: 4, paddingLeft: 16 }}>
+        <div style={{ width: isMobile ? '100%' : 210, paddingTop: 4, paddingLeft: isMobile ? 0 : 16 }}>
           <CurrentlyReadingPanel
             books={currentlyReadingBooks}
             onBookClick={(book) => {
