@@ -607,11 +607,12 @@ function RotatingQuote({ books, quotes = [], onManage }) {
           borderRadius: 14,
           padding: "10px 18px",
           display: "inline-block",
+          maxWidth: "min(480px, 85vw)",
         }}>
           <p style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             color: "#6B2030", fontSize: 17, margin: 0, fontStyle: "italic",
-            lineHeight: 1.5, whiteSpace: 'nowrap',
+            lineHeight: 1.5,
           }}>
             &ldquo;{quote.text}&rdquo;
           </p>
@@ -1137,12 +1138,10 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
                 <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.p.toLocaleString()}</span>
               </div>
             )}
-            {book.y && (
-              <div>
-                <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Published</div>
-                <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.y}</span>
-              </div>
-            )}
+            <div>
+              <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Published</div>
+              <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>{book.y || "—"}</span>
+            </div>
             <div>
               <div style={{ color: "#8B7355", fontSize: 11, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Format</div>
               <span style={{ color: "#E8D5B7", fontFamily: "'Libre Baskerville', serif", fontSize: 14 }}>
@@ -2691,9 +2690,13 @@ export default function App() {
         select option { background: #F2E8D9; color: #3A2515; }
         select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B3520' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
         @media (max-width: 768px) {
-  .bookshelf-row { flex-direction: column !important; }
+  .bookshelf-row { flex-direction: column !important; padding: 12px 8px 40px !important; }
+  .cr-outer { position: static !important; width: 100% !important; left: auto !important; top: auto !important; overflow: visible !important; margin-top: 16px; }
+  .cr-outer > div { width: 100% !important; padding-left: 0 !important; }
   .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; gap: 16px; padding-bottom: 12px; }
   .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin-bottom: 0; align-self: center; margin-right: 8px; }
+  .bookshelf-wood { transform: scale(0.92); transform-origin: top center; margin-bottom: -4%; }
+  .controls-wrap { padding: 10px 8px 6px !important; }
 }
       `}</style>
 
@@ -2947,7 +2950,7 @@ export default function App() {
           + Add Book
         </button>
         {/* Wood frame */}
-        <div style={{
+        <div className="bookshelf-wood" style={{
           padding: 18,
           background: "linear-gradient(135deg, #C8A878 0%, #B89060 30%, #A87A48 60%, #B89060 80%, #C4A070 100%)",
           borderRadius: 14,
@@ -3060,6 +3063,7 @@ export default function App() {
 
       {/* Sliding CR panel — absolutely positioned, does not affect bookshelf layout */}
       <div
+        className="cr-outer"
         style={{
           position: "absolute",
           top: 0,
