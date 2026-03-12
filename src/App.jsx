@@ -2395,7 +2395,8 @@ export default function App() {
   const [crPanelFullyOpen, setCrPanelFullyOpen] = useState(!!siteSettings.currentlyReadingEnabled);
   const [displayedView, setDisplayedView] = useState('bookshelf');
   const [contentVisible, setContentVisible] = useState(true);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const isMobile = windowWidth <= 768;
 
   const handleNavigate = useCallback((view) => {
     if (view === currentView) return;
@@ -2607,15 +2608,15 @@ export default function App() {
     return result;
   }, [books, sortBy, sortAsc, filterShelf, filterGenres, searchQuery, effectiveColors]);
 
-  // Split books into shelves — fewer per shelf on mobile so books don't overflow
+  // Split books into shelves — count adapts to window width so books don't overflow
   const shelves = useMemo(() => {
     const result = [];
-    const booksPerShelf = isMobile ? 8 : 20;
+    const booksPerShelf = windowWidth <= 480 ? 6 : windowWidth <= 768 ? 8 : windowWidth <= 1024 ? 14 : 20;
     for (let i = 0; i < filteredAndSorted.length; i += booksPerShelf) {
       result.push(filteredAndSorted.slice(i, i + booksPerShelf));
     }
     return result;
-  }, [filteredAndSorted, isMobile]);
+  }, [filteredAndSorted, windowWidth]);
 
   const currentlyReadingBooks = useMemo(
     () => books.filter(b => b.s === 'currently-reading'),
@@ -2625,6 +2626,12 @@ export default function App() {
   useEffect(() => {
     if (!siteSettings.currentlyReadingEnabled) setCrPanelFullyOpen(false);
   }, [siteSettings.currentlyReadingEnabled]);
+
+  useEffect(() => {
+    const handler = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   const handleEditBook = useCallback((id, changes) => {
     editBook(id, changes, manualBookIds.has(id));
@@ -2698,7 +2705,6 @@ export default function App() {
   .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; padding: 8px 4px 14px !important; }
   .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin: 0 4px 0 0 !important; align-self: center; white-space: nowrap; }
   .cr-card { flex-shrink: 0 !important; width: 100px !important; margin-bottom: 0 !important; }
-  .shelf-books-row { overflow-x: hidden !important; }
   .controls-wrap { padding: 10px 8px 6px !important; }
 }
       `}</style>
@@ -3086,7 +3092,7 @@ export default function App() {
         style={isMobile ? {
           position: "static",
           width: siteSettings.currentlyReadingEnabled ? '100%' : 0,
-          overflow: 'hidden',
+          overflow: crPanelFullyOpen ? 'visible' : 'hidden',
           transition: 'width 0.65s cubic-bezier(0.4,0,0.2,1)',
           marginTop: 16,
         } : {
