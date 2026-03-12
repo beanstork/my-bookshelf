@@ -1945,6 +1945,7 @@ function CurrentlyReadingCard({ book, onClick, tiltRight }) {
 
   return (
     <div
+      className="cr-card"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -2691,11 +2692,11 @@ export default function App() {
         select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B3520' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
         @media (max-width: 768px) {
   .bookshelf-row { flex-direction: column !important; padding: 12px 8px 40px !important; }
-  .cr-outer { position: static !important; width: 100% !important; left: auto !important; top: auto !important; overflow: visible !important; margin-top: 16px; }
+  .cr-outer { position: static !important; width: 100% !important; left: auto !important; top: auto !important; overflow: visible !important; margin-top: 20px; }
   .cr-outer > div { width: 100% !important; padding-left: 0 !important; }
-  .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; gap: 16px; padding-bottom: 12px; }
-  .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin-bottom: 0; align-self: center; margin-right: 8px; }
-  .bookshelf-wood { transform: scale(0.92); transform-origin: top center; margin-bottom: -4%; }
+  .cr-panel { width: 100% !important; overflow-x: auto; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; padding: 8px 0 14px !important; }
+  .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin: 0 4px 0 0 !important; align-self: center; white-space: nowrap; }
+  .cr-card { flex-shrink: 0 !important; width: 100px !important; margin-bottom: 0 !important; }
   .controls-wrap { padding: 10px 8px 6px !important; }
 }
       `}</style>
