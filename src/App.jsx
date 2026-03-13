@@ -1234,6 +1234,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   const [grSearching, setGrSearching] = useState(false);
   const [grUrl, setGrUrl] = useState("");
   const [grError, setGrError] = useState(false);
+  const fetchControllerRef = useRef(null);
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -1262,36 +1263,42 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   }, [title, author, books]);
 
   const fetchAndPopulate = async ({ url } = {}) => {
+    if (fetchControllerRef.current) fetchControllerRef.current.abort();
+    const controller = new AbortController();
+    fetchControllerRef.current = controller;
+
     setGrSearching(true);
     setGrError(false);
     try {
       let meta = null;
       if (url) {
-        const res = await fetch(`/api/goodreads-book?url=${encodeURIComponent(url)}`);
+        const res = await fetch(`/api/goodreads-book?url=${encodeURIComponent(url)}`, { signal: controller.signal });
         if (res.ok) meta = await res.json();
       } else {
         const params = new URLSearchParams({ title });
         if (author) params.set('author', author);
-        const searchRes = await fetch(`/api/search-goodreads?${params}`);
+        const searchRes = await fetch(`/api/search-goodreads?${params}`, { signal: controller.signal });
         if (searchRes.ok) {
           const data = await searchRes.json();
           if (data.id) {
-            const metaRes = await fetch(`/api/goodreads-book?id=${encodeURIComponent(data.id)}`);
+            const metaRes = await fetch(`/api/goodreads-book?id=${encodeURIComponent(data.id)}`, { signal: controller.signal });
             if (metaRes.ok) meta = await metaRes.json();
           }
         }
       }
-      if (meta) {
-        if (meta.title)  setTitle(meta.title);
-        if (meta.author) setAuthor(meta.author);
-        if (meta.pages)  setPages(String(meta.pages));
-      } else {
-        setGrError(true);
+      if (!controller.signal.aborted) {
+        if (meta) {
+          if (meta.title)  setTitle(meta.title);
+          if (meta.author) setAuthor(meta.author);
+          if (meta.pages)  setPages(String(meta.pages));
+        } else {
+          setGrError(true);
+        }
       }
-    } catch {
-      setGrError(true);
+    } catch (err) {
+      if (err.name !== 'AbortError') setGrError(true);
     } finally {
-      setGrSearching(false);
+      if (!controller.signal.aborted) setGrSearching(false);
     }
   };
 
@@ -2171,6 +2178,11 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image is too large (max 5 MB). Please choose a smaller file.');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = ev => { setImageUrl(ev.target.result); setUrlInput(""); };
     reader.readAsDataURL(file);
@@ -2179,6 +2191,11 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const handleProfileFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image is too large (max 2 MB). Please choose a smaller file.');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = ev => setProfileImage(ev.target.result);
     reader.readAsDataURL(file);
@@ -2361,8 +2378,8 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
 }
 
 export default function App() {
-  const { books: syncedBooks, loading: syncLoading } = useGoodreadsSync(RAW_BOOKS);
-  const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, customColors, setCustomColor } = useLocalData();
+  const { books: syncedBooks, loading: syncLoading, error: syncError } = useGoodreadsSync(RAW_BOOKS);
+  const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, undeleteBook, customColors, setCustomColor } = useLocalData();
   const [selectedBookId, setSelectedBookId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState("dateRead");
@@ -2396,6 +2413,7 @@ export default function App() {
   const [displayedView, setDisplayedView] = useState('bookshelf');
   const [contentVisible, setContentVisible] = useState(true);
   const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [undoToast, setUndoToast] = useState(null);
   const isMobile = windowWidth <= 768;
 
   const handleNavigate = useCallback((view) => {
@@ -2647,10 +2665,25 @@ export default function App() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDeleteBook = useCallback((id) => {
+    const bookTitle = books.find(b => b.id === id)?.t || 'this book';
     deleteBook(id);
     setSelectedBookId(null);
     setPulledBookId(null);
-  }, [deleteBook]);
+    setUndoToast(prev => {
+      if (prev?.timeoutId) clearTimeout(prev.timeoutId);
+      const timeoutId = setTimeout(() => setUndoToast(null), 5000);
+      return { bookId: id, bookTitle, timeoutId };
+    });
+  }, [deleteBook, books]);
+
+  const handleUndoDelete = useCallback(() => {
+    setUndoToast(prev => {
+      if (!prev) return null;
+      clearTimeout(prev.timeoutId);
+      undeleteBook(prev.bookId);
+      return null;
+    });
+  }, [undeleteBook]);
 
   const shelfCounts = useMemo(() => ({
     all: books.length,
@@ -2775,6 +2808,15 @@ export default function App() {
             opacity: 0.7, position: "relative", zIndex: 1,
           }}>
             Syncing with Goodreads…
+          </div>
+        )}
+        {!syncLoading && syncError && (
+          <div style={{
+            textAlign: 'center', padding: '6px 16px', fontSize: 12,
+            color: '#C0504A', fontFamily: "'DM Sans', sans-serif",
+            background: 'rgba(192,80,74,0.08)', position: "relative", zIndex: 1,
+          }}>
+            Couldn't sync with Goodreads — showing saved data
           </div>
         )}
 
@@ -3173,6 +3215,28 @@ export default function App() {
           onSave={(newQuotes) => updateSiteSettings({ customQuotes: newQuotes })}
           onClose={() => setShowQuoteManager(false)}
         />
+      )}
+      {undoToast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#1E1208', border: '1px solid #4A3728', borderRadius: 10,
+          padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 16,
+          color: '#E8D5B7', fontFamily: "'DM Sans', sans-serif", fontSize: 14,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)', zIndex: 2000,
+          animation: 'slideUp 0.2s ease', whiteSpace: 'nowrap',
+        }}>
+          <span>Removed <em style={{ fontStyle: 'italic' }}>"{undoToast.bookTitle}"</em></span>
+          <button
+            onClick={handleUndoDelete}
+            style={{
+              background: '#8B2840', border: 'none', borderRadius: 6,
+              color: '#FDF0F3', padding: '5px 12px', cursor: 'pointer',
+              fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
+            }}
+          >
+            Undo
+          </button>
+        </div>
       )}
     </>
   );

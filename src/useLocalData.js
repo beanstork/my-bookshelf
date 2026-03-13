@@ -61,6 +61,15 @@ export function useLocalData() {
     });
   }, []);
 
+  const undeleteBook = useCallback((id) => {
+    setDeletedIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      save(DELETED_KEY, [...next]);
+      return next;
+    });
+  }, []);
+
   const setCustomColor = useCallback((id, hex) => {
     setCustomColorsState(prev => {
       const next = { ...prev, [id]: hex };
@@ -69,5 +78,5 @@ export function useLocalData() {
     });
   }, []);
 
-  return { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, customColors, setCustomColor };
+  return { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, undeleteBook, customColors, setCustomColor };
 }

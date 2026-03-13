@@ -1,7 +1,11 @@
 import { XMLParser } from 'fast-xml-parser';
 
 const GOODREADS_USER_ID = '174446438';
-const RSS_URL = `https://www.goodreads.com/review/list_rss/${GOODREADS_USER_ID}?shelf=%23all&per_page=200`;
+const PER_PAGE = 200;
+
+function getRssUrl(page) {
+  return `https://www.goodreads.com/review/list_rss/${GOODREADS_USER_ID}?shelf=%23all&per_page=${PER_PAGE}&page=${page}`;
+}
 
 const EXCLUSIVE_SHELVES = new Set(['read', 'currently-reading', 'to-read', 'dnf']);
 
@@ -74,31 +78,47 @@ function itemToBook(item) {
 }
 
 export default async function handler(req, res) {
-  try {
-    const response = await fetch(RSS_URL, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bookshelf-app/1.0)' },
-    });
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    isArray: (name) => name === 'item',
+  });
 
-    if (!response.ok) {
-      return res.status(502).json({ error: `Goodreads returned ${response.status}` });
+  try {
+    const allBooks = [];
+    let page = 1;
+
+    while (true) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      let response;
+      try {
+        response = await fetch(getRssUrl(page), {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bookshelf-app/1.0)' },
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!response.ok) {
+        if (page === 1) return res.status(502).json({ error: `Goodreads returned ${response.status}` });
+        break; // Return partial results for subsequent pages
+      }
+
+      const xml = await response.text();
+      const parsed = parser.parse(xml);
+      const items = parsed?.rss?.channel?.item || [];
+      const books = items.map(itemToBook).filter(b => b.id && b.t);
+
+      allBooks.push(...books);
+
+      if (items.length < PER_PAGE) break; // Reached the last page
+      page++;
     }
 
-    const xml = await response.text();
-
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      isArray: (name) => name === 'item',
-    });
-
-    const parsed = parser.parse(xml);
-    const items = parsed?.rss?.channel?.item || [];
-
-    const books = items
-      .map(itemToBook)
-      .filter(b => b.id && b.t);
-
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
-    res.status(200).json(books);
+    res.status(200).json(allBooks);
   } catch (err) {
     console.error('Goodreads fetch error:', err);
     res.status(500).json({ error: 'Failed to fetch Goodreads data' });

@@ -87,6 +87,22 @@ async function extractColor(coverUrl) {
 export default function useCoverColors(books) {
   const [colors, setColors] = useState(() => loadCache());
 
+  // Prune stale cache entries for books that no longer exist
+  useEffect(() => {
+    if (!books || books.length === 0) return;
+    const validIds = new Set(books.map(b => b.id));
+    const cache = loadCache();
+    const staleKeys = Object.keys(cache).filter(id => !validIds.has(id));
+    if (staleKeys.length === 0) return;
+    staleKeys.forEach(id => delete cache[id]);
+    saveCache(cache);
+    setColors(prev => {
+      const next = { ...prev };
+      staleKeys.forEach(id => delete next[id]);
+      return next;
+    });
+  }, [books]);
+
   useEffect(() => {
     if (!books || books.length === 0) return;
 

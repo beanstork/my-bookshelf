@@ -14,30 +14,37 @@ export default function useGoodreadsSync(fallbackBooks) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
+    let timeoutId;
 
     async function fetchBooks() {
+      timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const res = await fetch('/api/goodreads');
+        const res = await fetch('/api/goodreads', { signal: controller.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!cancelled) {
-          setBooks(mergeSeriesOverrides(data));
-          setError(null);
-        }
+        setBooks(mergeSeriesOverrides(data));
+        setError(null);
       } catch (err) {
-        if (!cancelled) {
+        if (controller.signal.aborted) {
+          setError('Sync timed out — showing saved data');
+        } else {
           console.warn('Goodreads sync failed, using local data:', err.message);
           setError(err.message);
-          setBooks(mergeSeriesOverrides(fallbackBooks));
         }
+        setBooks(mergeSeriesOverrides(fallbackBooks));
       } finally {
-        if (!cancelled) setLoading(false);
+        clearTimeout(timeoutId);
+        if (!controller.signal.aborted) setLoading(false);
+        else setLoading(false);
       }
     }
 
     fetchBooks();
-    return () => { cancelled = true; };
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);  // run once on mount
 
   return { books, loading, error };
