@@ -20,7 +20,12 @@ export default function useGoodreadsSync(fallbackBooks) {
     async function fetchBooks() {
       timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const res = await fetch('/api/goodreads', { signal: controller.signal });
+        const rssUrl = (() => {
+          try { return JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}').goodreadsRssUrl || ''; }
+          catch { return ''; }
+        })();
+        const apiUrl = rssUrl ? `/api/goodreads?rssUrl=${encodeURIComponent(rssUrl)}` : '/api/goodreads';
+        const res = await fetch(apiUrl, { signal: controller.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setBooks(mergeSeriesOverrides(data));

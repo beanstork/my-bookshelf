@@ -650,7 +650,7 @@ function RotatingQuote({ books, quotes = [], onManage }) {
   );
 }
 
-function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange, allGenres = [] }) {
+function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange, allGenres = [], isReadOnly = false }) {
   const [srcIndex, setSrcIndex] = useState(0);
   const [mode, setMode] = useState('view'); // 'view' | 'edit' | 'delete'
   const [editState, setEditState] = useState(null);
@@ -1179,8 +1179,8 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
 
           {/* Edit / Delete / Colour actions */}
           <div style={{ display: "flex", gap: 10, marginTop: 20, paddingTop: 16, borderTop: "1px solid rgba(74,55,40,0.5)", alignItems: "center", flexWrap: "wrap" }}>
-            <button style={actionBtnStyle('edit')} onClick={enterEdit}>Edit</button>
-            <button style={actionBtnStyle('delete')} onClick={() => setMode('delete')}>Remove</button>
+            {!isReadOnly && <button style={actionBtnStyle('edit')} onClick={enterEdit}>Edit</button>}
+            {!isReadOnly && <button style={actionBtnStyle('delete')} onClick={() => setMode('delete')}>Remove</button>}
             <div style={{ flex: 1 }} />
             {/* Spine colour picker */}
             <button
@@ -1898,6 +1898,13 @@ function StatsBar({ books }) {
   const avgRating = rated.length > 0 ? (rated.reduce((s, b) => s + b.r, 0) / rated.length).toFixed(1) : "—";
   const fiveStars = read.filter(b => b.r === 5).length;
 
+  const currentYear = new Date().getFullYear();
+  const yearGoal = (() => {
+    try { return JSON.parse(localStorage.getItem('bookshelf_goals_v1') || '{}')[currentYear] || null; }
+    catch { return null; }
+  })();
+  const booksThisYear = read.filter(b => b.dr && b.dr.startsWith(String(currentYear))).length;
+
   const stats = [
     { label: "Books Read", value: read.length, icon: <IconBook /> },
     { label: "Pages", value: totalPages.toLocaleString(), icon: <IconPages /> },
@@ -1925,6 +1932,28 @@ function StatsBar({ books }) {
           <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#6B3520", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>{s.label}</div>
         </div>
       ))}
+      {yearGoal && (
+        <div style={{
+          padding: "14px 20px", textAlign: "center", minWidth: 70, flex: 1, maxWidth: 160,
+          background: booksThisYear >= yearGoal ? "rgba(92,107,46,0.12)" : "rgba(255,255,255,0.75)",
+          borderRadius: 10,
+          boxShadow: "0 2px 10px rgba(120,70,40,0.10), 0 1px 3px rgba(120,70,40,0.07)",
+          border: booksThisYear >= yearGoal ? "1px solid rgba(92,107,46,0.35)" : "1px solid rgba(200,160,120,0.2)",
+        }}>
+          <div style={{ fontSize: 18, marginBottom: 4, lineHeight: 1.4, display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <circle cx="9" cy="9" r="7.5" stroke={booksThisYear >= yearGoal ? "#5C6B2E" : "#8B2840"} strokeWidth="1.5" fill="none" opacity="0.3"/>
+              <circle cx="9" cy="9" r="4" fill={booksThisYear >= yearGoal ? "#5C6B2E" : "#8B2840"} opacity="0.7"/>
+            </svg>
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", color: booksThisYear >= yearGoal ? "#3A5010" : "#5C2010", fontSize: 22, fontWeight: 700 }}>
+            {booksThisYear}/{yearGoal}
+          </div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#6B3520", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>
+            {currentYear} Goal
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2164,6 +2193,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
 
 function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const [name, setName] = useState(settings.name || "My Bookshelf");
+  const [goodreadsRssUrl, setGoodreadsRssUrl] = useState(settings.goodreadsRssUrl || "");
   const [imageUrl, setImageUrl] = useState(settings.imageUrl || "");
   const [urlInput, setUrlInput] = useState(settings.imageUrl || "");
   const [imagePosition, setImagePosition] = useState(settings.imagePosition !== undefined ? settings.imagePosition : 22);
@@ -2206,7 +2236,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   };
 
   const handleSave = () => {
-    onSave({ name: name.trim() || "My Bookshelf", imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage, currentlyReadingEnabled });
+    onSave({ name: name.trim() || "My Bookshelf", goodreadsRssUrl: goodreadsRssUrl.trim(), imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage, currentlyReadingEnabled });
     onClose();
   };
 
@@ -2240,6 +2270,19 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
         <div style={{ marginBottom: 20 }}>
           <label style={labelStyle}>Site Name</label>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="My Bookshelf" />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Goodreads RSS URL</label>
+          <input
+            style={inputStyle}
+            value={goodreadsRssUrl}
+            onChange={e => setGoodreadsRssUrl(e.target.value)}
+            placeholder="https://www.goodreads.com/review/list_rss/YOUR_ID"
+          />
+          <p style={{ color: "#7A5A40", fontSize: 11, fontFamily: "'DM Sans', sans-serif", margin: "6px 0 0", lineHeight: 1.5 }}>
+            Find this on Goodreads → My Books → RSS (bottom of page). Paste the full URL here to sync your library.
+          </p>
         </div>
 
         {/* Profile circle image */}
@@ -2381,7 +2424,229 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   );
 }
 
+// ── CSV Import Modal ────────────────────────────────────────────────────────
+function parseGoodreadsDate(raw) {
+  if (!raw || raw.trim() === '') return '';
+  const [m, d, y] = raw.trim().split('/');
+  if (!y || !m || !d) return '';
+  return `${y}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+}
+
+function parseISBN(raw) {
+  return String(raw || '').replace(/[^0-9X]/gi, '');
+}
+
+const CSV_EXCLUSIVE = new Set(['read', 'currently-reading', 'to-read']);
+const CSV_SKIP_SHELVES = new Set(['read', 'currently-reading', 'to-read', 'audiobook', 'audible', 'kindle', 'favorites', 'dnf']);
+
+function parseCsvRow(row, headers) {
+  const obj = {};
+  headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
+
+  const exclusiveShelf = obj['Exclusive Shelf'] || 'to-read';
+  const bookshelves = (obj['Bookshelves'] || '').split(',').map(s => s.trim()).filter(Boolean);
+  const shelf = bookshelves.includes('dnf') ? 'dnf' : (CSV_EXCLUSIVE.has(exclusiveShelf) ? exclusiveShelf : 'to-read');
+  const genres = bookshelves.filter(s => !CSV_SKIP_SHELVES.has(s));
+
+  const isbn13 = parseISBN(obj['ISBN13']);
+  const isbn10 = parseISBN(obj['ISBN']);
+  const isbn = isbn13 || isbn10;
+
+  return {
+    id: `csv_${obj['Book Id'] || Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    t: (obj['Title'] || '').trim(),
+    a: (obj['Author'] || '').trim(),
+    r: parseInt(obj['My Rating']) || 0,
+    ar: parseFloat(obj['Average Rating']) || 0,
+    p: parseInt(obj['Number of Pages']) || 0,
+    y: String(obj['Original Publication Year'] || obj['Year Published'] || ''),
+    dr: parseGoodreadsDate(obj['Date Read']),
+    da: parseGoodreadsDate(obj['Date Added']),
+    s: shelf,
+    g: genres,
+    sn: '', si: 0,
+    au: bookshelves.includes('audiobook') || bookshelves.includes('audible'),
+    ki: bookshelves.includes('kindle'),
+    fav: bookshelves.includes('favorites'),
+    isbn,
+    pub: (obj['Publisher'] || '').trim(),
+    bind: (obj['Binding'] || '').trim(),
+    rev: (obj['My Review'] || '').trim(),
+    cover: '',
+    manual: true,
+  };
+}
+
+function parseCsv(text) {
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const books = [];
+  let i = 1;
+  while (i < lines.length) {
+    if (!lines[i].trim()) { i++; continue; }
+    // Handle multi-line quoted fields
+    let row = lines[i];
+    while ((row.match(/"/g) || []).length % 2 !== 0 && i + 1 < lines.length) {
+      i++;
+      row += '\n' + lines[i];
+    }
+    // Split by comma, respecting quotes
+    const fields = [];
+    let current = '';
+    let inQuote = false;
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] === '"') { inQuote = !inQuote; }
+      else if (row[c] === ',' && !inQuote) { fields.push(current); current = ''; }
+      else { current += row[c]; }
+    }
+    fields.push(current);
+    const book = parseCsvRow(fields, headers);
+    if (book.t) books.push(book);
+    i++;
+  }
+  return books;
+}
+
+function CSVImportModal({ onClose, onImport, existingBooks }) {
+  const [parsed, setParsed] = useState(null);
+  const [filename, setFilename] = useState('');
+  const [error, setError] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const existingTitles = useMemo(() => new Set(existingBooks.map(b => b.t.toLowerCase().trim())), [existingBooks]);
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.name.endsWith('.csv')) { setError('Please select a .csv file.'); return; }
+    setFilename(file.name);
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const books = parseCsv(ev.target.result);
+        if (books.length === 0) { setError('No books found in this CSV. Is it a Goodreads export?'); return; }
+        setParsed(books);
+      } catch {
+        setError('Failed to parse CSV. Please make sure this is a Goodreads library export.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const newBooks = useMemo(() => {
+    if (!parsed) return [];
+    return parsed.filter(b => !existingTitles.has(b.t.toLowerCase().trim()));
+  }, [parsed, existingTitles]);
+
+  const handleImport = () => {
+    setImporting(true);
+    newBooks.forEach(b => onImport(b));
+    setImporting(false);
+    setDone(true);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 1000,
+      background: 'rgba(20,10,5,0.72)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#FDF5EC', borderRadius: 16, padding: '32px 36px',
+        maxWidth: 460, width: '90%',
+        boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
+        fontFamily: "'DM Sans', sans-serif",
+      }}>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#5C0F1E', margin: '0 0 6px', fontSize: 22 }}>
+          Import from Goodreads
+        </h2>
+        <p style={{ color: '#8B5E3C', fontSize: 13, margin: '0 0 24px', lineHeight: 1.5 }}>
+          Export your library from Goodreads (My Books → Export Library), then upload the CSV file here.
+          Books with matching titles won't be duplicated.
+        </p>
+
+        {!done ? (
+          <>
+            <label style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 10, padding: '28px 20px', borderRadius: 10,
+              border: '2px dashed rgba(139,94,60,0.3)', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.5)', marginBottom: 20,
+              transition: 'border-color 0.15s',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8B5E3C" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M12 3v12M8 7l4-4 4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+              </svg>
+              <span style={{ color: '#6B3520', fontSize: 14 }}>
+                {filename ? filename : 'Choose CSV file…'}
+              </span>
+              <input type="file" accept=".csv" onChange={handleFile} style={{ display: 'none' }} />
+            </label>
+
+            {error && (
+              <p style={{ color: '#C0504A', fontSize: 13, margin: '-12px 0 16px', textAlign: 'center' }}>{error}</p>
+            )}
+
+            {parsed && (
+              <div style={{
+                background: 'rgba(212,168,67,0.1)', borderRadius: 10,
+                border: '1px solid rgba(212,168,67,0.25)', padding: '14px 18px',
+                marginBottom: 20,
+              }}>
+                <div style={{ color: '#3A2010', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
+                  Found {parsed.length} book{parsed.length !== 1 ? 's' : ''} in CSV
+                </div>
+                <div style={{ color: '#8B7355', fontSize: 13 }}>
+                  {parsed.length - newBooks.length} already in your shelf → will be skipped
+                </div>
+                <div style={{ color: '#5C6B2E', fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+                  {newBooks.length} new book{newBooks.length !== 1 ? 's' : ''} will be imported
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={onClose} style={{
+                padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(139,94,60,0.3)',
+                background: 'transparent', color: '#6B3520', fontSize: 13, cursor: 'pointer',
+              }}>Cancel</button>
+              {newBooks.length > 0 && (
+                <button onClick={handleImport} disabled={importing} style={{
+                  padding: '8px 20px', borderRadius: 8, border: 'none',
+                  background: '#8B2840', color: '#FDF0F3', fontSize: 13,
+                  fontWeight: 600, cursor: 'pointer',
+                }}>
+                  {importing ? 'Importing…' : `Import ${newBooks.length} Book${newBooks.length !== 1 ? 's' : ''}`}
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
+            <div style={{ color: '#3A2010', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>
+              {newBooks.length} book{newBooks.length !== 1 ? 's' : ''} imported!
+            </div>
+            <div style={{ color: '#8B7355', fontSize: 13, marginBottom: 24 }}>
+              They've been added to your shelf as manual entries.
+            </div>
+            <button onClick={onClose} style={{
+              padding: '9px 24px', borderRadius: 8, border: 'none',
+              background: '#8B2840', color: '#FDF0F3', fontSize: 13,
+              fontWeight: 600, cursor: 'pointer',
+            }}>Done</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const isReadOnly = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('share');
   const { books: syncedBooks, loading: syncLoading, error: syncError } = useGoodreadsSync(RAW_BOOKS);
   const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, undeleteBook, customColors, setCustomColor } = useLocalData();
   const [selectedBookId, setSelectedBookId] = useState(null);
@@ -2418,6 +2683,8 @@ export default function App() {
   const [contentVisible, setContentVisible] = useState(true);
   const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [undoToast, setUndoToast] = useState(null);
+  const [shareConfirmed, setShareConfirmed] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const isMobile = windowWidth <= 768;
 
   const handleNavigate = useCallback((view) => {
@@ -2769,7 +3036,34 @@ export default function App() {
 
         {/* Header content */}
         <div style={{ padding: "28px 20px 8px", textAlign: "center", position: "relative", zIndex: 1 }}>
-          {/* Profile / edit button — top right */}
+          {/* Share button — top left */}
+          <button
+            onClick={() => {
+              const shareUrl = window.location.origin + window.location.pathname + '?share';
+              navigator.clipboard.writeText(shareUrl).then(() => {
+                setShareConfirmed(true);
+                setTimeout(() => setShareConfirmed(false), 2000);
+              });
+            }}
+            title="Copy shareable link"
+            style={{
+              position: "absolute", top: 16, left: 16,
+              background: shareConfirmed ? "rgba(92,107,46,0.35)" : "rgba(255,255,255,0.28)",
+              border: `1px solid ${shareConfirmed ? "rgba(92,107,46,0.5)" : "rgba(92,15,30,0.3)"}`,
+              borderRadius: "50%", width: 36, height: 36,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", backdropFilter: "blur(4px)",
+              transition: "all 0.2s",
+            }}
+          >
+            {shareConfirmed
+              ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C6B2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C0F1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            }
+          </button>
+
+          {/* Profile / edit button — top right (hidden in read-only mode) */}
+          {!isReadOnly && (
           <button
             onClick={() => setShowSettings(true)}
             title="Edit profile"
@@ -2789,6 +3083,7 @@ export default function App() {
                 </svg>
             }
           </button>
+          )}
 
           <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
             {HEADER_ICONS[siteSettings.headerIcon || 'books']}
@@ -2826,6 +3121,16 @@ export default function App() {
             background: 'rgba(192,80,74,0.08)', position: "relative", zIndex: 1,
           }}>
             Couldn't sync with Goodreads — showing saved data
+          </div>
+        )}
+        {isReadOnly && (
+          <div style={{
+            textAlign: 'center', padding: '7px 16px', fontSize: 12,
+            color: '#6B3520', fontFamily: "'DM Sans', sans-serif",
+            background: 'rgba(212,168,67,0.12)', position: "relative", zIndex: 1,
+            borderTop: '1px solid rgba(212,168,67,0.2)', borderBottom: '1px solid rgba(212,168,67,0.2)',
+          }}>
+            You are viewing {siteSettings.name ? `${siteSettings.name}'s` : 'this'} bookshelf — read only
           </div>
         )}
 
@@ -2970,6 +3275,25 @@ export default function App() {
               )}
             </div>
           )}
+          {!isReadOnly && (
+            <button
+              onClick={() => setShowImport(true)}
+              title="Import books from a Goodreads CSV export"
+              style={{
+                marginLeft: 'auto', padding: "7px 14px", borderRadius: 8,
+                border: "1px solid rgba(160,100,70,0.35)",
+                background: "rgba(255,255,255,0.75)", color: "#5C2010",
+                fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                <path d="M7 1v8M4 6l3 3 3-3M2 11h10" />
+              </svg>
+              Import CSV
+            </button>
+          )}
         </div>
       </div>
       </div>{/* end controls */}
@@ -2986,7 +3310,7 @@ export default function App() {
       >
         <div style={{ position: 'relative' }}>
         {/* Flat book — Add Book button resting on top of wood frame border */}
-        <button
+        {!isReadOnly && <button
           onClick={() => setShowAddForm(true)}
           title="Add a book"
           onMouseEnter={() => setAddBookHovered(true)}
@@ -3008,7 +3332,7 @@ export default function App() {
           }}
         >
           + Add Book
-        </button>
+        </button>}
         {/* Wood frame */}
         <div className="bookshelf-wood" style={{
           padding: 18,
@@ -3066,7 +3390,7 @@ export default function App() {
       }} />
 
       {/* Bookmark toggle — absolutely positioned at right edge of bookshelf */}
-      <button
+      {!isReadOnly && <button
         className="bookmark-toggle-btn"
         onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
         onMouseEnter={() => setToggleHovered(true)}
@@ -3120,10 +3444,10 @@ export default function App() {
             {siteSettings.currentlyReadingEnabled ? "Hide currently reading" : "Show currently reading"}
           </div>
         )}
-      </button>
+      </button>}
 
       {/* Mobile-only Currently Reading toggle button */}
-      <button
+      {!isReadOnly && <button
         className="cr-fab"
         onClick={() => updateSiteSettings({ currentlyReadingEnabled: !siteSettings.currentlyReadingEnabled })}
         style={{ display: 'none' }}
@@ -3135,7 +3459,7 @@ export default function App() {
           />
         </svg>
         {siteSettings.currentlyReadingEnabled ? 'Hide Currently Reading' : 'Currently Reading'}
-      </button>
+      </button>}
 
       {/* Sliding CR panel — absolutely positioned on desktop, static below bookshelf on mobile */}
       <div
@@ -3197,9 +3521,11 @@ export default function App() {
           onDelete={handleDeleteBook}
           onColorChange={setCustomColor}
           allGenres={allGenres}
+          isReadOnly={isReadOnly}
         />
       )}
       {showAddForm && <AddBookForm onAdd={addBook} onClose={() => setShowAddForm(false)} books={books} />}
+      {showImport && <CSVImportModal onClose={() => setShowImport(false)} onImport={addBook} existingBooks={books} />}
       {showSettings && (
         <SiteSettingsModal
           settings={siteSettings}

@@ -3,8 +3,17 @@ import { XMLParser } from 'fast-xml-parser';
 const GOODREADS_USER_ID = '174446438';
 const PER_PAGE = 200;
 
-function getRssUrl(page) {
-  return `https://www.goodreads.com/review/list_rss/${GOODREADS_USER_ID}?shelf=%23all&per_page=${PER_PAGE}&page=${page}`;
+// Extract user ID from a Goodreads RSS URL, or fall back to the hardcoded default
+function resolveUserId(rssUrl) {
+  if (rssUrl && typeof rssUrl === 'string') {
+    const match = rssUrl.match(/goodreads\.com\/review\/list_rss\/(\d+)/);
+    if (match) return match[1];
+  }
+  return GOODREADS_USER_ID;
+}
+
+function getRssUrl(userId, page) {
+  return `https://www.goodreads.com/review/list_rss/${userId}?shelf=%23all&per_page=${PER_PAGE}&page=${page}`;
 }
 
 const EXCLUSIVE_SHELVES = new Set(['read', 'currently-reading', 'to-read', 'dnf']);
@@ -78,6 +87,8 @@ function itemToBook(item) {
 }
 
 export default async function handler(req, res) {
+  const userId = resolveUserId(req.query.rssUrl);
+
   const parser = new XMLParser({
     ignoreAttributes: false,
     isArray: (name) => name === 'item',
@@ -93,7 +104,7 @@ export default async function handler(req, res) {
 
       let response;
       try {
-        response = await fetch(getRssUrl(page), {
+        response = await fetch(getRssUrl(userId, page), {
           signal: controller.signal,
           headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bookshelf-app/1.0)' },
         });
