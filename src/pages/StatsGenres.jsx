@@ -65,6 +65,22 @@ export default function StatsGenres({ books, onBack, onBookClick }) {
         }}>
           Genre Breakdown
         </h1>
+        {genreData.length === 0 ? (
+          <div style={{
+            marginTop: 48, textAlign: 'center', padding: '60px 32px',
+            background: 'rgba(255,255,255,0.65)', borderRadius: 16,
+            border: '1px solid rgba(200,160,120,0.2)',
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.4 }}>🏷️</div>
+            <p style={{ fontFamily: "'Playfair Display', serif", color: '#5C0F1E', fontSize: 22, margin: '0 0 8px', fontWeight: 700 }}>
+              No genres tagged yet
+            </p>
+            <p style={{ color: '#8B7355', fontSize: 14, margin: 0, fontFamily: "'DM Sans', sans-serif" }}>
+              Add genre tags to your read books to see the breakdown here.
+            </p>
+          </div>
+        ) : (
+        <>
         <p style={{ color: '#8B5E3C', fontSize: 14, margin: '0 0 32px' }}>
           {genreData.length} genre{genreData.length !== 1 ? 's' : ''} across your read books
         </p>
@@ -174,6 +190,8 @@ export default function StatsGenres({ books, onBack, onBookClick }) {
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

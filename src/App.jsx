@@ -1234,7 +1234,14 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   const [grSearching, setGrSearching] = useState(false);
   const [grUrl, setGrUrl] = useState("");
   const [grError, setGrError] = useState(false);
+  const [grId, setGrId] = useState(null);
+  const [grData, setGrData] = useState(null);
   const fetchControllerRef = useRef(null);
+
+  const extractGrId = (url) => {
+    const m = url.match(/\/book\/show\/(\d+)/);
+    return m ? m[1] : null;
+  };
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -1270,8 +1277,10 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
     setGrSearching(true);
     setGrError(false);
     try {
+      let foundId = null;
       let meta = null;
       if (url) {
+        foundId = extractGrId(url);
         const res = await fetch(`/api/goodreads-book?url=${encodeURIComponent(url)}`, { signal: controller.signal });
         if (res.ok) meta = await res.json();
       } else {
@@ -1281,6 +1290,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
         if (searchRes.ok) {
           const data = await searchRes.json();
           if (data.id) {
+            foundId = data.id;
             const metaRes = await fetch(`/api/goodreads-book?id=${encodeURIComponent(data.id)}`, { signal: controller.signal });
             if (metaRes.ok) meta = await metaRes.json();
           }
@@ -1291,8 +1301,12 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
           if (meta.title)  setTitle(meta.title);
           if (meta.author) setAuthor(meta.author);
           if (meta.pages)  setPages(String(meta.pages));
+          setGrId(foundId);
+          setGrData(meta);
         } else {
           setGrError(true);
+          setGrId(null);
+          setGrData(null);
         }
       }
     } catch (err) {
@@ -1302,44 +1316,23 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!title || submitting || grSearching) return;
-    setSubmitting(true);
-    let grId = null;
-    try {
-      const params = new URLSearchParams({ title });
-      if (author) params.set('author', author);
-      const res = await fetch(`/api/search-goodreads?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.id) grId = data.id;
-      }
-    } catch {}
-
-    // Fetch full metadata from Goodreads if we found an ID
-    let grMeta = null;
-    if (grId) {
-      try {
-        const res = await fetch(`/api/goodreads-book?id=${encodeURIComponent(grId)}`);
-        if (res.ok) grMeta = await res.json();
-      } catch {}
-    }
-
     const newBook = {
       id: grId || String(Date.now()),
       manual: !grId,
       t: title,
-      a: author || grMeta?.author || '',
+      a: author || grData?.author || '',
       r: rating, ar: 0,
-      p: parseInt(pages) || grMeta?.pages || 0,
-      y: grMeta?.year || '',
+      p: parseInt(pages) || grData?.pages || 0,
+      y: grData?.year || '',
       dr: dateRead ? dateRead.replace(/-/g, '/') : '',
       da: new Date().toISOString().slice(0, 10).replace(/-/g, '/'),
       s: shelf, g: genre ? [genre] : [], sn: '', si: 0,
       au: isAudiobook, fav: false,
-      isbn: grMeta?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : 'Paperback',
+      isbn: grData?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : 'Paperback',
       rev: notes,
-      cover: grMeta?.cover || '',
+      cover: grData?.cover || '',
     };
     onAdd(newBook);
     onClose();
@@ -1392,7 +1385,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
           <div>
             <label style={labelStyle}>Title *</label>
             <div style={{ display: "flex", gap: 8 }}>
-              <input style={{ ...inputStyle, flex: 1 }} value={title} onChange={e => setTitle(e.target.value)} placeholder="Book title..." />
+              <input style={{ ...inputStyle, flex: 1 }} value={title} onChange={e => { setTitle(e.target.value); setGrId(null); setGrData(null); }} placeholder="Book title..." />
               <button
                 type="button"
                 onClick={() => fetchAndPopulate()}
@@ -1513,7 +1506,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
             cursor: (title && !submitting && !grSearching) ? "pointer" : "not-allowed",
             opacity: (title && !submitting && !grSearching) ? 1 : 0.5, transition: "opacity 0.2s",
           }}>
-            {submitting ? "Searching Goodreads…" : "Add to Bookshelf"}
+            {grSearching ? "Searching…" : "Add to Bookshelf"}
           </button>
         </div>
       </div>
@@ -1780,6 +1773,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
       }}>
         {isRight && (
           <div
+            className="shelf-prop"
             onClick={onPropClick}
             title="Click to change decoration"
             style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center", cursor: "pointer" }}
@@ -1789,7 +1783,7 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
             </div>
           </div>
         )}
-        {isRight && <div aria-hidden="true" style={bookendStyle} />}
+        {isRight && <div aria-hidden="true" className="shelf-bookend" style={bookendStyle} />}
         {books.map((book, i) => (
           <BookSpine
             key={book.id}
@@ -1800,9 +1794,10 @@ function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId 
             isPulled={pulledBookId === book.id}
           />
         ))}
-        {!isRight && <div aria-hidden="true" style={bookendStyle} />}
+        {!isRight && <div aria-hidden="true" className="shelf-bookend" style={bookendStyle} />}
         {!isRight && (
           <div
+            className="shelf-prop"
             onClick={onPropClick}
             title="Click to change decoration"
             style={{ flex: 1, display: "flex", alignItems: "flex-end", justifyContent: "center", cursor: "pointer" }}
@@ -2026,13 +2021,22 @@ function CurrentlyReadingPanel({ books, onBookClick }) {
         Currently Reading
       </h3>
       {books.length === 0 ? (
-        <p style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          color: '#8B7355', fontSize: 14, fontStyle: 'italic',
-          lineHeight: 1.5,
-        }}>
-          Nothing on the nightstand yet
-        </p>
+        <div style={{ textAlign: 'center', padding: '12px 8px' }}>
+          <svg width="36" height="42" viewBox="0 0 36 42" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.35, marginBottom: 10 }}>
+            <rect x="4" y="2" width="26" height="38" rx="3" fill="#8B7355" stroke="#6B5030" strokeWidth="1.5"/>
+            <rect x="4" y="2" width="6" height="38" rx="2" fill="#6B5030"/>
+            <line x1="14" y1="12" x2="26" y2="12" stroke="#A08060" strokeWidth="1.2"/>
+            <line x1="14" y1="17" x2="26" y2="17" stroke="#A08060" strokeWidth="1.2"/>
+            <line x1="14" y1="22" x2="22" y2="22" stroke="#A08060" strokeWidth="1.2"/>
+          </svg>
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            color: '#8B7355', fontSize: 13, fontStyle: 'italic',
+            lineHeight: 1.6, margin: 0,
+          }}>
+            Nothing on the<br/>nightstand yet
+          </p>
+        </div>
       ) : (
         books.map((book, i) => (
           <CurrentlyReadingCard
@@ -2739,6 +2743,11 @@ export default function App() {
   .cr-panel h3 { flex-shrink: 0; writing-mode: horizontal-tb; margin: 0 4px 0 0 !important; align-self: center; white-space: nowrap; }
   .cr-card { flex-shrink: 0 !important; width: 100px !important; margin-bottom: 0 !important; }
   .controls-wrap { padding: 10px 8px 6px !important; }
+  .shelf-prop { display: none !important; }
+  .shelf-bookend { width: 20px !important; height: 110px !important; }
+  .bookshelf-wood { padding: 10px !important; }
+  .shelf-books-row { min-height: 150px !important; padding: 0 4px !important; }
+  .site-title { font-size: 30px !important; letter-spacing: -0.5px !important; }
 }
       `}</style>
 
@@ -2784,7 +2793,7 @@ export default function App() {
           <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
             {HEADER_ICONS[siteSettings.headerIcon || 'books']}
           </div>
-          <h1 style={{
+          <h1 className="site-title" style={{
             fontFamily: "'Playfair Display', Georgia, serif",
             color: "#5C0F1E", fontSize: 42, fontWeight: 900, margin: 0,
             letterSpacing: "-1px",
