@@ -1528,7 +1528,18 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
               }}>
                 {isKindle && "✓"}
               </div>
-              <span style={{ color: "#BFA88A", fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>📱 Kindle</span>
+              <span style={{ color: "#BFA88A", fontFamily: "'DM Sans', sans-serif", fontSize: 14, display: "flex", alignItems: "center", gap: 5 }}>
+                <svg width="13" height="16" viewBox="0 0 13 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="11" height="14" rx="1.5" fill="none" stroke="#BFA88A" strokeWidth="1.1"/>
+                  <rect x="2.5" y="2.5" width="8" height="10" rx="0.8" fill="none" stroke="#BFA88A" strokeWidth="0.7"/>
+                  <line x1="4" y1="5" x2="9" y2="5" stroke="#BFA88A" strokeWidth="0.8" strokeLinecap="round"/>
+                  <line x1="4" y1="6.8" x2="9" y2="6.8" stroke="#BFA88A" strokeWidth="0.8" strokeLinecap="round"/>
+                  <line x1="4" y1="8.6" x2="9" y2="8.6" stroke="#BFA88A" strokeWidth="0.8" strokeLinecap="round"/>
+                  <line x1="4" y1="10.4" x2="7" y2="10.4" stroke="#BFA88A" strokeWidth="0.8" strokeLinecap="round"/>
+                  <circle cx="6.5" cy="13.2" r="0.6" fill="#BFA88A"/>
+                </svg>
+                Kindle
+              </span>
             </div>
           </div>
           <div>
@@ -1568,9 +1579,17 @@ function migrateShelfPropOverrides(raw) {
     if (typeof val === 'number') {
       migrated[key] = { [season]: val, autoSelect: false };
     } else if (typeof val === 'string') {
-      migrated[key] = { custom: val, autoSelect: false };
+      // Legacy: top-level string = custom image dataUrl
+      migrated[key] = { customImages: [val], customSelected: 0, autoSelect: false };
     } else {
-      migrated[key] = val; // already new format
+      // Object format — also migrate legacy .custom string field
+      const obj = { ...val };
+      if (typeof obj.custom === 'string') {
+        obj.customImages = obj.customImages ? [...obj.customImages, obj.custom] : [obj.custom];
+        if (obj.customSelected === undefined || obj.customSelected === null) obj.customSelected = 0;
+        delete obj.custom;
+      }
+      migrated[key] = obj;
     }
   }
   return migrated;
@@ -1804,9 +1823,12 @@ function getEffectiveProp(shelfIndex, override) {
   // Legacy formats (shouldn't reach here post-migration, but guard anyway)
   if (typeof override === 'number') return getSeasonalProp(shelfIndex, override);
   if (typeof override === 'string') return <img src={override} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
-  // New per-season object format
-  const { custom, autoSelect } = override;
-  if (custom) return <img src={custom} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
+  // Per-season object format
+  const { customImages, customSelected, autoSelect } = override;
+  // Selected custom image takes priority
+  if (customSelected !== null && customSelected !== undefined && customImages && customImages[customSelected]) {
+    return <img src={customImages[customSelected]} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
+  }
   if (autoSelect !== false) return getSeasonalProp(shelfIndex);
   const seasonKey = getCurrentSeasonKey();
   const idx = override[seasonKey];
@@ -2200,7 +2222,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
               {seasonLabels[s]}
             </button>
           ))}
-          <button onClick={() => setActiveTab('custom')} style={tabBtnStyle('custom')}>🖼 Custom</button>
+          <button onClick={() => setActiveTab('custom')} style={tabBtnStyle('custom')}>★ Custom</button>
         </div>
 
         {/* Seasonal tab */}
@@ -2240,17 +2262,25 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
         {activeTab === 'custom' && (
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-              {override.custom && (
-                <div style={{ position: "relative", width: 72, height: 96, borderRadius: 10, overflow: "hidden", border: "1px solid #4A3728" }}>
-                  <img src={override.custom} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <button onClick={() => onClear('custom')} style={{
-                    position: "absolute", top: 3, right: 3, width: 16, height: 16,
-                    borderRadius: "50%", background: "#8B2840", border: "none",
-                    color: "#fff", fontSize: 9, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>✕</button>
-                </div>
-              )}
+              {(override.customImages || []).map((src, idx) => {
+                const isSelected = override.customSelected === idx;
+                return (
+                  <div key={idx} style={{
+                    position: "relative", width: 72, height: 96, borderRadius: 10, overflow: "hidden",
+                    border: isSelected ? "2px solid #D4A843" : "1px solid #4A3728",
+                    background: isSelected ? "rgba(212,168,67,0.08)" : "#2C1D12",
+                    cursor: "pointer",
+                  }} onClick={() => onSelect('customSelect', idx)}>
+                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <button onClick={e => { e.stopPropagation(); onSelect('customRemove', idx); }} style={{
+                      position: "absolute", top: 3, right: 3, width: 16, height: 16,
+                      borderRadius: "50%", background: "#8B2840", border: "none",
+                      color: "#fff", fontSize: 9, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>✕</button>
+                  </div>
+                );
+              })}
               <div onClick={() => fileRef.current.click()} style={{
                 width: 72, height: 96, border: "1px dashed #4A3728", borderRadius: 10,
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -2260,7 +2290,16 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
               </div>
             </div>
             <input type="file" accept="image/*" ref={fileRef} onChange={handleFile} style={{ display: "none" }} />
-            <p style={{ color: "#5A4030", fontSize: 11, margin: 0 }}>Custom image overrides all seasons for this shelf.</p>
+            {(override.customImages || []).length > 0 && override.customSelected !== null && override.customSelected !== undefined && (
+              <div style={{ textAlign: "center", marginBottom: 8 }}>
+                <button onClick={() => onClear('custom')} style={{
+                  padding: "7px 14px", borderRadius: 7, border: "1px solid #3A2820",
+                  background: "transparent", color: "#8B6040",
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
+                }}>Set to default</button>
+              </div>
+            )}
+            <p style={{ color: "#5A4030", fontSize: 11, margin: 0 }}>Upload custom images. Click to select or deselect as the active prop.</p>
           </div>
         )}
 
@@ -3000,7 +3039,18 @@ export default function App() {
     const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? current : {};
     let next;
     if (seasonKey === 'custom') {
-      next = { ...existing, custom: value };
+      // value = new dataUrl — append to array and select it
+      const imgs = existing.customImages ? [...existing.customImages, value] : [value];
+      next = { ...existing, customImages: imgs, customSelected: imgs.length - 1, autoSelect: false };
+    } else if (seasonKey === 'customSelect') {
+      // value = index — toggle selection
+      next = { ...existing, customSelected: existing.customSelected === value ? null : value, autoSelect: false };
+    } else if (seasonKey === 'customRemove') {
+      // value = index — remove from array
+      const imgs = (existing.customImages || []).filter((_, i) => i !== value);
+      const prevSel = existing.customSelected;
+      const newSel = prevSel === value ? null : (prevSel !== null && prevSel > value ? prevSel - 1 : prevSel);
+      next = { ...existing, customImages: imgs, customSelected: imgs.length === 0 ? null : newSel };
     } else if (seasonKey === 'autoSelect') {
       next = { ...existing, autoSelect: value };
     } else {
@@ -3015,7 +3065,7 @@ export default function App() {
     const current = (siteSettings.shelfPropOverrides || {})[shelfIndex];
     const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? { ...current } : {};
     if (seasonKey === 'custom') {
-      existing.custom = null;
+      existing.customSelected = null; // deselect but keep images in library
     } else {
       existing[seasonKey] = null;
     }
