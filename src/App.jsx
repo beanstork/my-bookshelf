@@ -1572,42 +1572,40 @@ function getCurrentSeasonKey() {
 
 function migrateShelfPropOverrides(raw) {
   if (!raw || typeof raw !== 'object') return raw;
-  const season = getCurrentSeasonKey();
   const migrated = {};
   for (const [key, val] of Object.entries(raw)) {
-    if (val === null || val === undefined) continue;
+    if (val === null || val === undefined) { migrated[key] = null; continue; }
     if (typeof val === 'number') {
-      migrated[key] = { [season]: val, autoSelect: false };
+      // Very old format: variant index number
+      migrated[key] = { season: getCurrentSeasonKey(), index: val % 4 };
     } else if (typeof val === 'string') {
-      // Legacy: top-level string = custom image dataUrl
-      migrated[key] = { customImages: [val], customSelected: 0, autoSelect: false };
-    } else {
-      // Object format — migrate any legacy fields
-      const obj = { ...val };
-      // Migrate legacy .custom string field
-      if (typeof obj.custom === 'string') {
-        obj.customImages = obj.customImages ? [...obj.customImages, obj.custom] : [obj.custom];
-        if (obj.customSelected === undefined || obj.customSelected === null) obj.customSelected = 0;
-        delete obj.custom;
-      }
-      // Migrate legacy per-season keys (spring/summer/fall/winter) to propSeason/propIndex
-      if (obj.propSeason === undefined) {
-        const currentSeason = getCurrentSeasonKey();
-        for (const s of ['spring', 'summer', 'fall', 'winter']) {
-          if (typeof obj[s] === 'number') {
-            // Prefer current season's selection; otherwise use whichever season had a selection
-            if (s === currentSeason || obj.propSeason === undefined) {
-              obj.propSeason = s;
-              obj.propIndex = obj[s];
-            }
-          }
-          delete obj[s];
-        }
+      // Old format: custom dataUrl string
+      migrated[key] = { src: val, images: [val] };
+    } else if (typeof val === 'object') {
+      // Already new format?
+      if (val.season !== undefined || val.src !== undefined) {
+        migrated[key] = val; // pass through
       } else {
-        // Clean up any lingering per-season keys
-        for (const s of ['spring', 'summer', 'fall', 'winter']) delete obj[s];
+        // Old complex object format — extract active selection + image gallery
+        const images = [];
+        if (typeof val.custom === 'string') images.push(val.custom);
+        if (Array.isArray(val.customImages)) images.push(...val.customImages);
+
+        let result = images.length > 0 ? { images } : {};
+
+        if (Array.isArray(val.customImages) && typeof val.customSelected === 'number' && val.customImages[val.customSelected]) {
+          result = { ...result, src: val.customImages[val.customSelected] };
+        } else if (typeof val.custom === 'string') {
+          result = { ...result, src: val.custom };
+        } else if (val.propSeason !== undefined && val.propIndex !== undefined && val.autoSelect === false) {
+          result = { ...result, season: val.propSeason, index: val.propIndex };
+        } else if (val.autoSelect === false) {
+          for (const s of ['spring', 'summer', 'fall', 'winter']) {
+            if (typeof val[s] === 'number') { result = { ...result, season: s, index: val[s] }; break; }
+          }
+        }
+        migrated[key] = result;
       }
-      migrated[key] = obj;
     }
   }
   return migrated;
@@ -1836,21 +1834,14 @@ function getSeasonalProp(shelfIndex, vOverride, seasonOverride) {
 }
 
 function getEffectiveProp(shelfIndex, override) {
-  // No override
-  if (override === undefined || override === null) return getSeasonalProp(shelfIndex);
-  // Legacy formats
+  if (!override) return getSeasonalProp(shelfIndex);
+  // Legacy scalar formats
   if (typeof override === 'number') return getSeasonalProp(shelfIndex, override);
   if (typeof override === 'string') return <img src={override} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
-  const { customImages, customSelected, autoSelect, propSeason, propIndex } = override;
-  // Active custom image
-  if (customSelected !== null && customSelected !== undefined && customImages && customImages[customSelected]) {
-    return <img src={customImages[customSelected]} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
-  }
-  // Rotate with seasons = use current season's default
-  if (autoSelect !== false) return getSeasonalProp(shelfIndex);
-  // Specific prop selected (propSeason + propIndex = last clicked thumbnail)
-  if (propSeason !== undefined && propIndex !== null && propIndex !== undefined) {
-    return getSeasonalProp(shelfIndex, propIndex, propSeason);
+  // New simple format: { src } or { season, index } or {} (no active selection)
+  if (override.src) return <img src={override.src} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
+  if (override.season !== undefined && override.index !== null && override.index !== undefined) {
+    return getSeasonalProp(shelfIndex, override.index, override.season);
   }
   return getSeasonalProp(shelfIndex);
 }
@@ -2195,12 +2186,11 @@ function CurrentlyReadingPanel({ books, onBookClick }) {
   );
 }
 
-function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, onClose }) {
+function ShelfPropPickerModal({ shelfIndex, currentOverride, onAction, onClose }) {
   const fileRef = useRef(null);
   const seasons = ['spring', 'summer', 'fall', 'winter'];
   const seasonLabels = { spring: '🌸 Spring', summer: '🌊 Summer', fall: '🍂 Fall', winter: '❄️ Winter' };
-  const defaultTab = getCurrentSeasonKey();
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [activeTab, setActiveTab] = useState(getCurrentSeasonKey());
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -2209,14 +2199,15 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
   }, [onClose]);
 
   const override = (currentOverride && typeof currentOverride === 'object') ? currentOverride : {};
-  const autoSelect = override.autoSelect !== false;
+  const images = override.images || [];
 
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => onSelect('custom', ev.target.result);
+    reader.onload = ev => onAction('addImage', ev.target.result);
     reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const tabBtnStyle = (tab) => ({
@@ -2249,9 +2240,9 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
           <>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 16 }}>
               {[0, 1, 2, 3].map(i => {
-                const isSelected = !autoSelect && override.propSeason === activeTab && override.propIndex === i;
+                const isSelected = !override.src && override.season === activeTab && override.index === i;
                 return (
-                  <button key={i} onClick={() => { onSelect(activeTab, i); onClose(); }} style={{
+                  <button key={i} onClick={() => { onAction('svg', { season: activeTab, index: i }); onClose(); }} style={{
                     width: 72, height: 96,
                     border: isSelected ? "2px solid #D4A843" : "1px solid #4A3728",
                     borderRadius: 10,
@@ -2266,7 +2257,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
               })}
             </div>
             <div style={{ textAlign: "center", marginBottom: 8 }}>
-              <button onClick={() => onClear(activeTab)} style={{
+              <button onClick={() => { onAction('clear'); onClose(); }} style={{
                 padding: "7px 14px", borderRadius: 7, border: "1px solid #3A2820",
                 background: "transparent", color: "#8B6040",
                 fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
@@ -2281,17 +2272,17 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
         {activeTab === 'custom' && (
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-              {(override.customImages || []).map((src, idx) => {
-                const isSelected = override.customSelected === idx;
+              {images.map((src, idx) => {
+                const isSelected = override.src === src;
                 return (
                   <div key={idx} style={{
                     position: "relative", width: 72, height: 96, borderRadius: 10, overflow: "hidden",
                     border: isSelected ? "2px solid #D4A843" : "1px solid #4A3728",
                     background: isSelected ? "rgba(212,168,67,0.08)" : "#2C1D12",
                     cursor: "pointer",
-                  }} onClick={() => onSelect('customSelect', idx)}>
+                  }} onClick={() => onAction('selectImage', src)}>
                     <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    <button onClick={e => { e.stopPropagation(); onSelect('customRemove', idx); }} style={{
+                    <button onClick={e => { e.stopPropagation(); onAction('removeImage', src); }} style={{
                       position: "absolute", top: 3, right: 3, width: 16, height: 16,
                       borderRadius: "50%", background: "#8B2840", border: "none",
                       color: "#fff", fontSize: 9, cursor: "pointer",
@@ -2309,9 +2300,9 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
               </div>
             </div>
             <input type="file" accept="image/*" ref={fileRef} onChange={handleFile} style={{ display: "none" }} />
-            {(override.customImages || []).length > 0 && override.customSelected !== null && override.customSelected !== undefined && (
+            {override.src && (
               <div style={{ textAlign: "center", marginBottom: 8 }}>
-                <button onClick={() => onClear('custom')} style={{
+                <button onClick={() => { onAction('clear'); onClose(); }} style={{
                   padding: "7px 14px", borderRadius: 7, border: "1px solid #3A2820",
                   background: "transparent", color: "#8B6040",
                   fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
@@ -2322,30 +2313,8 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
           </div>
         )}
 
-        {/* Auto-select + close */}
-        <div style={{ borderTop: "1px solid #2C1D12", paddingTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", position: "relative" }}
-            onMouseEnter={e => { const t = e.currentTarget.querySelector('.as-tip'); if (t) t.style.opacity = '1'; }}
-            onMouseLeave={e => { const t = e.currentTarget.querySelector('.as-tip'); if (t) t.style.opacity = '0'; }}
-          >
-            <input
-              type="checkbox"
-              checked={autoSelect}
-              onChange={e => onSelect('autoSelect', e.target.checked)}
-              style={{ accentColor: "#D4A843", width: 15, height: 15, cursor: "pointer" }}
-            />
-            <span style={{ color: "#BFA88A", fontSize: 13 }}>Rotate with seasons</span>
-            <span className="as-tip" style={{
-              position: "absolute", bottom: "calc(100% + 6px)", left: 0,
-              background: "#2C1D12", border: "1px solid #4A3728", borderRadius: 6,
-              padding: "6px 10px", fontSize: 11, color: "#D4A843",
-              whiteSpace: "nowrap", pointerEvents: "none",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.4)", opacity: 0,
-              transition: "opacity 0.15s", zIndex: 10,
-            }}>
-              Prop will automatically change to the default for each season
-            </span>
-          </label>
+        {/* Close */}
+        <div style={{ borderTop: "1px solid #2C1D12", paddingTop: 14, display: "flex", justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{
             padding: "7px 16px", borderRadius: 7, border: "1px solid #4A3728",
             background: "transparent", color: "#BFA88A",
@@ -3053,47 +3022,32 @@ export default function App() {
     window.location.reload();
   };
 
-  const handlePropSelect = (shelfIndex, seasonKey, value) => {
+  const handlePropAction = (shelfIndex, action, value) => {
     const current = (siteSettings.shelfPropOverrides || {})[shelfIndex];
     const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? current : {};
+    const images = existing.images || [];
     let next;
-    if (seasonKey === 'custom') {
-      // value = new dataUrl — append to array and select it
-      const imgs = existing.customImages ? [...existing.customImages, value] : [value];
-      next = { ...existing, customImages: imgs, customSelected: imgs.length - 1, autoSelect: false };
-    } else if (seasonKey === 'customSelect') {
-      // value = index — toggle selection
-      next = { ...existing, customSelected: existing.customSelected === value ? null : value, autoSelect: false };
-    } else if (seasonKey === 'customRemove') {
-      // value = index — remove from array
-      const imgs = (existing.customImages || []).filter((_, i) => i !== value);
-      const prevSel = existing.customSelected;
-      const newSel = prevSel === value ? null : (prevSel !== null && prevSel > value ? prevSel - 1 : prevSel);
-      next = { ...existing, customImages: imgs, customSelected: imgs.length === 0 ? null : newSel };
-    } else if (seasonKey === 'autoSelect') {
-      next = { ...existing, autoSelect: value };
-    } else {
-      // Seasonal prop selected — store as propSeason/propIndex so it shows immediately
-      next = { ...existing, propSeason: seasonKey, propIndex: value, autoSelect: false };
+    if (action === 'svg') {
+      // value = { season, index } — set a specific seasonal SVG as active
+      next = { images, season: value.season, index: value.index, src: null };
+    } else if (action === 'addImage') {
+      // value = dataUrl — add to gallery and make active
+      const newImages = [...images, value];
+      next = { images: newImages, src: value, season: null, index: null };
+    } else if (action === 'selectImage') {
+      // value = src string — toggle: if already active, deselect; else select
+      const newSrc = existing.src === value ? null : value;
+      next = { images, src: newSrc, season: null, index: null };
+    } else if (action === 'removeImage') {
+      // value = src string — remove from gallery; deselect if it was active
+      const newImages = images.filter(s => s !== value);
+      next = { images: newImages, src: existing.src === value ? null : existing.src, season: existing.src === value ? null : existing.season, index: existing.src === value ? null : existing.index };
+    } else if (action === 'clear') {
+      // Reset to seasonal default, keep image gallery
+      next = images.length > 0 ? { images } : null;
     }
     updateSiteSettings({
       shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: next },
-    });
-  };
-
-  const handlePropClear = (shelfIndex, seasonKey) => {
-    const current = (siteSettings.shelfPropOverrides || {})[shelfIndex];
-    const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? { ...current } : {};
-    if (seasonKey === 'custom') {
-      existing.customSelected = null; // deselect but keep images in library
-    } else {
-      // "Set to default" — clear specific selection, revert to seasonal auto-default
-      existing.propSeason = undefined;
-      existing.propIndex = undefined;
-      existing.autoSelect = true;
-    }
-    updateSiteSettings({
-      shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: existing },
     });
   };
 
@@ -3910,8 +3864,7 @@ export default function App() {
         <ShelfPropPickerModal
           shelfIndex={propPickerShelf}
           currentOverride={(siteSettings.shelfPropOverrides || {})[propPickerShelf] || null}
-          onSelect={(seasonKey, value) => handlePropSelect(propPickerShelf, seasonKey, value)}
-          onClear={(seasonKey) => handlePropClear(propPickerShelf, seasonKey)}
+          onAction={(action, value) => handlePropAction(propPickerShelf, action, value)}
           onClose={() => setPropPickerShelf(null)}
         />
       )}
