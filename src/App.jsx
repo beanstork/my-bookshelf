@@ -872,6 +872,10 @@ function BookModal({ book, onClose, spineColor, onEdit, onDelete, onColorChange,
                 <input style={modalInputStyle} type="number" min="0" value={editState.p} onChange={e => setEditState(s => ({ ...s, p: e.target.value }))} />
               </div>
               <div>
+                <label style={modalLabelStyle}>Publication Year</label>
+                <input style={modalInputStyle} type="number" min="1" max="2100" step="1" value={editState.y || ""} onChange={e => setEditState(s => ({ ...s, y: e.target.value }))} placeholder="e.g. 2021" />
+              </div>
+              <div>
                 <label style={modalLabelStyle}>Date Read</label>
                 <input style={modalInputStyle} type="date" value={editState.dr} onChange={e => setEditState(s => ({ ...s, dr: e.target.value }))} />
               </div>
@@ -1225,6 +1229,8 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
   const [rating, setRating] = useState(0);
   const [pages, setPages] = useState("");
   const [isAudiobook, setIsAudiobook] = useState(false);
+  const [isKindle, setIsKindle] = useState(false);
+  const [pubYear, setPubYear] = useState("");
   const [shelf, setShelf] = useState("read");
   const [genre, setGenre] = useState("");
   const [dateRead, setDateRead] = useState("");
@@ -1301,6 +1307,7 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
           if (meta.title)  setTitle(meta.title);
           if (meta.author) setAuthor(meta.author);
           if (meta.pages)  setPages(String(meta.pages));
+          if (meta.year)   setPubYear(String(meta.year));
           setGrId(foundId);
           setGrData(meta);
         } else {
@@ -1325,12 +1332,12 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
       a: author || grData?.author || '',
       r: rating, ar: 0,
       p: parseInt(pages) || grData?.pages || 0,
-      y: grData?.year || '',
+      y: pubYear || grData?.year || '',
       dr: dateRead ? dateRead.replace(/-/g, '/') : '',
       da: new Date().toISOString().slice(0, 10).replace(/-/g, '/'),
       s: shelf, g: genre ? [genre] : [], sn: '', si: 0,
-      au: isAudiobook, fav: false,
-      isbn: grData?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : 'Paperback',
+      au: isAudiobook, ki: isKindle, fav: false,
+      isbn: grData?.isbn || '', pub: '', bind: isAudiobook ? 'Audiobook' : isKindle ? 'Kindle' : 'Paperback',
       rev: notes,
       cover: grData?.cover || '',
     };
@@ -1485,15 +1492,40 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
               ))}
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div onClick={() => setIsAudiobook(!isAudiobook)} style={{
-              width: 20, height: 20, borderRadius: 4, border: "1px solid #4A3728",
-              background: isAudiobook ? "#D4A843" : "#1A120B", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#1A120B",
-            }}>
-              {isAudiobook && "✓"}
+          <div>
+            <label style={labelStyle}>Publication Year</label>
+            <input
+              type="number" min="1" max="2100" step="1"
+              style={inputStyle}
+              value={pubYear}
+              onChange={e => setPubYear(e.target.value)}
+              placeholder="e.g. 2021"
+            />
+            {pubYear && !/^\d{4}$/.test(pubYear) && (
+              <p style={{ color: "#C04040", fontSize: 11, margin: "4px 0 0", fontFamily: "'DM Sans', sans-serif" }}>Please enter a 4-digit year</p>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div onClick={() => { setIsAudiobook(v => !v); setIsKindle(false); }} style={{
+                width: 20, height: 20, borderRadius: 4, border: "1px solid #4A3728",
+                background: isAudiobook ? "#D4A843" : "#1A120B", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#1A120B",
+              }}>
+                {isAudiobook && "✓"}
+              </div>
+              <span style={{ color: "#BFA88A", fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>🎧 Audiobook</span>
             </div>
-            <span style={{ color: "#BFA88A", fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>🎧 Audiobook</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div onClick={() => { setIsKindle(v => !v); setIsAudiobook(false); }} style={{
+                width: 20, height: 20, borderRadius: 4, border: "1px solid #4A3728",
+                background: isKindle ? "#D4A843" : "#1A120B", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#1A120B",
+              }}>
+                {isKindle && "✓"}
+              </div>
+              <span style={{ color: "#BFA88A", fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}>📱 Kindle</span>
+            </div>
           </div>
           <div>
             <label style={labelStyle}>Notes / Review</label>
@@ -2851,6 +2883,7 @@ export default function App() {
       if (sortBy === "title") return b.t.toLowerCase();
       if (sortBy === "author") { const last = b.a.split(" ").pop().toLowerCase(); return last + "\t" + b.a.toLowerCase() + "\t" + (b.y || "0000"); }
       if (sortBy === "pages") return b.p;
+      if (sortBy === "pubYear") return parseInt(b.y || "0");
       if (sortBy === "color") return hexToHue(effectiveColors[b.id] || getBookColor(b.id));
       return 0;
     };
@@ -2861,6 +2894,7 @@ export default function App() {
       if (sortBy === "title") return arr[0].sn.toLowerCase();
       if (sortBy === "author") { const last = arr[0].a.split(" ").pop().toLowerCase(); return last + "\t" + arr[0].a.toLowerCase() + "\t" + (arr[0].y || "0000"); }
       if (sortBy === "pages") return arr.reduce((s, b) => s + b.p, 0);
+      if (sortBy === "pubYear") return Math.min(...arr.map(b => parseInt(b.y || "0")));
       if (sortBy === "color") return hexToHue(effectiveColors[arr[0].id] || getBookColor(arr[0].id));
       return 0;
     };
@@ -2882,6 +2916,7 @@ export default function App() {
       }
       else if (sortBy === "title") result = a.sortKey.localeCompare(b.sortKey);
       else if (sortBy === "pages") result = b.sortKey - a.sortKey;
+      else if (sortBy === "pubYear") result = b.sortKey - a.sortKey;
       else if (sortBy === "color") result = a.sortKey - b.sortKey;
       else result = 0;
       return sortAsc ? -result : result;
@@ -3195,6 +3230,7 @@ export default function App() {
               <option value="title">Title</option>
               <option value="author">Author</option>
               <option value="pages">Pages</option>
+              <option value="pubYear">Pub. Year</option>
               <option value="color">Colour</option>
             </select>
             <button
