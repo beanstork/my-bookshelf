@@ -2186,7 +2186,7 @@ function CurrentlyReadingPanel({ books, onBookClick }) {
   );
 }
 
-function ShelfPropPickerModal({ shelfIndex, currentOverride, onAction, onClose }) {
+function ShelfPropPickerModal({ shelfIndex, currentOverride, customImages, onAction, onClose }) {
   const fileRef = useRef(null);
   const seasons = ['spring', 'summer', 'fall', 'winter'];
   const seasonLabels = { spring: '🌸 Spring', summer: '🌊 Summer', fall: '🍂 Fall', winter: '❄️ Winter' };
@@ -2199,7 +2199,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onAction, onClose }
   }, [onClose]);
 
   const override = (currentOverride && typeof currentOverride === 'object') ? currentOverride : {};
-  const images = override.images || [];
+  const images = customImages || [];
 
   const handleFile = (e) => {
     const file = e.target.files[0];
@@ -2950,6 +2950,18 @@ export default function App() {
       }
       if (stored.shelfPropOverrides) {
         stored.shelfPropOverrides = migrateShelfPropOverrides(stored.shelfPropOverrides);
+        // Lift any per-shelf image galleries into the global customPropImages list
+        const existing = stored.customPropImages || [];
+        const lifted = [];
+        for (const val of Object.values(stored.shelfPropOverrides)) {
+          if (val && Array.isArray(val.images)) {
+            for (const img of val.images) {
+              if (img && !existing.includes(img) && !lifted.includes(img)) lifted.push(img);
+            }
+            delete val.images;
+          }
+        }
+        if (lifted.length > 0) stored.customPropImages = [...existing, ...lifted];
       }
       return stored;
     } catch {
@@ -3023,31 +3035,41 @@ export default function App() {
   };
 
   const handlePropAction = (shelfIndex, action, value) => {
-    const current = (siteSettings.shelfPropOverrides || {})[shelfIndex];
+    const overrides = siteSettings.shelfPropOverrides || {};
+    const current = overrides[shelfIndex];
     const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? current : {};
-    const images = existing.images || [];
-    let next;
+    const globalImages = siteSettings.customPropImages || [];
+    let nextOverrides = overrides;
+    let nextGlobalImages = globalImages;
+
     if (action === 'svg') {
       // value = { season, index } — set a specific seasonal SVG as active
-      next = { images, season: value.season, index: value.index, src: null };
+      nextOverrides = { ...overrides, [shelfIndex]: { season: value.season, index: value.index, src: null } };
     } else if (action === 'addImage') {
-      // value = dataUrl — add to gallery and make active
-      const newImages = [...images, value];
-      next = { images: newImages, src: value, season: null, index: null };
+      // value = dataUrl — add to global gallery (if not already present) and make active for this shelf
+      if (!globalImages.includes(value)) nextGlobalImages = [...globalImages, value];
+      nextOverrides = { ...overrides, [shelfIndex]: { src: value, season: null, index: null } };
     } else if (action === 'selectImage') {
-      // value = src string — toggle: if already active, deselect; else select
+      // value = src string — toggle: if already active deselect, else select
       const newSrc = existing.src === value ? null : value;
-      next = { images, src: newSrc, season: null, index: null };
+      nextOverrides = { ...overrides, [shelfIndex]: { src: newSrc, season: null, index: null } };
     } else if (action === 'removeImage') {
-      // value = src string — remove from gallery; deselect if it was active
-      const newImages = images.filter(s => s !== value);
-      next = { images: newImages, src: existing.src === value ? null : existing.src, season: existing.src === value ? null : existing.season, index: existing.src === value ? null : existing.index };
+      // value = src string — remove from global gallery; clear src on every shelf using it
+      nextGlobalImages = globalImages.filter(s => s !== value);
+      const clearedOverrides = {};
+      for (const [k, v] of Object.entries(overrides)) {
+        if (v && v.src === value) clearedOverrides[k] = { ...v, src: null };
+        else clearedOverrides[k] = v;
+      }
+      nextOverrides = clearedOverrides;
     } else if (action === 'clear') {
-      // Reset to seasonal default, keep image gallery
-      next = images.length > 0 ? { images } : null;
+      // Reset to seasonal default for this shelf
+      nextOverrides = { ...overrides, [shelfIndex]: null };
     }
+
     updateSiteSettings({
-      shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: next },
+      shelfPropOverrides: nextOverrides,
+      customPropImages: nextGlobalImages,
     });
   };
 
@@ -3864,6 +3886,7 @@ export default function App() {
         <ShelfPropPickerModal
           shelfIndex={propPickerShelf}
           currentOverride={(siteSettings.shelfPropOverrides || {})[propPickerShelf] || null}
+          customImages={siteSettings.customPropImages || []}
           onAction={(action, value) => handlePropAction(propPickerShelf, action, value)}
           onClose={() => setPropPickerShelf(null)}
         />
