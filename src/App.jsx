@@ -1261,9 +1261,13 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
     const timer = setTimeout(() => {
       const norm = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
       const nt = norm(title);
+      // Only check once a meaningful portion of the title has been typed
+      if (nt.length < 5) { setDuplicateWarning(null); return; }
       const match = books.find(b => {
         const bt = norm(b.t);
-        if (!(bt === nt || bt.includes(nt) || nt.includes(bt))) return false;
+        // Exact match, or substring match only when both sides are substantial
+        const isSimilar = bt === nt || (bt.length >= 5 && nt.length >= 5 && (bt.includes(nt) || nt.includes(bt)));
+        if (!isSimilar) return false;
         if (!author) return true;
         const na = norm(author);
         const ba = norm(b.a);
@@ -1572,14 +1576,19 @@ function migrateShelfPropOverrides(raw) {
   return migrated;
 }
 
-function getSeasonalProp(shelfIndex, vOverride) {
+function getSeasonalProp(shelfIndex, vOverride, seasonOverride) {
   const month = new Date().getMonth() + 1; // 1–12
   const v = vOverride !== undefined ? vOverride % 4 : shelfIndex % 4;
+  const effectiveSeason = seasonOverride || (
+    month >= 3 && month <= 5 ? 'spring' :
+    month >= 6 && month <= 8 ? 'summer' :
+    month >= 9 && month <= 11 ? 'fall' : 'winter'
+  );
 
   // Spring: March–May
-  if (month >= 3 && month <= 5) {
-    // Top shelf gets custom plant art in spring
-    if (shelfIndex === 0 && vOverride === undefined) {
+  if (effectiveSeason === 'spring') {
+    // Top shelf gets custom plant art in spring (only when not forcing a specific season in the picker)
+    if (shelfIndex === 0 && vOverride === undefined && !seasonOverride) {
       return <img src={plant2Img} alt="" style={{ height: 110, width: "auto", display: "block" }} />;
     }
     const plants = [
@@ -1638,7 +1647,7 @@ function getSeasonalProp(shelfIndex, vOverride) {
   }
 
   // Summer: June–August
-  if (month >= 6 && month <= 8) {
+  if (effectiveSeason === 'summer') {
     const items = [
       // 0: Seashell — 1.75× (77×72, viewBox trimmed to bottom at y=41)
       <svg width="77" height="72" viewBox="0 0 44 41" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1687,7 +1696,7 @@ function getSeasonalProp(shelfIndex, vOverride) {
   }
 
   // Autumn: September–November
-  if (month >= 9 && month <= 11) {
+  if (effectiveSeason === 'fall') {
     const items = [
       // 0: Mini pumpkin — 1.75× (77×81, viewBox trimmed to shadow bottom at y=46)
       <svg width="77" height="81" viewBox="0 0 44 46" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2209,7 +2218,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
                     cursor: "pointer", overflow: "hidden", position: "relative", padding: 0,
                   }}>
                     <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%) scale(0.62)", transformOrigin: "bottom center", display: "flex" }}>
-                      {getSeasonalProp(shelfIndex === 0 ? 999 : shelfIndex, i)}
+                      {getSeasonalProp(shelfIndex === 0 ? 999 : shelfIndex, i, activeTab)}
                     </div>
                   </button>
                 );
@@ -2221,7 +2230,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
                 background: "transparent", color: "#8B6040",
                 fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
               }}>
-                Reset this season
+                Set to default
               </button>
             </div>
           </>
@@ -2267,7 +2276,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
               onChange={e => onSelect('autoSelect', e.target.checked)}
               style={{ accentColor: "#D4A843", width: 15, height: 15, cursor: "pointer" }}
             />
-            <span style={{ color: "#BFA88A", fontSize: 13 }}>Auto-select</span>
+            <span style={{ color: "#BFA88A", fontSize: 13 }}>Rotate with seasons</span>
             <span className="as-tip" style={{
               position: "absolute", bottom: "calc(100% + 6px)", left: 0,
               background: "#2C1D12", border: "1px solid #4A3728", borderRadius: 6,
@@ -2276,7 +2285,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
               boxShadow: "0 4px 12px rgba(0,0,0,0.4)", opacity: 0,
               transition: "opacity 0.15s", zIndex: 10,
             }}>
-              Props will automatically change to match the correct season
+              Prop will automatically change to the default for each season
             </span>
           </label>
           <button onClick={onClose} style={{
@@ -3013,7 +3022,6 @@ export default function App() {
     updateSiteSettings({
       shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: existing },
     });
-    setPropPickerShelf(null);
   };
 
   const manualBookIds = useMemo(() => new Set(manualBooks.map(b => b.id)), [manualBooks]);
