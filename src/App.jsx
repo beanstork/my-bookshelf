@@ -2290,7 +2290,8 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
   );
 }
 
-function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
+function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose, onImportCsv, onExportCsv, onResetData }) {
+  const [activeTab, setActiveTab] = useState('profile');
   const [name, setName] = useState(settings.name || "My Bookshelf");
   const [goodreadsRssUrl, setGoodreadsRssUrl] = useState(settings.goodreadsRssUrl || "");
   const [imageUrl, setImageUrl] = useState(settings.imageUrl || "");
@@ -2300,6 +2301,10 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   const [garlandEnabled, setGarlandEnabled] = useState(settings.garlandEnabled !== false);
   const [currentlyReadingEnabled, setCurrentlyReadingEnabled] = useState(settings.currentlyReadingEnabled || false);
   const [profileImage, setProfileImage] = useState(settings.profileImage || '');
+  const [defaultSort, setDefaultSort] = useState(() => {
+    const valid = ["dateRead","rating","title","author","pages","pubYear","color"];
+    return valid.includes(settings.defaultSort) ? settings.defaultSort : "dateRead";
+  });
   const profileFileRef = useRef(null);
 
   useEffect(() => {
@@ -2335,7 +2340,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
   };
 
   const handleSave = () => {
-    onSave({ name: name.trim() || "My Bookshelf", goodreadsRssUrl: goodreadsRssUrl.trim(), imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage, currentlyReadingEnabled });
+    onSave({ name: name.trim() || "My Bookshelf", goodreadsRssUrl: goodreadsRssUrl.trim(), imageUrl, imagePosition, headerIcon: selectedIcon, garlandEnabled, profileImage, currentlyReadingEnabled, defaultSort });
     onClose();
   };
 
@@ -2348,6 +2353,7 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
     background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16,
     padding: 32, width: "100%", maxWidth: 420,
     fontFamily: "'DM Sans', sans-serif",
+    maxHeight: "90vh", overflowY: "auto",
   };
   const labelStyle = { color: "#D4A843", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, display: "block", marginBottom: 6 };
   const inputStyle = {
@@ -2356,157 +2362,290 @@ function SiteSettingsModal({ settings, defaultImageUrl, onSave, onClose }) {
     color: "#E8D5B7", fontFamily: "'DM Sans', sans-serif", fontSize: 14,
     outline: "none", boxSizing: "border-box",
   };
+  const sectionLabelStyle = { color: "#7A5A40", fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, display: "block", marginBottom: 10, marginTop: 20 };
 
   const preview = imageUrl || defaultImageUrl;
 
   return (
     <div style={overlayStyle}>
       <div style={modalStyle} onClick={e => e.stopPropagation()}>
-        <h2 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 24px", fontSize: 22 }}>
-          Edit Profile
+        <h2 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 20px", fontSize: 22 }}>
+          Profile &amp; Settings
         </h2>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Site Name</label>
-          <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="My Bookshelf" />
+        {/* Tab switcher */}
+        <div style={{ display: "flex", gap: 0, marginBottom: 24, borderBottom: "1px solid #4A3728" }}>
+          {[['profile', 'Edit Profile'], ['settings', 'Settings']].map(([tab, label]) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: "8px 20px", border: "none", background: "transparent",
+                color: activeTab === tab ? "#D4A843" : "#7A5A40",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 14, cursor: "pointer",
+                borderBottom: activeTab === tab ? "2px solid #D4A843" : "2px solid transparent",
+                marginBottom: -1,
+              }}
+            >{label}</button>
+          ))}
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Goodreads RSS URL</label>
-          <input
-            style={inputStyle}
-            value={goodreadsRssUrl}
-            onChange={e => setGoodreadsRssUrl(e.target.value)}
-            placeholder="https://www.goodreads.com/review/list_rss/YOUR_ID"
-          />
-          <p style={{ color: "#7A5A40", fontSize: 11, fontFamily: "'DM Sans', sans-serif", margin: "6px 0 0", lineHeight: 1.5 }}>
-            Find this on Goodreads → My Books → RSS (bottom of page). Paste the full URL here to sync your library.
-          </p>
-        </div>
+        {activeTab === 'profile' && (<>
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Site Name</label>
+            <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="My Bookshelf" />
+          </div>
 
-        {/* Profile circle image */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Profile Circle Image</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
-              border: "2px solid #4A3728", background: "#2C1D12", flexShrink: 0,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {profileImage
-                ? <img src={profileImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <svg width="16" height="16" viewBox="0 0 24 24" fill="#4A3728"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/></svg>
-              }
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <input type="file" accept="image/*" ref={profileFileRef} onChange={handleProfileFile} style={{ display: "none" }} />
-              <button
-                onClick={() => profileFileRef.current.click()}
-                style={{
-                  padding: "7px 14px", borderRadius: 7, border: "1px solid #4A3728",
-                  background: "#2C1D12", color: "#D4A843",
-                  fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
-                }}
-              >
-                Upload photo
-              </button>
-              {profileImage && (
+          {/* Profile circle image */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Profile Circle Image</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
+                border: "2px solid #4A3728", background: "#2C1D12", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {profileImage
+                  ? <img src={profileImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="#4A3728"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/></svg>
+                }
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <input type="file" accept="image/*" ref={profileFileRef} onChange={handleProfileFile} style={{ display: "none" }} />
                 <button
-                  onClick={() => setProfileImage('')}
+                  onClick={() => profileFileRef.current.click()}
                   style={{
-                    padding: "5px 14px", borderRadius: 7, border: "1px solid #3A2820",
-                    background: "transparent", color: "#7A5040",
-                    fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer",
+                    padding: "7px 14px", borderRadius: 7, border: "1px solid #4A3728",
+                    background: "#2C1D12", color: "#D4A843",
+                    fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
                   }}
                 >
-                  Remove
+                  Upload photo
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>Header Image</label>
-          {preview && (
-            <div style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden", height: 80 }}>
-              <img src={preview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `center ${imagePosition}%` }} />
-            </div>
-          )}
-          {preview && (
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Drag to reposition image</label>
-              <input
-                type="range" min="0" max="100" value={imagePosition}
-                onChange={e => setImagePosition(Number(e.target.value))}
-                style={{ width: "100%", cursor: "ns-resize", accentColor: "#8B2840" }}
-              />
-            </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div>
-              <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Upload from device</label>
-              <input type="file" accept="image/*" onChange={handleFile}
-                style={{ color: "#BFA88A", fontSize: 13, cursor: "pointer" }} />
-            </div>
-            <div>
-              <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Or paste an image URL</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input style={{ ...inputStyle, flex: 1 }} value={urlInput}
-                  onChange={e => setUrlInput(e.target.value)}
-                  placeholder="https://..." />
-                <button onClick={() => setImageUrl(urlInput)}
-                  style={{
-                    padding: "10px 14px", borderRadius: 8, border: "1px solid #4A3728",
-                    background: "#2C1D12", color: urlInput ? "#D4A843" : "#4A3728",
-                    fontFamily: "'DM Sans', sans-serif", fontSize: 13,
-                    cursor: urlInput ? "pointer" : "not-allowed",
-                  }}>
-                  Preview
-                </button>
+                {profileImage && (
+                  <button
+                    onClick={() => setProfileImage('')}
+                    style={{
+                      padding: "5px 14px", borderRadius: 7, border: "1px solid #3A2820",
+                      background: "transparent", color: "#7A5040",
+                      fontFamily: "'DM Sans', sans-serif", fontSize: 11, cursor: "pointer",
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Header Icon</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {Object.entries(HEADER_ICONS).map(([key, icon]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSelectedIcon(key)}
-                style={{
-                  padding: 10, borderRadius: 10, cursor: "pointer",
-                  border: selectedIcon === key ? "2px solid #D4A843" : "1px solid #4A3728",
-                  background: selectedIcon === key ? "rgba(212,168,67,0.15)" : "#2C1D12",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                {icon}
-              </button>
-            ))}
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Header Image</label>
+            {preview && (
+              <div style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden", height: 80 }}>
+                <img src={preview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `center ${imagePosition}%` }} />
+              </div>
+            )}
+            {preview && (
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Drag to reposition image</label>
+                <input
+                  type="range" min="0" max="100" value={imagePosition}
+                  onChange={e => setImagePosition(Number(e.target.value))}
+                  style={{ width: "100%", cursor: "ns-resize", accentColor: "#8B2840" }}
+                />
+              </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Upload from device</label>
+                <input type="file" accept="image/*" onChange={handleFile}
+                  style={{ color: "#BFA88A", fontSize: 13, cursor: "pointer" }} />
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: 10, opacity: 0.7 }}>Or paste an image URL</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input style={{ ...inputStyle, flex: 1 }} value={urlInput}
+                    onChange={e => setUrlInput(e.target.value)}
+                    placeholder="https://..." />
+                  <button onClick={() => setImageUrl(urlInput)}
+                    style={{
+                      padding: "10px 14px", borderRadius: 8, border: "1px solid #4A3728",
+                      background: "#2C1D12", color: urlInput ? "#D4A843" : "#4A3728",
+                      fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+                      cursor: urlInput ? "pointer" : "not-allowed",
+                    }}>
+                    Preview
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Garland toggle */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Seasonal Frame Decorations</label>
-          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Header Icon</label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {Object.entries(HEADER_ICONS).map(([key, icon]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelectedIcon(key)}
+                  style={{
+                    padding: 10, borderRadius: 10, cursor: "pointer",
+                    border: selectedIcon === key ? "2px solid #D4A843" : "1px solid #4A3728",
+                    background: selectedIcon === key ? "rgba(212,168,67,0.15)" : "#2C1D12",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Garland toggle */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Seasonal Frame Decorations</label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={garlandEnabled}
+                onChange={e => setGarlandEnabled(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: "#D4A843", cursor: "pointer" }}
+              />
+              <span style={{ color: "#D4A843", fontSize: 13 }}>
+                Show seasonal decorations on the bookcase frame
+              </span>
+            </label>
+          </div>
+
+          {/* Currently Reading toggle */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Currently Reading Shelf</label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={currentlyReadingEnabled}
+                onChange={e => setCurrentlyReadingEnabled(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: "#D4A843", cursor: "pointer" }}
+              />
+              <span style={{ color: "#D4A843", fontSize: 13 }}>
+                Show "Currently Reading" shelf
+              </span>
+            </label>
+          </div>
+        </>)}
+
+        {activeTab === 'settings' && (<>
+          {/* Sync */}
+          <div style={{ marginBottom: 4 }}>
+            <span style={sectionLabelStyle}>Sync</span>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Goodreads RSS URL</label>
             <input
-              type="checkbox"
-              checked={garlandEnabled}
-              onChange={e => setGarlandEnabled(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: "#D4A843", cursor: "pointer" }}
+              style={inputStyle}
+              value={goodreadsRssUrl}
+              onChange={e => setGoodreadsRssUrl(e.target.value)}
+              placeholder="https://www.goodreads.com/review/list_rss/YOUR_ID"
             />
-            <span style={{ color: "#D4A843", fontSize: 13 }}>
-              Show seasonal decorations on the bookcase frame
-            </span>
-          </label>
-        </div>
+            <p style={{ color: "#7A5A40", fontSize: 11, fontFamily: "'DM Sans', sans-serif", margin: "6px 0 0", lineHeight: 1.5 }}>
+              Find this on Goodreads → My Books → RSS (bottom of page). Paste the full URL here to sync your library.
+            </p>
+          </div>
 
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24 }}>
+          {/* Library Data */}
+          <div style={{ marginBottom: 4 }}>
+            <span style={sectionLabelStyle}>Library Data</span>
+          </div>
+          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+            <button
+              onClick={onImportCsv}
+              style={{
+                padding: "8px 16px", borderRadius: 8, border: "1px solid #4A3728",
+                background: "#2C1D12", color: "#BFA88A",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                <path d="M7 1v8M4 6l3 3 3-3M2 11h10" />
+              </svg>
+              Import CSV
+            </button>
+            <button
+              onClick={onExportCsv}
+              style={{
+                padding: "8px 16px", borderRadius: 8, border: "1px solid #4A3728",
+                background: "#2C1D12", color: "#BFA88A",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                <path d="M7 13V5M4 8l3-3 3 3M2 13h10" />
+              </svg>
+              Export CSV
+            </button>
+          </div>
+
+          {/* Preferences */}
+          <div style={{ marginBottom: 4 }}>
+            <span style={sectionLabelStyle}>Preferences</span>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Default Sort</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[
+                { value: 'dateRead', label: 'Date Read' },
+                { value: 'rating', label: 'Rating' },
+                { value: 'title', label: 'Title' },
+                { value: 'author', label: 'Author' },
+                { value: 'pages', label: 'Pages' },
+                { value: 'pubYear', label: 'Pub. Year' },
+                { value: 'color', label: 'Colour' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setDefaultSort(opt.value)}
+                  style={{
+                    padding: "5px 12px", borderRadius: 20,
+                    border: defaultSort === opt.value ? "1px solid #D4A843" : "1px solid #4A3728",
+                    background: defaultSort === opt.value ? "rgba(212,168,67,0.15)" : "#2C1D12",
+                    color: defaultSort === opt.value ? "#D4A843" : "#BFA88A",
+                    fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
+                  }}
+                >{opt.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div style={{ marginBottom: 4 }}>
+            <span style={{ ...sectionLabelStyle, color: "#8B2840" }}>Danger Zone</span>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <button
+              onClick={() => {
+                if (window.confirm('This will delete all your manual book data, overrides, and shelf decorations. Your profile and appearance settings will be kept. This cannot be undone.')) {
+                  onResetData();
+                }
+              }}
+              style={{
+                padding: "8px 16px", borderRadius: 8,
+                border: "1px solid rgba(139,40,64,0.5)",
+                background: "rgba(139,40,64,0.1)", color: "#C05070",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
+              }}
+            >
+              Reset all manual overrides…
+            </button>
+            <p style={{ color: "#7A5A40", fontSize: 11, fontFamily: "'DM Sans', sans-serif", margin: "6px 0 0", lineHeight: 1.5 }}>
+              Removes all manually added books, edits, and shelf prop customisations. Cannot be undone.
+            </p>
+          </div>
+        </>)}
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24, borderTop: "1px solid #4A3728", paddingTop: 20 }}>
           <button onClick={onClose} style={{
             padding: "10px 20px", borderRadius: 8, border: "1px solid #4A3728",
             background: "transparent", color: "#BFA88A",
@@ -2812,6 +2951,39 @@ export default function App() {
       localStorage.setItem('bookshelf_settings_v1', JSON.stringify(next));
       return next;
     });
+  };
+
+  const handleExportCsv = () => {
+    const esc = (val) => {
+      const s = String(val === null || val === undefined ? '' : val);
+      return '"' + s.replace(/"/g, '""') + '"';
+    };
+    const headers = ['Title','Author','My Rating','Average Rating','Publisher','Binding','Number of Pages','Year Published','Date Read','Date Added','Shelves','ISBN','Audiobook','Kindle','Favourite','Series','Review'];
+    const rows = books.map(b => [
+      esc(b.t), esc(b.a), esc(b.r), esc(b.ar), esc(b.pub), esc(b.bind),
+      esc(b.p), esc(b.y), esc(b.dr), esc(b.da),
+      esc([b.s, ...(b.g || [])].filter(Boolean).join(' | ')),
+      esc(b.isbn), esc(b.au ? 'true' : 'false'), esc(b.ki ? 'true' : 'false'),
+      esc(b.fav ? 'true' : 'false'), esc(b.sn), esc(b.rev),
+    ].join(','));
+    const csv = [headers.map(h => '"' + h + '"').join(','), ...rows].join('\n');
+    const date = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bookshelf-export-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleResetData = () => {
+    localStorage.removeItem('bookshelf_manual_v2');
+    localStorage.removeItem('bookshelf_overrides_v1');
+    localStorage.removeItem('bookshelf_deleted_v1');
+    localStorage.removeItem('bookshelf_custom_colors_v1');
+    updateSiteSettings({ shelfPropOverrides: {} });
+    window.location.reload();
   };
 
   const handlePropSelect = (shelfIndex, seasonKey, value) => {
@@ -3145,6 +3317,16 @@ export default function App() {
 }
       `}</style>
 
+      {/* Read-only visitor banner — above header */}
+      {isReadOnly && (
+        <div style={{ background: "linear-gradient(135deg, #5C0F1E, #8B2840)", width: "100%", padding: "11px 20px", textAlign: "center" }}>
+          <div style={{ color: "#F5ECD7", fontSize: 13, fontWeight: 600, marginBottom: 2, fontFamily: "'DM Sans', sans-serif" }}>
+            👀 You're visiting {siteSettings.name || "this"} Bookshelf
+          </div>
+          <div style={{ color: "rgba(245,236,215,0.7)", fontSize: 11, fontFamily: "'DM Sans', sans-serif" }}>Read-only view</div>
+        </div>
+      )}
+
       {/* Cherry tree + Stats wrapper — single background layer */}
       <div style={{ position: "relative", overflow: "hidden", borderRadius: "0 0 40px 40px" }}>
         {/* Cherry tree photo */}
@@ -3163,31 +3345,38 @@ export default function App() {
 
         {/* Header content */}
         <div style={{ padding: "28px 20px 8px", textAlign: "center", position: "relative", zIndex: 1 }}>
-          {/* Share button — top left */}
+          {/* Share button — top left (hidden in read-only view) */}
+          {!isReadOnly && (
           <button
             onClick={() => {
               const shareUrl = window.location.origin + window.location.pathname + '?share';
               navigator.clipboard.writeText(shareUrl).then(() => {
                 setShareConfirmed(true);
-                setTimeout(() => setShareConfirmed(false), 2000);
+                setTimeout(() => setShareConfirmed(false), 2500);
               });
             }}
             title="Copy shareable link"
             style={{
               position: "absolute", top: 16, left: 16,
-              background: shareConfirmed ? "rgba(92,107,46,0.35)" : "rgba(255,255,255,0.28)",
-              border: `1px solid ${shareConfirmed ? "rgba(92,107,46,0.5)" : "rgba(92,15,30,0.3)"}`,
-              borderRadius: "50%", width: 36, height: 36,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", backdropFilter: "blur(4px)",
-              transition: "all 0.2s",
+              background: shareConfirmed ? "rgba(92,154,58,0.2)" : "rgba(255,255,255,0.28)",
+              border: `1px solid ${shareConfirmed ? "rgba(92,154,58,0.5)" : "rgba(92,15,30,0.3)"}`,
+              borderRadius: 18, height: 36,
+              maxWidth: shareConfirmed ? 150 : 36,
+              display: "flex", alignItems: "center", justifyContent: "flex-start",
+              padding: 0, cursor: "pointer", backdropFilter: "blur(4px)",
+              overflow: "hidden", whiteSpace: "nowrap",
+              transition: "max-width 0.3s ease, background 0.2s, border-color 0.2s",
             }}
           >
-            {shareConfirmed
-              ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C6B2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C0F1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            }
+            <span style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={shareConfirmed ? "#5C9A3A" : "#5C0F1E"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            </span>
+            <span style={{ color: "#5C9A3A", fontSize: 13, paddingRight: 12, flexShrink: 0 }}>Link copied!</span>
           </button>
+          )}
 
           {/* Profile / edit button — top right (hidden in read-only mode) */}
           {!isReadOnly && (
@@ -3248,16 +3437,6 @@ export default function App() {
             background: 'rgba(192,80,74,0.08)', position: "relative", zIndex: 1,
           }}>
             Couldn't sync with Goodreads — showing saved data
-          </div>
-        )}
-        {isReadOnly && (
-          <div style={{
-            textAlign: 'center', padding: '7px 16px', fontSize: 12,
-            color: '#6B3520', fontFamily: "'DM Sans', sans-serif",
-            background: 'rgba(212,168,67,0.12)', position: "relative", zIndex: 1,
-            borderTop: '1px solid rgba(212,168,67,0.2)', borderBottom: '1px solid rgba(212,168,67,0.2)',
-          }}>
-            You are viewing {siteSettings.name ? `${siteSettings.name}'s` : 'this'} bookshelf — read only
           </div>
         )}
 
@@ -3402,25 +3581,6 @@ export default function App() {
                 </div>
               )}
             </div>
-          )}
-          {!isReadOnly && (
-            <button
-              onClick={() => setShowImport(true)}
-              title="Import books from a Goodreads CSV export"
-              style={{
-                marginLeft: 'auto', padding: "7px 14px", borderRadius: 8,
-                border: "1px solid rgba(160,100,70,0.35)",
-                background: "rgba(255,255,255,0.75)", color: "#5C2010",
-                fontSize: 13, fontFamily: "'DM Sans', sans-serif",
-                cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-                boxShadow: "0 1px 4px rgba(120,70,40,0.08)",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-                <path d="M7 1v8M4 6l3 3 3-3M2 11h10" />
-              </svg>
-              Import CSV
-            </button>
           )}
         </div>
       </div>
@@ -3660,6 +3820,9 @@ export default function App() {
           defaultImageUrl={cherryTreeImg}
           onSave={updateSiteSettings}
           onClose={() => setShowSettings(false)}
+          onImportCsv={() => { setShowSettings(false); setShowImport(true); }}
+          onExportCsv={handleExportCsv}
+          onResetData={handleResetData}
         />
       )}
       {propPickerShelf !== null && (
