@@ -1547,6 +1547,31 @@ function AddBookForm({ onAdd, onClose, books = [] }) {
 }
 
 
+function getCurrentSeasonKey() {
+  const m = new Date().getMonth() + 1;
+  if (m >= 3 && m <= 5) return 'spring';
+  if (m >= 6 && m <= 8) return 'summer';
+  if (m >= 9 && m <= 11) return 'fall';
+  return 'winter';
+}
+
+function migrateShelfPropOverrides(raw) {
+  if (!raw || typeof raw !== 'object') return raw;
+  const season = getCurrentSeasonKey();
+  const migrated = {};
+  for (const [key, val] of Object.entries(raw)) {
+    if (val === null || val === undefined) continue;
+    if (typeof val === 'number') {
+      migrated[key] = { [season]: val, autoSelect: false };
+    } else if (typeof val === 'string') {
+      migrated[key] = { custom: val, autoSelect: false };
+    } else {
+      migrated[key] = val; // already new format
+    }
+  }
+  return migrated;
+}
+
 function getSeasonalProp(shelfIndex, vOverride) {
   const month = new Date().getMonth() + 1; // 1–12
   const v = vOverride !== undefined ? vOverride % 4 : shelfIndex % 4;
@@ -1765,11 +1790,19 @@ function getSeasonalProp(shelfIndex, vOverride) {
 }
 
 function getEffectiveProp(shelfIndex, override) {
-  if (override !== undefined && override !== null) {
-    if (typeof override === 'number') return getSeasonalProp(shelfIndex, override);
-    if (typeof override === 'string') return <img src={override} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
-  }
-  return getSeasonalProp(shelfIndex);
+  // No override
+  if (override === undefined || override === null) return getSeasonalProp(shelfIndex);
+  // Legacy formats (shouldn't reach here post-migration, but guard anyway)
+  if (typeof override === 'number') return getSeasonalProp(shelfIndex, override);
+  if (typeof override === 'string') return <img src={override} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
+  // New per-season object format
+  const { custom, autoSelect } = override;
+  if (custom) return <img src={custom} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
+  if (autoSelect !== false) return getSeasonalProp(shelfIndex);
+  const seasonKey = getCurrentSeasonKey();
+  const idx = override[seasonKey];
+  if (idx === null || idx === undefined) return getSeasonalProp(shelfIndex);
+  return getSeasonalProp(shelfIndex, idx);
 }
 
 function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId = null, propOverride, onPropClick }) {
@@ -2114,6 +2147,10 @@ function CurrentlyReadingPanel({ books, onBookClick }) {
 
 function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, onClose }) {
   const fileRef = useRef(null);
+  const seasons = ['spring', 'summer', 'fall', 'winter'];
+  const seasonLabels = { spring: '🌸 Spring', summer: '🌊 Summer', fall: '🍂 Fall', winter: '❄️ Winter' };
+  const defaultTab = getCurrentSeasonKey();
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -2121,102 +2158,132 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  const override = (currentOverride && typeof currentOverride === 'object') ? currentOverride : {};
+  const autoSelect = override.autoSelect !== false;
+
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => onSelect(ev.target.result);
+    reader.onload = ev => onSelect('custom', ev.target.result);
     reader.readAsDataURL(file);
   };
 
-  const overlayStyle = {
-    position: "fixed", inset: 0, background: "rgba(20,10,5,0.75)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    zIndex: 600, padding: 20,
-  };
+  const tabBtnStyle = (tab) => ({
+    padding: "8px 10px", background: "transparent", border: "none",
+    borderBottom: activeTab === tab ? "2px solid #D4A843" : "2px solid transparent",
+    color: activeTab === tab ? "#D4A843" : "#7A6040",
+    fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    fontWeight: activeTab === tab ? 600 : 400,
+  });
 
   return (
-    <div style={overlayStyle}>
-      <div
-        style={{
-          background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16,
-          padding: 28, width: "100%", maxWidth: 380, fontFamily: "'DM Sans', sans-serif",
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 4px", fontSize: 20 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(20,10,5,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 600, padding: 20 }} onClick={onClose}>
+      <div style={{ background: "#1E1208", border: "1px solid #4A3728", borderRadius: 16, padding: 28, width: "100%", maxWidth: 420, fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
+        <h3 style={{ color: "#F5ECD7", fontFamily: "'Playfair Display', Georgia, serif", margin: "0 0 20px", fontSize: 20 }}>
           Change Decoration
         </h3>
-        <p style={{ color: "#A08060", fontSize: 12, margin: "0 0 20px" }}>
-          {SEASON_LABEL} shelf {shelfIndex + 1} — pick a theme decoration or upload your own image
-        </p>
 
-        {/* 4 seasonal options */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 20 }}>
-          {[0, 1, 2, 3].map(i => {
-            const isSelected = currentOverride === i;
-            return (
-              <button
-                key={i}
-                onClick={() => onSelect(i)}
-                title={`Option ${i + 1}`}
-                style={{
-                  width: 72, height: 96, border: isSelected ? "2px solid #D4A843" : "1px solid #4A3728",
-                  borderRadius: 10, background: isSelected ? "rgba(212,168,67,0.12)" : "#2C1D12",
-                  cursor: "pointer", overflow: "hidden", position: "relative", padding: 0,
-                }}
-              >
-                <div style={{
-                  position: "absolute", bottom: 0, left: "50%",
-                  transform: "translateX(-50%) scale(0.62)",
-                  transformOrigin: "bottom center",
-                  display: "flex",
-                }}>
-                  {getSeasonalProp(shelfIndex === 0 ? 999 : shelfIndex, i)}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Upload */}
-        <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-          <input type="file" accept="image/*" ref={fileRef} onChange={handleFile} style={{ display: "none" }} />
-          <button
-            onClick={() => fileRef.current.click()}
-            style={{
-              padding: "9px 18px", borderRadius: 8, border: "1px solid #4A3728",
-              background: "#2C1D12", color: "#D4A843",
-              fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
-            }}
-          >
-            Upload image
-          </button>
-          {currentOverride !== undefined && currentOverride !== null && (
-            <button
-              onClick={onClear}
-              style={{
-                padding: "9px 18px", borderRadius: 8, border: "1px solid #3A2820",
-                background: "transparent", color: "#8B6040",
-                fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
-              }}
-            >
-              Use default
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid #4A3728", marginBottom: 20 }}>
+          {seasons.map(s => (
+            <button key={s} onClick={() => setActiveTab(s)} style={tabBtnStyle(s)}>
+              {seasonLabels[s]}
             </button>
-          )}
+          ))}
+          <button onClick={() => setActiveTab('custom')} style={tabBtnStyle('custom')}>🖼 Custom</button>
         </div>
 
-        <div style={{ textAlign: "right" }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "9px 20px", borderRadius: 8, border: "1px solid #4A3728",
-              background: "transparent", color: "#BFA88A",
-              fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: "pointer",
-            }}
+        {/* Seasonal tab */}
+        {activeTab !== 'custom' && (
+          <>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 16 }}>
+              {[0, 1, 2, 3].map(i => {
+                const isSelected = override[activeTab] === i;
+                return (
+                  <button key={i} onClick={() => { onSelect(activeTab, i); onClose(); }} style={{
+                    width: 72, height: 96,
+                    border: isSelected ? "2px solid #D4A843" : "1px solid #4A3728",
+                    borderRadius: 10,
+                    background: isSelected ? "rgba(212,168,67,0.12)" : "#2C1D12",
+                    cursor: "pointer", overflow: "hidden", position: "relative", padding: 0,
+                  }}>
+                    <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%) scale(0.62)", transformOrigin: "bottom center", display: "flex" }}>
+                      {getSeasonalProp(shelfIndex === 0 ? 999 : shelfIndex, i)}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <button onClick={() => onClear(activeTab)} style={{
+                padding: "7px 14px", borderRadius: 7, border: "1px solid #3A2820",
+                background: "transparent", color: "#8B6040",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
+              }}>
+                Reset this season
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Custom tab */}
+        {activeTab === 'custom' && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+              {override.custom && (
+                <div style={{ position: "relative", width: 72, height: 96, borderRadius: 10, overflow: "hidden", border: "1px solid #4A3728" }}>
+                  <img src={override.custom} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <button onClick={() => onClear('custom')} style={{
+                    position: "absolute", top: 3, right: 3, width: 16, height: 16,
+                    borderRadius: "50%", background: "#8B2840", border: "none",
+                    color: "#fff", fontSize: 9, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>✕</button>
+                </div>
+              )}
+              <div onClick={() => fileRef.current.click()} style={{
+                width: 72, height: 96, border: "1px dashed #4A3728", borderRadius: 10,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "#5A4030", fontSize: 11, textAlign: "center", lineHeight: 1.4,
+              }}>
+                + Upload<br />image
+              </div>
+            </div>
+            <input type="file" accept="image/*" ref={fileRef} onChange={handleFile} style={{ display: "none" }} />
+            <p style={{ color: "#5A4030", fontSize: 11, margin: 0 }}>Custom image overrides all seasons for this shelf.</p>
+          </div>
+        )}
+
+        {/* Auto-select + close */}
+        <div style={{ borderTop: "1px solid #2C1D12", paddingTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", position: "relative" }}
+            onMouseEnter={e => { const t = e.currentTarget.querySelector('.as-tip'); if (t) t.style.opacity = '1'; }}
+            onMouseLeave={e => { const t = e.currentTarget.querySelector('.as-tip'); if (t) t.style.opacity = '0'; }}
           >
-            Cancel
-          </button>
+            <input
+              type="checkbox"
+              checked={autoSelect}
+              onChange={e => onSelect('autoSelect', e.target.checked)}
+              style={{ accentColor: "#D4A843", width: 15, height: 15, cursor: "pointer" }}
+            />
+            <span style={{ color: "#BFA88A", fontSize: 13 }}>Auto-select</span>
+            <span className="as-tip" style={{
+              position: "absolute", bottom: "calc(100% + 6px)", left: 0,
+              background: "#2C1D12", border: "1px solid #4A3728", borderRadius: 6,
+              padding: "6px 10px", fontSize: 11, color: "#D4A843",
+              whiteSpace: "nowrap", pointerEvents: "none",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.4)", opacity: 0,
+              transition: "opacity 0.15s", zIndex: 10,
+            }}>
+              Props will automatically change to match the correct season
+            </span>
+          </label>
+          <button onClick={onClose} style={{
+            padding: "7px 16px", borderRadius: 7, border: "1px solid #4A3728",
+            background: "transparent", color: "#BFA88A",
+            fontFamily: "'DM Sans', sans-serif", fontSize: 12, cursor: "pointer",
+          }}>Close</button>
         </div>
       </div>
     </div>
@@ -2683,7 +2750,13 @@ export default function App() {
   const { manualBooks, overrides, deletedIds, addBook, editBook, deleteBook, undeleteBook, customColors, setCustomColor } = useLocalData();
   const [selectedBookId, setSelectedBookId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [sortBy, setSortBy] = useState("dateRead");
+  const [sortBy, setSortBy] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}');
+      const valid = ["dateRead","rating","title","author","pages","pubYear","color"];
+      return valid.includes(stored.defaultSort) ? stored.defaultSort : "dateRead";
+    } catch { return "dateRead"; }
+  });
   const [sortAsc, setSortAsc] = useState(false);
   const [filterShelf, setFilterShelf] = useState("read");
   const [filterGenres, setFilterGenres] = useState([]);
@@ -2699,6 +2772,9 @@ export default function App() {
       const stored = JSON.parse(localStorage.getItem('bookshelf_settings_v1') || '{}');
       if (!stored.customQuotes) {
         stored.customQuotes = BOOK_QUOTES;
+      }
+      if (stored.shelfPropOverrides) {
+        stored.shelfPropOverrides = migrateShelfPropOverrides(stored.shelfPropOverrides);
       }
       return stored;
     } catch {
@@ -2738,17 +2814,33 @@ export default function App() {
     });
   };
 
-  const handlePropSelect = (shelfIndex, override) => {
+  const handlePropSelect = (shelfIndex, seasonKey, value) => {
+    const current = (siteSettings.shelfPropOverrides || {})[shelfIndex];
+    const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? current : {};
+    let next;
+    if (seasonKey === 'custom') {
+      next = { ...existing, custom: value };
+    } else if (seasonKey === 'autoSelect') {
+      next = { ...existing, autoSelect: value };
+    } else {
+      next = { ...existing, [seasonKey]: value, autoSelect: false };
+    }
     updateSiteSettings({
-      shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: override },
+      shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: next },
     });
-    setPropPickerShelf(null);
   };
 
-  const handlePropClear = (shelfIndex) => {
-    const overrides = { ...(siteSettings.shelfPropOverrides || {}) };
-    delete overrides[shelfIndex];
-    updateSiteSettings({ shelfPropOverrides: overrides });
+  const handlePropClear = (shelfIndex, seasonKey) => {
+    const current = (siteSettings.shelfPropOverrides || {})[shelfIndex];
+    const existing = (current && typeof current === 'object' && !Array.isArray(current)) ? { ...current } : {};
+    if (seasonKey === 'custom') {
+      existing.custom = null;
+    } else {
+      existing[seasonKey] = null;
+    }
+    updateSiteSettings({
+      shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: existing },
+    });
     setPropPickerShelf(null);
   };
 
@@ -3573,9 +3665,9 @@ export default function App() {
       {propPickerShelf !== null && (
         <ShelfPropPickerModal
           shelfIndex={propPickerShelf}
-          currentOverride={(siteSettings.shelfPropOverrides || {})[propPickerShelf]}
-          onSelect={(override) => handlePropSelect(propPickerShelf, override)}
-          onClear={() => handlePropClear(propPickerShelf)}
+          currentOverride={(siteSettings.shelfPropOverrides || {})[propPickerShelf] || null}
+          onSelect={(seasonKey, value) => handlePropSelect(propPickerShelf, seasonKey, value)}
+          onClear={(seasonKey) => handlePropClear(propPickerShelf, seasonKey)}
           onClose={() => setPropPickerShelf(null)}
         />
       )}
