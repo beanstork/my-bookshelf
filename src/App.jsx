@@ -1582,12 +1582,30 @@ function migrateShelfPropOverrides(raw) {
       // Legacy: top-level string = custom image dataUrl
       migrated[key] = { customImages: [val], customSelected: 0, autoSelect: false };
     } else {
-      // Object format — also migrate legacy .custom string field
+      // Object format — migrate any legacy fields
       const obj = { ...val };
+      // Migrate legacy .custom string field
       if (typeof obj.custom === 'string') {
         obj.customImages = obj.customImages ? [...obj.customImages, obj.custom] : [obj.custom];
         if (obj.customSelected === undefined || obj.customSelected === null) obj.customSelected = 0;
         delete obj.custom;
+      }
+      // Migrate legacy per-season keys (spring/summer/fall/winter) to propSeason/propIndex
+      if (obj.propSeason === undefined) {
+        const currentSeason = getCurrentSeasonKey();
+        for (const s of ['spring', 'summer', 'fall', 'winter']) {
+          if (typeof obj[s] === 'number') {
+            // Prefer current season's selection; otherwise use whichever season had a selection
+            if (s === currentSeason || obj.propSeason === undefined) {
+              obj.propSeason = s;
+              obj.propIndex = obj[s];
+            }
+          }
+          delete obj[s];
+        }
+      } else {
+        // Clean up any lingering per-season keys
+        for (const s of ['spring', 'summer', 'fall', 'winter']) delete obj[s];
       }
       migrated[key] = obj;
     }
@@ -1820,20 +1838,21 @@ function getSeasonalProp(shelfIndex, vOverride, seasonOverride) {
 function getEffectiveProp(shelfIndex, override) {
   // No override
   if (override === undefined || override === null) return getSeasonalProp(shelfIndex);
-  // Legacy formats (shouldn't reach here post-migration, but guard anyway)
+  // Legacy formats
   if (typeof override === 'number') return getSeasonalProp(shelfIndex, override);
   if (typeof override === 'string') return <img src={override} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
-  // Per-season object format
-  const { customImages, customSelected, autoSelect } = override;
-  // Selected custom image takes priority
+  const { customImages, customSelected, autoSelect, propSeason, propIndex } = override;
+  // Active custom image
   if (customSelected !== null && customSelected !== undefined && customImages && customImages[customSelected]) {
     return <img src={customImages[customSelected]} alt="" style={{ maxHeight: 110, maxWidth: 80, objectFit: 'contain', display: 'block' }} />;
   }
+  // Rotate with seasons = use current season's default
   if (autoSelect !== false) return getSeasonalProp(shelfIndex);
-  const seasonKey = getCurrentSeasonKey();
-  const idx = override[seasonKey];
-  if (idx === null || idx === undefined) return getSeasonalProp(shelfIndex);
-  return getSeasonalProp(shelfIndex, idx);
+  // Specific prop selected (propSeason + propIndex = last clicked thumbnail)
+  if (propSeason !== undefined && propIndex !== null && propIndex !== undefined) {
+    return getSeasonalProp(shelfIndex, propIndex, propSeason);
+  }
+  return getSeasonalProp(shelfIndex);
 }
 
 function Shelf({ books, onBookClick, shelfIndex, coverColors = {}, pulledBookId = null, propOverride, onPropClick }) {
@@ -2230,7 +2249,7 @@ function ShelfPropPickerModal({ shelfIndex, currentOverride, onSelect, onClear, 
           <>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 16 }}>
               {[0, 1, 2, 3].map(i => {
-                const isSelected = override[activeTab] === i;
+                const isSelected = !autoSelect && override.propSeason === activeTab && override.propIndex === i;
                 return (
                   <button key={i} onClick={() => { onSelect(activeTab, i); onClose(); }} style={{
                     width: 72, height: 96,
@@ -3054,7 +3073,8 @@ export default function App() {
     } else if (seasonKey === 'autoSelect') {
       next = { ...existing, autoSelect: value };
     } else {
-      next = { ...existing, [seasonKey]: value, autoSelect: false };
+      // Seasonal prop selected — store as propSeason/propIndex so it shows immediately
+      next = { ...existing, propSeason: seasonKey, propIndex: value, autoSelect: false };
     }
     updateSiteSettings({
       shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: next },
@@ -3067,7 +3087,10 @@ export default function App() {
     if (seasonKey === 'custom') {
       existing.customSelected = null; // deselect but keep images in library
     } else {
-      existing[seasonKey] = null;
+      // "Set to default" — clear specific selection, revert to seasonal auto-default
+      existing.propSeason = undefined;
+      existing.propIndex = undefined;
+      existing.autoSelect = true;
     }
     updateSiteSettings({
       shelfPropOverrides: { ...(siteSettings.shelfPropOverrides || {}), [shelfIndex]: existing },
